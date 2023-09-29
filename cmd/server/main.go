@@ -2,7 +2,7 @@ package main
 
 import (
 	// "fmt"
-	"encoding/json"
+	// "encoding/json"
 	"net/http"
 	"strconv"
 
@@ -42,7 +42,7 @@ func UpdateMetric(rw http.ResponseWriter, r *http.Request) {
 
 	switch len(pathValues) {
 	case 2:
-		http.Error(rw, "metric value was not sent", http.StatusBadRequest)
+		http.Error(rw, "metric value was not sent", http.StatusNotFound)
 		return
 	case 1:
 		http.Error(rw, "metric name was not sent", http.StatusNotFound)
@@ -52,30 +52,30 @@ func UpdateMetric(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	m_Type := pathValues[0]
-	m_Name := pathValues[1]
+	mType := pathValues[0]
+	mName := pathValues[1]
 
-	switch m_Type {
+	switch mType {
 	case "gauge":
 		// _, ok := pathValues[2]
-		m_Value, err := strconv.ParseFloat(pathValues[2], 64)
+		mValue, err := strconv.ParseFloat(pathValues[2], 64)
 		if err != nil {
 			http.Error(rw, "incorrect metric value\ncannot parse to float64", http.StatusBadRequest)
 			return
 		}
-		memStorage.gauge[m_Name] = m_Value
+		memStorage.gauge[mName] = mValue
 		// body, err := json.Marshal(memStorage.gauge)
 		// if err != nil {
 
 		// }
 		// rw.Write(body)
 	case "counter":
-		m_Value, err := strconv.ParseInt(pathValues[2], 10, 32)
+		mValue, err := strconv.ParseInt(pathValues[2], 10, 32)
 		if err != nil {
 			http.Error(rw, "incorrect metric value\ncannot parse to int32", http.StatusBadRequest)
 			return
 		}
-		memStorage.counter[m_Name] = append(memStorage.counter[m_Name], m_Value)
+		memStorage.counter[mName] = append(memStorage.counter[mName], mValue)
 		// body, err := json.Marshal(memStorage.counter)
 		// if err != nil {
 
