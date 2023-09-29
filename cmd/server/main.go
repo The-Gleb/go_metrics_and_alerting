@@ -55,7 +55,7 @@ func UpdateMetric(rw http.ResponseWriter, r *http.Request) {
 	mType := pathValues[0]
 	mName := pathValues[1]
 
-	switch m_Type {
+	switch mType {
 	case "gauge":
 		// _, ok := pathValues[2]
 		mValue, err := strconv.ParseFloat(pathValues[2], 64)
