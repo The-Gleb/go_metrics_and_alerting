@@ -42,7 +42,7 @@ func UpdateMetric(rw http.ResponseWriter, r *http.Request) {
 
 	switch len(pathValues) {
 	case 2:
-		http.Error(rw, "metric value was not sent", http.StatusBadRequest)
+		http.Error(rw, "metric value was not sent", http.StatusNotFound)
 		return
 	case 1:
 		http.Error(rw, "metric name was not sent", http.StatusNotFound)
