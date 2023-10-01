@@ -113,6 +113,7 @@ func Test_handlers_UpdateMetric(t *testing.T) {
 			tt.h.UpdateMetric(rw, request)
 
 			res := rw.Result()
+			defer res.Body.Close()
 			// проверяем код ответа
 			require.Equal(t, tt.want.code, res.StatusCode)
 			if tt.want.code != 200 {
