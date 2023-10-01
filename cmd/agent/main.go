@@ -118,6 +118,7 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 		}
 
 		res, err := http.DefaultClient.Do(req)
+		defer http.DefaultClient.CloseIdleConnections()
 		if err != nil {
 			fmt.Printf("client: error making http request: %s\n", err)
 			os.Exit(1)
@@ -133,6 +134,7 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 	}
 
 	res, err := http.DefaultClient.Do(req)
+	defer http.DefaultClient.CloseIdleConnections()
 	if err != nil {
 		fmt.Printf("client: error making http request: %s\n", err)
 		os.Exit(1)
@@ -141,6 +143,5 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 	fmt.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n\n")
 	fmt.Printf("client: status code: %d\n", res.StatusCode)
 	// fmt.Printf("client: got response!%v\n", resBody)
-
 	return nil
 }
