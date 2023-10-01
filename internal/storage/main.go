@@ -20,7 +20,7 @@ func (s *storage) UpdateGauge(name string, value float64) {
 }
 
 func (s *storage) UpdateCounter(name string, value int64) {
-	s.counter[name] = value
+	s.counter[name] += value
 }
 
 // TODO: fix GetAll()
