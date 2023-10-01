@@ -36,8 +36,9 @@ func main() {
 			select {
 			case <-updTicker.C:
 				CollectMetrics(gaugeMap, &PollCount)
-			case n := <-stop:
-				fmt.Printf("Закрытие горутины %v\n", n)
+			case <-stop:
+
+				// fmt.Printf("Закрытие горутины %v\n", n)
 				return
 			}
 		}
@@ -49,8 +50,8 @@ func main() {
 			select {
 			case <-sendTicker.C:
 				SendMetrics(gaugeMap, &PollCount)
-			case n := <-stop:
-				fmt.Printf("Закрытие горутины %v\n", n)
+			case <-stop:
+				// fmt.Printf("Закрытие горутины %v\n", n)
 				return
 			}
 		}
@@ -107,7 +108,7 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 	// Just encode to json and print
 	// b, _ := json.Marshal(gaugeMap)
 	// fmt.Println(string(b))
-	fmt.Print("METRICS COLLECTED \n\n")
+	// fmt.Print("METRICS COLLECTED \n\n")
 
 }
 
@@ -117,17 +118,17 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 		// req, err := http.NewRequest(http.MethodPost, requestURL, nil)
 		res, err := http.Post(requestURL, "text/plain", nil)
 		if err != nil {
-			fmt.Printf("client: could not create request: %s\n", err)
+			// fmt.Printf("client: could not create request: %s\n", err)
 			os.Exit(1)
 		}
 
 		// res, err := http.DefaultClient.Do(req)
 		if err != nil {
-			fmt.Printf("client: error making http request: %s\n", err)
+			// fmt.Printf("client: error making http request: %s\n", err)
 			os.Exit(1)
 		}
 		defer res.Body.Close()
-		fmt.Printf("client: status code: %d ", res.StatusCode)
+		// fmt.Printf("client: status code: %d ", res.StatusCode)
 	}
 
 	requestURL := fmt.Sprintf("http://localhost:8080/update/counter/PollCount/%d", *PollCount)
@@ -135,19 +136,19 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 	res, err := http.Post(requestURL, "text/plain", nil)
 
 	if err != nil {
-		fmt.Printf("client: could not create request: %s\n", err)
+		// fmt.Printf("client: could not create request: %s\n", err)
 		os.Exit(1)
 	}
 
 	// res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("client: error making http request: %s\n", err)
+		// fmt.Printf("client: error making http request: %s\n", err)
 		os.Exit(1)
 	}
 	defer res.Body.Close()
 	// resBody, _ := io.ReadAll(res.Body)
-	fmt.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n\n")
-	fmt.Printf("client: status code: %d\n", res.StatusCode)
+	// fmt.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n\n")
+	// fmt.Printf("client: status code: %d\n", res.StatusCode)
 	// fmt.Printf("client: got response!%v\n", resBody)
 	return nil
 }

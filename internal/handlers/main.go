@@ -1,10 +1,12 @@
 package handlers
 
 import (
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
+	// "fmt"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
 )
 
 type handlers struct {
@@ -64,5 +66,6 @@ func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) 
 		http.Error(rw, "Invalid mertic type", http.StatusBadRequest)
 	}
 	rw.WriteHeader(http.StatusOK)
+	// fmt.Println("request was processed successfuly")
 
 }
