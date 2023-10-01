@@ -114,13 +114,14 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 	for name, val := range gaugeMap {
 		requestURL := fmt.Sprintf("http://localhost:8080/update/gauge/%s/%f", name, val)
-		req, err := http.NewRequest(http.MethodPost, requestURL, nil)
+		// req, err := http.NewRequest(http.MethodPost, requestURL, nil)
+		res, err := http.Post(requestURL, "text/plain", nil)
 		if err != nil {
 			fmt.Printf("client: could not create request: %s\n", err)
 			os.Exit(1)
 		}
 
-		res, err := http.DefaultClient.Do(req)
+		// res, err := http.DefaultClient.Do(req)
 		if err != nil {
 			fmt.Printf("client: error making http request: %s\n", err)
 			os.Exit(1)
@@ -130,13 +131,15 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 	}
 
 	requestURL := fmt.Sprintf("http://localhost:8080/update/counter/PollCount/%d", *PollCount)
-	req, err := http.NewRequest(http.MethodPost, requestURL, nil)
+	// req, err := http.NewRequest(http.MethodPost, requestURL, nil)
+	res, err := http.Post(requestURL, "text/plain", nil)
+
 	if err != nil {
 		fmt.Printf("client: could not create request: %s\n", err)
 		os.Exit(1)
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	// res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Printf("client: error making http request: %s\n", err)
 		os.Exit(1)
