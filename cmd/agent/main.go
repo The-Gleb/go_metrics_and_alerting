@@ -17,7 +17,7 @@ func main() {
 	gaugeMap := make(map[string]float64)
 	var PollCount int64 = 0
 	var pollInterval = time.Duration(2) * time.Second
-	var reportInterval = time.Duration(9) * time.Second
+	var reportInterval = time.Duration(10) * time.Second
 
 	CollectMetrics(gaugeMap, &PollCount)
 	SendMetrics(gaugeMap, &PollCount)
