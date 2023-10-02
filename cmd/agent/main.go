@@ -2,7 +2,7 @@ package main
 
 import (
 	// "encoding/json"
-	"fmt"
+	// "fmt"
 	// "io"
 	// "math"
 	"log"
@@ -111,7 +111,7 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 
 }
 
-func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
+func SendMetrics(gaugeMap map[string]float64, PollCount *int64) {
 	for name, val := range gaugeMap {
 		requestURL := fmt.Sprintf("http://localhost:8080/update/gauge/%s/%f", name, val)
 		// req, err := http.NewRequest(http.MethodPost, requestURL, nil)
@@ -132,20 +132,14 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 	// req, err := http.NewRequest(http.MethodPost, requestURL, nil)
 	res, err := http.Post(requestURL, "text/plain", nil)
 
-	if err != nil {
-		// fmt.Printf("client: could not create request: %s\n", err)
-		os.Exit(1)
-	}
-
 	// res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		// fmt.Printf("client: error making http request: %s\n", err)
+		log.Printf("client: error making http request: %s\n", err)
 		os.Exit(1)
 	}
 	defer res.Body.Close()
 	// resBody, _ := io.ReadAll(res.Body)
-	fmt.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n\n")
-	fmt.Printf("client: status code: %d\n", res.StatusCode)
+	log.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n\n")
+	log.Printf("client: status code: %d\n", res.StatusCode)
 	// fmt.Printf("client: got response!%v\n", resBody)
-	return nil
 }
