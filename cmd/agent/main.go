@@ -113,7 +113,7 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 
 func SendMetrics(gaugeMap map[string]float64, PollCount *int64) {
 	for name, val := range gaugeMap {
-		requestURL := fmt.Sprintf("http://localhost:8080/update/gauge/%s/%f", name, val)
+		requestURL := fmt.Sprintf("http://127.0.0.1:8080/update/gauge/%s/%f", name, val)
 
 		res, err := http.Post(requestURL, "text/plain", nil)
 		if err != nil {
@@ -131,7 +131,7 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) {
 	}
 	log.Printf("gauge metrics sent")
 
-	requestURL := fmt.Sprintf("http://localhost:8080/update/counter/PollCount/%d", *PollCount)
+	requestURL := fmt.Sprintf("http://127.0.0.1:8080/update/counter/PollCount/%d", *PollCount)
 	res, err := http.Post(requestURL, "text/plain", nil)
 	if err != nil {
 		log.Printf("client: error making http request: %s\n", err)

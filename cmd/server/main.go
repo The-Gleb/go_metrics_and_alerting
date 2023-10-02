@@ -10,7 +10,7 @@ import (
 func main() {
 	storage := storage.New()
 	handlers := handlers.New(storage)
-	server := server.New(":8080", handlers)
+	server := server.New("127.0.0.1:8080", handlers)
 
 	err := server.Run()
 	if err != nil {
