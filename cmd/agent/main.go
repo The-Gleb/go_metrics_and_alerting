@@ -1,4 +1,4 @@
-package main
+package agent
 
 import (
 	// "encoding/json"
@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func main() {
+func StartAgent() {
 	gaugeMap := make(map[string]float64)
 	var PollCount int64 = 0
 	var pollInterval = time.Duration(2) * time.Second
