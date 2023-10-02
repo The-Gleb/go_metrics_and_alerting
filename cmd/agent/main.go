@@ -5,6 +5,7 @@ import (
 	"fmt"
 	// "io"
 	// "math"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -108,7 +109,7 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 	// Just encode to json and print
 	// b, _ := json.Marshal(gaugeMap)
 	// fmt.Println(string(b))
-	fmt.Print("METRICS COLLECTED \n\n")
+	log.Printf("METRICS COLLECTED \n\n")
 
 }
 
@@ -117,10 +118,10 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 		requestURL := fmt.Sprintf("http://localhost:8080/update/gauge/%s/%f", name, val)
 		// req, err := http.NewRequest(http.MethodPost, requestURL, nil)
 		res, err := http.Post(requestURL, "text/plain", nil)
-		if err != nil {
-			fmt.Printf("client: could not create request: %s\n", err)
-			os.Exit(1)
-		}
+		// if err != nil {
+		// 	fmt.Printf("client: could not create request: %s\n", err)
+		// 	os.Exit(1)
+		// }
 
 		// res, err := http.DefaultClient.Do(req)
 		if err != nil {
@@ -128,8 +129,10 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 			os.Exit(1)
 		}
 		defer res.Body.Close()
-		// fmt.Printf("client: status code: %d ", res.StatusCode)
+		log.Printf("client: status code: %d ", res.StatusCode)
+
 	}
+	log.Printf("gauge metrics sent")
 
 	requestURL := fmt.Sprintf("http://localhost:8080/update/counter/PollCount/%d", *PollCount)
 	// req, err := http.NewRequest(http.MethodPost, requestURL, nil)

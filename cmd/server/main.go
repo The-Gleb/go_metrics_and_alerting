@@ -4,6 +4,7 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/server"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
+	"log"
 )
 
 func main() {
@@ -15,6 +16,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("server started")
 }
 
 // func main() {
