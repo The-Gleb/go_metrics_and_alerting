@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
@@ -6,7 +6,7 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
 )
 
-func StartServer() {
+func main() {
 	storage := storage.New()
 	handlers := handlers.New(storage)
 	server := server.New(":8080", handlers)

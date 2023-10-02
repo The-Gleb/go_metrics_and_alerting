@@ -1,4 +1,4 @@
-package agent
+package main
 
 import (
 	// "encoding/json"
@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func StartAgent() {
+func main() {
 	gaugeMap := make(map[string]float64)
 	var PollCount int64 = 0
 	var pollInterval = time.Duration(2) * time.Second
@@ -102,13 +102,13 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 	gaugeMap["StackSys"] = float64(rtm.StackSys)
 	gaugeMap["Sys"] = float64(rtm.Sys)
 	gaugeMap["TotalAlloc"] = float64(rtm.TotalAlloc)
-	gaugeMap["RandomValue"] = math.SmallestNonzeroFloat64 + rand.Float64()*(math.MaxFloat64-math.SmallestNonzeroFloat64)
+	gaugeMap["RandomValue"] = rand.Float64()
 	*counter++
 
 	// Just encode to json and print
 	// b, _ := json.Marshal(gaugeMap)
 	// fmt.Println(string(b))
-	// fmt.Print("METRICS COLLECTED \n\n")
+	fmt.Print("METRICS COLLECTED \n\n")
 
 }
 
@@ -118,13 +118,13 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 		// req, err := http.NewRequest(http.MethodPost, requestURL, nil)
 		res, err := http.Post(requestURL, "text/plain", nil)
 		if err != nil {
-			// fmt.Printf("client: could not create request: %s\n", err)
+			fmt.Printf("client: could not create request: %s\n", err)
 			os.Exit(1)
 		}
 
 		// res, err := http.DefaultClient.Do(req)
 		if err != nil {
-			// fmt.Printf("client: error making http request: %s\n", err)
+			fmt.Printf("client: error making http request: %s\n", err)
 			os.Exit(1)
 		}
 		defer res.Body.Close()
@@ -147,8 +147,8 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 	}
 	defer res.Body.Close()
 	// resBody, _ := io.ReadAll(res.Body)
-	// fmt.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n\n")
-	// fmt.Printf("client: status code: %d\n", res.StatusCode)
+	fmt.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n\n")
+	fmt.Printf("client: status code: %d\n", res.StatusCode)
 	// fmt.Printf("client: got response!%v\n", resBody)
 	return nil
 }
