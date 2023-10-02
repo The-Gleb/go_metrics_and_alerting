@@ -24,7 +24,7 @@ func main() {
 	SendMetrics(gaugeMap, &PollCount)
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c)
+	signal.Notify(c, os.Interrupt)
 
 	updTicker := time.NewTicker(pollInterval)
 	sendTicker := time.NewTicker(reportInterval)
@@ -59,7 +59,8 @@ func main() {
 	}()
 
 	// Блокировка, пока не будет получен сигнал
-	<-c
+	test := <-c
+	fmt.Println("stop signal", test)
 	updTicker.Stop()
 	sendTicker.Stop()
 
@@ -146,4 +147,8 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) {
 	log.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n\n")
 	log.Printf("client: status code: %d\n", res.StatusCode)
 	// fmt.Printf("client: got response!%v\n", resBody)
+}
+
+func MakeHTTPCall(URL string) {
+
 }
