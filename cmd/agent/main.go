@@ -72,8 +72,6 @@ func main() {
 
 func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 	var rtm runtime.MemStats
-
-	// Read full mem stats
 	runtime.ReadMemStats(&rtm)
 
 	gaugeMap["Alloc"] = float64(rtm.Alloc)
@@ -118,14 +116,10 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) error {
 		requestURL := fmt.Sprintf("http://localhost:8080/update/gauge/%s/%f", name, val)
 		// req, err := http.NewRequest(http.MethodPost, requestURL, nil)
 		res, err := http.Post(requestURL, "text/plain", nil)
-		// if err != nil {
-		// 	fmt.Printf("client: could not create request: %s\n", err)
-		// 	os.Exit(1)
-		// }
 
 		// res, err := http.DefaultClient.Do(req)
 		if err != nil {
-			fmt.Printf("client: error making http request: %s\n", err)
+			log.Printf("client: error making http request: %s\n", err)
 			os.Exit(1)
 		}
 		defer res.Body.Close()
