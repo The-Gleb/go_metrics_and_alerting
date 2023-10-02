@@ -119,7 +119,7 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) {
 		res, err := http.Post(requestURL, "text/plain", nil)
 		if err != nil {
 			log.Printf("client: error making http request: %s\n", err)
-			os.Exit(1)
+			return
 		}
 		some, err := io.Copy(io.Discard, res.Body)
 		if err != nil {
@@ -136,7 +136,7 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64) {
 	res, err := http.Post(requestURL, "text/plain", nil)
 	if err != nil {
 		log.Printf("client: error making http request: %s\n", err)
-		os.Exit(1)
+		return
 	}
 	some, err := io.Copy(io.Discard, res.Body)
 	if err != nil {
