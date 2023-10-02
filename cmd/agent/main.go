@@ -19,8 +19,8 @@ func main() {
 	var pollInterval = time.Duration(2) * time.Second
 	var reportInterval = time.Duration(10) * time.Second
 
-	SendMetrics(gaugeMap, &PollCount)
 	CollectMetrics(gaugeMap, &PollCount)
+	SendMetrics(gaugeMap, &PollCount)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c)
