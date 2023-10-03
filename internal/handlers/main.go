@@ -2,11 +2,13 @@ package handlers
 
 import (
 	// "fmt"
+	"bytes"
+	"fmt"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
+	"github.com/go-chi/chi/v5"
+	"io"
 	"net/http"
 	"strconv"
-	"strings"
-
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
 )
 
 type handlers struct {
@@ -15,6 +17,8 @@ type handlers struct {
 
 type Handlers interface {
 	UpdateMetric(rw http.ResponseWriter, r *http.Request)
+	GetAllMetrics(rw http.ResponseWriter, r *http.Request)
+	GetMetric(rw http.ResponseWriter, r *http.Request)
 }
 
 func New(store storage.Repositiries) *handlers {
@@ -25,38 +29,22 @@ func New(store storage.Repositiries) *handlers {
 }
 
 func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		rw.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-	rw.Header().Add("Content-Type", "text/plain; charset=UTF-8")
-	pathValues := strings.Split(strings.TrimPrefix(r.URL.Path, "/update/"), "/")
+	// CHECK IT
+	rw.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 
-	switch len(pathValues) {
-	case 2:
-		http.Error(rw, "metric value was not sent", http.StatusNotFound)
-		return
-	case 1:
-		http.Error(rw, "metric name was not sent", http.StatusNotFound)
-		return
-	case 0:
-		http.Error(rw, "metric type was not sent", http.StatusBadRequest)
-		return
-	}
-
-	mType := pathValues[0]
-	mName := pathValues[1]
+	mType := chi.URLParam(r, "mType")
+	mName := chi.URLParam(r, "mName")
 
 	switch mType {
 	case "gauge":
-		mValue, err := strconv.ParseFloat(pathValues[2], 64)
+		mValue, err := strconv.ParseFloat(chi.URLParam(r, "mValue"), 64)
 		if err != nil {
 			http.Error(rw, "incorrect metric value\ncannot parse to float64", http.StatusBadRequest)
 			return
 		}
 		handlers.storage.UpdateGauge(mName, mValue)
 	case "counter":
-		mValue, err := strconv.ParseInt(pathValues[2], 10, 32)
+		mValue, err := strconv.ParseInt(chi.URLParam(r, "mValue"), 10, 32)
 		if err != nil {
 			http.Error(rw, "incorrect metric value\ncannot parse to int32", http.StatusBadRequest)
 			return
@@ -65,7 +53,58 @@ func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) 
 	default:
 		http.Error(rw, "Invalid mertic type", http.StatusBadRequest)
 	}
-	rw.WriteHeader(http.StatusOK)
 	// fmt.Println("request was processed successfuly")
 
+}
+
+func (h *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Content-Type", "text/plain; charset=UTF-8")
+
+	mType := chi.URLParam(r, "mType")
+	mName := chi.URLParam(r, "mName")
+	var stringifiedValue string
+	switch mType {
+	case "gauge":
+		mValue, err := h.storage.GetGauge(mName)
+		if err != nil {
+			http.Error(rw, "metric doesn`t exist", http.StatusNotFound)
+		}
+		stringifiedValue = fmt.Sprintf("%v", mValue)
+	case "counter":
+		mValue, err := h.storage.GetCounter(mName)
+		if err != nil {
+			http.Error(rw, "metric doesn`t exist", http.StatusNotFound)
+		}
+		stringifiedValue = fmt.Sprintf("%v", mValue)
+	}
+	io.WriteString(rw, stringifiedValue)
+}
+
+func (h *handlers) GetAllMetrics(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	gaugeMap, counterMap := h.storage.GetAllMetrics()
+
+	b := new(bytes.Buffer)
+	fmt.Fprintf(b, `
+	<html>
+		<head>
+			<meta charset="utf-8">
+			<title>list-style-type</title>
+			<style>
+				ul {
+					list-style-type: none;
+				}
+			</style>
+		</head>
+		<body>
+		<ul>`)
+	for key, value := range gaugeMap {
+		fmt.Fprintf(b, "<li>%s = %f</li>", key, value)
+	}
+	for key, value := range counterMap {
+		fmt.Fprintf(b, "<li>%s = %d</li>", key, value)
+	}
+	fmt.Fprintf(b, "</ul></body></body>")
+	io.WriteString(rw, b.String())
 }

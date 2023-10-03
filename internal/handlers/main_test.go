@@ -105,7 +105,7 @@ func Test_handlers_UpdateMetric(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			var oldCounter int64
 			if tt.mType == "counter" {
-				oldCounter = tt.h.storage.GetCounter(tt.mName)
+				oldCounter, _ = tt.h.storage.GetCounter(tt.mName)
 			}
 
 			request := httptest.NewRequest(http.MethodPost, "/update"+tt.address, nil)
@@ -122,9 +122,11 @@ func Test_handlers_UpdateMetric(t *testing.T) {
 			// получаем и проверяем тело запроса
 			switch tt.mType {
 			case "gauge":
-				assert.Equal(t, tt.gaugeValue, tt.h.storage.GetGauge(tt.mName))
+				val, _ := tt.h.storage.GetGauge(tt.mName)
+				assert.Equal(t, tt.gaugeValue, val)
 			case "counter":
-				assert.Equal(t, tt.counterValue+oldCounter, tt.h.storage.GetCounter(tt.mName))
+				val, _ := tt.h.storage.GetCounter(tt.mName)
+				assert.Equal(t, tt.counterValue+oldCounter, val)
 			}
 
 		})

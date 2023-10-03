@@ -1,6 +1,8 @@
 package storage
 
-import ()
+import (
+	"errors"
+)
 
 type storage struct {
 	gauge   map[string]float64
@@ -10,9 +12,9 @@ type storage struct {
 type Repositiries interface {
 	UpdateGauge(name string, value float64)
 	UpdateCounter(name string, value int64)
-	GetAll() (map[string]float64, map[string]int64)
-	GetGauge(name string) float64
-	GetCounter(name string) int64
+	GetAllMetrics() (map[string]float64, map[string]int64)
+	GetGauge(name string) (float64, error)
+	GetCounter(name string) (int64, error)
 }
 
 func (s *storage) UpdateGauge(name string, value float64) {
@@ -24,16 +26,24 @@ func (s *storage) UpdateCounter(name string, value int64) {
 }
 
 // TODO: fix GetAll()
-func (s *storage) GetAll() (map[string]float64, map[string]int64) {
+func (s *storage) GetAllMetrics() (map[string]float64, map[string]int64) {
 	return s.gauge, s.counter
 }
 
-func (s *storage) GetGauge(name string) float64 {
-	return s.gauge[name]
+func (s *storage) GetGauge(name string) (float64, error) {
+	val, ok := s.gauge[name]
+	if ok {
+		return val, nil
+	}
+	return 0, errors.New("metric doesn`t exist")
 }
 
-func (s *storage) GetCounter(name string) int64 {
-	return s.counter[name]
+func (s *storage) GetCounter(name string) (int64, error) {
+	val, ok := s.counter[name]
+	if ok {
+		return val, nil
+	}
+	return 0, errors.New("metric doesn`t exist")
 }
 
 func New() *storage {
