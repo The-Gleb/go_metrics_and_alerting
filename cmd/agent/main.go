@@ -1,13 +1,11 @@
 package main
 
 import (
-	// "encoding/json"
 	"fmt"
-	"io"
-	// "math"
+	"github.com/go-resty/resty/v2"
 	"log"
 	"math/rand"
-	"net/http"
+	// "net/http"
 	"os"
 	"os/signal"
 	"runtime"
@@ -20,10 +18,6 @@ func main() {
 	var pollInterval = time.Duration(2) * time.Second
 	var reportInterval = time.Duration(10) * time.Second
 
-	// CollectMetrics(gaugeMap, &PollCount)
-	// time.Sleep(1)
-	// SendMetrics(gaugeMap, &PollCount)
-
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
@@ -31,6 +25,10 @@ func main() {
 	sendTicker := time.NewTicker(reportInterval)
 
 	stop := make(chan bool)
+
+	client := resty.New().
+		SetRetryCount(3).
+		SetRetryWaitTime(1 * time.Second)
 
 	go func() {
 		defer func() { stop <- true }()
@@ -51,7 +49,7 @@ func main() {
 		for {
 			select {
 			case <-sendTicker.C:
-				SendMetrics(gaugeMap, &PollCount)
+				SendMetrics(gaugeMap, &PollCount, client)
 			case <-stop:
 				// fmt.Printf("Закрытие горутины %v\n", n)
 				return
@@ -113,41 +111,33 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 
 }
 
-func SendMetrics(gaugeMap map[string]float64, PollCount *int64) {
+func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Client) {
 	for name, val := range gaugeMap {
 		requestURL := fmt.Sprintf("http://127.0.0.1:8080/update/gauge/%s/%f", name, val)
 
-		res, err := http.Post(requestURL, "text/plain", nil)
+		res, err := client.R().
+			SetHeader("Content-Type", "application/json").
+			Post(requestURL)
 		if err != nil {
 			log.Printf("client: error making http request: %s\n", err)
 			return
 		}
-		some, err := io.Copy(io.Discard, res.Body)
-		if err != nil {
-			log.Printf("%v,  %v", some, err)
-		}
 
-		res.Body.Close()
-		log.Printf("client: status code: %d ", res.StatusCode)
-
+		log.Printf("client: status code: %d ", res.StatusCode())
 	}
 	log.Printf("gauge metrics sent")
 
 	requestURL := fmt.Sprintf("http://127.0.0.1:8080/update/counter/PollCount/%d", *PollCount)
-	res, err := http.Post(requestURL, "text/plain", nil)
+	res, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		Post(requestURL)
 	if err != nil {
 		log.Printf("client: error making http request: %s\n", err)
 		return
 	}
-	some, err := io.Copy(io.Discard, res.Body)
-	if err != nil {
-		log.Printf("%v,  %v", some, err)
-	}
-	res.Body.Close()
-	// resBody, _ := io.ReadAll(res.Body)
-	log.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n\n")
-	log.Printf("client: status code: %d\n", res.StatusCode)
-	// fmt.Printf("client: got response!%v\n", resBody)
+
+	log.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n")
+	log.Printf("client: status code: %d\n", res.StatusCode())
 }
 
 func MakeHTTPCall(URL string) {
