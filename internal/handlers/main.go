@@ -57,7 +57,7 @@ func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) 
 
 }
 
-func (h *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
+func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 
 	mType := chi.URLParam(r, "mType")
@@ -65,13 +65,13 @@ func (h *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 	var stringifiedValue string
 	switch mType {
 	case "gauge":
-		mValue, err := h.storage.GetGauge(mName)
+		mValue, err := handlers.storage.GetGauge(mName)
 		if err != nil {
 			http.Error(rw, "metric doesn`t exist", http.StatusNotFound)
 		}
 		stringifiedValue = fmt.Sprintf("%v", mValue)
 	case "counter":
-		mValue, err := h.storage.GetCounter(mName)
+		mValue, err := handlers.storage.GetCounter(mName)
 		if err != nil {
 			http.Error(rw, "metric doesn`t exist", http.StatusNotFound)
 		}
@@ -80,10 +80,10 @@ func (h *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 	io.WriteString(rw, stringifiedValue)
 }
 
-func (h *handlers) GetAllMetrics(rw http.ResponseWriter, r *http.Request) {
+func (handlers *handlers) GetAllMetrics(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	gaugeMap, counterMap := h.storage.GetAllMetrics()
+	gaugeMap, counterMap := handlers.storage.GetAllMetrics()
 
 	b := new(bytes.Buffer)
 	fmt.Fprintf(b, `
