@@ -133,6 +133,7 @@ func Test_handlers_UpdateMetric(t *testing.T) {
 			}
 
 			resp, _ := testRequest(t, ts, "POST", tt.address)
+			defer resp.Body.Close()
 
 			// проверяем код ответа
 			require.Equal(t, tt.want.code, resp.StatusCode)
