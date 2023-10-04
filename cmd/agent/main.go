@@ -27,9 +27,11 @@ func main() {
 
 	stop := make(chan bool)
 
+	baseURL := fmt.Sprintf("http://%s", flagRunAddr)
 	client := resty.New().
 		SetRetryCount(3).
-		SetRetryWaitTime(1 * time.Second)
+		SetRetryWaitTime(1 * time.Second).
+		SetBaseURL(baseURL)
 
 	go func() {
 		defer func() { stop <- true }()
@@ -114,7 +116,7 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 
 func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Client) {
 	for name, val := range gaugeMap {
-		requestURL := fmt.Sprintf("http://127.0.0.1:8080/update/gauge/%s/%f", name, val)
+		requestURL := fmt.Sprintf("%s/update/gauge/%s/%f", client.BaseURL, name, val)
 
 		res, err := client.R().
 			SetHeader("Content-Type", "application/json").
@@ -128,7 +130,7 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 	}
 	log.Printf("gauge metrics sent")
 
-	requestURL := fmt.Sprintf("http://127.0.0.1:8080/update/counter/PollCount/%d", *PollCount)
+	requestURL := fmt.Sprintf("%s/update/counter/PollCount/%d", client.BaseURL, *PollCount)
 	res, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		Post(requestURL)
