@@ -13,10 +13,11 @@ import (
 )
 
 func main() {
+	parseFlags()
 	gaugeMap := make(map[string]float64)
 	var PollCount int64 = 0
-	var pollInterval = time.Duration(2) * time.Second
-	var reportInterval = time.Duration(10) * time.Second
+	var pollInterval = time.Duration(pollInterval) * time.Second
+	var reportInterval = time.Duration(reportInterval) * time.Second
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)

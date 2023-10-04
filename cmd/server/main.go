@@ -8,9 +8,10 @@ import (
 )
 
 func main() {
+	parseFlags()
 	storage := storage.New()
 	handlers := handlers.New(storage)
-	server := server.New("127.0.0.1:8080", handlers)
+	server := server.New(flagRunAddr, handlers)
 
 	err := server.Run()
 	if err != nil {
