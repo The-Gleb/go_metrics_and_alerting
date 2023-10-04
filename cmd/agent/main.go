@@ -14,6 +14,10 @@ import (
 
 func main() {
 	parseFlags()
+	log.Printf("%s", flagRunAddr)
+	log.Printf("%d", pollInterval)
+	log.Printf("%d", reportInterval)
+
 	gaugeMap := make(map[string]float64)
 	var PollCount int64 = 0
 	var pollInterval = time.Duration(pollInterval) * time.Second
@@ -139,7 +143,7 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 		return
 	}
 
-	log.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n")
+	log.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n ADDRES: %s", client.BaseURL)
 	log.Printf("client: status code: %d\n", res.StatusCode())
 }
 
