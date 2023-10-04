@@ -31,7 +31,7 @@ func parseFlags() {
 	flag.IntVar(&pollInterval, "p", 2, "interval between collecting metric from runtime")
 	flag.Parse()
 
-	if envRunAddr := os.Getenv("ADDRES"); envRunAddr != "" {
+	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
 		flagRunAddr = envRunAddr
 	}
 	if envReportInterval := os.Getenv("REPORT_INTERVAL"); envReportInterval != "" {
