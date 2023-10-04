@@ -135,12 +135,11 @@ func Test_handlers_UpdateMetric(t *testing.T) {
 			resp, _ := testRequest(t, ts, "POST", tt.address)
 			defer resp.Body.Close()
 
-			// проверяем код ответа
 			require.Equal(t, tt.want.code, resp.StatusCode)
 			if tt.want.code != 200 {
 				t.Skip()
 			}
-			// получаем и проверяем тело запроса
+
 			switch tt.mType {
 			case "gauge":
 				val, _ := tt.h.storage.GetGauge(tt.mName)

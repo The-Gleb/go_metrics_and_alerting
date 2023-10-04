@@ -25,7 +25,6 @@ func (s *storage) UpdateCounter(name string, value int64) {
 	s.counter[name] += value
 }
 
-// TODO: fix GetAll()
 func (s *storage) GetAllMetrics() (map[string]float64, map[string]int64) {
 	return s.gauge, s.counter
 }

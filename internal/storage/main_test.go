@@ -15,9 +15,7 @@ func Test_storage_UpdateGauge(t *testing.T) {
 		name  string
 		value float64
 	}
-	// type want struct {
 
-	// }
 	tests := []struct {
 		name string
 		s    *storage

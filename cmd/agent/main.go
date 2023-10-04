@@ -5,30 +5,29 @@ import (
 	"github.com/go-resty/resty/v2"
 	"log"
 	"math/rand"
-	// "net/http"
-	// "os"
-	// "os/signal"
+	"os"
+	"os/signal"
 	"runtime"
 	"time"
 )
 
+// TODO: create proper structure
+// TODO: make unit tests
 func main() {
 	parseFlags()
-	log.Printf("%s", flagRunAddr)
-	log.Printf("%d", pollInterval)
-	log.Printf("%d", reportInterval)
 
+	// map is not safe for concurrent use
+	// TODO: implement concurrency-safe solution
 	gaugeMap := make(map[string]float64)
 	var PollCount int64 = 0
 	var pollInterval = time.Duration(pollInterval) * time.Second
 	var reportInterval = time.Duration(reportInterval) * time.Second
 
-	// c := make(chan os.Signal, 1)
-	// signal.Notify(c, os.Interrupt)
-	c := make(chan bool, 1)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
 
-	updTicker := time.NewTicker(pollInterval)
-	sendTicker := time.NewTicker(reportInterval)
+	pollTicker := time.NewTicker(pollInterval)
+	reportTicker := time.NewTicker(reportInterval)
 
 	stop := make(chan bool)
 
@@ -42,11 +41,9 @@ func main() {
 		defer func() { stop <- true }()
 		for {
 			select {
-			case <-updTicker.C:
+			case <-pollTicker.C:
 				CollectMetrics(gaugeMap, &PollCount)
 			case <-stop:
-
-				// fmt.Printf("Закрытие горутины %v\n", n)
 				return
 			}
 		}
@@ -56,10 +53,9 @@ func main() {
 		defer func() { stop <- true }()
 		for {
 			select {
-			case <-sendTicker.C:
+			case <-reportTicker.C:
 				SendMetrics(gaugeMap, &PollCount, client)
 			case <-stop:
-				// fmt.Printf("Закрытие горутины %v\n", n)
 				return
 			}
 		}
@@ -68,8 +64,8 @@ func main() {
 	// Блокировка, пока не будет получен сигнал
 	test := <-c
 	fmt.Println("stop signal", test)
-	updTicker.Stop()
-	sendTicker.Stop()
+	pollTicker.Stop()
+	reportTicker.Stop()
 
 	// Остановка горутины
 	stop <- true
@@ -112,7 +108,6 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 	gaugeMap["RandomValue"] = rand.Float64()
 	*counter++
 
-	// Just encode to json and print
 	// b, _ := json.Marshal(gaugeMap)
 	// fmt.Println(string(b))
 	log.Printf("METRICS COLLECTED \n\n")

@@ -29,7 +29,6 @@ func New(store storage.Repositiries) *handlers {
 }
 
 func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) {
-	// CHECK IT
 	rw.Header().Set("Content-Type", "text/plain; charset=UTF-8")
 
 	mType := chi.URLParam(r, "mType")
@@ -53,8 +52,6 @@ func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) 
 	default:
 		http.Error(rw, "Invalid mertic type", http.StatusBadRequest)
 	}
-	// fmt.Println("request was processed successfuly")
-
 }
 
 func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {

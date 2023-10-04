@@ -2,8 +2,6 @@ package main
 
 import (
 	"flag"
-	// "github.com/caarlos0/env/v6"
-	// "log"
 	"os"
 	"strconv"
 )
@@ -13,15 +11,6 @@ var (
 	reportInterval int
 	pollInterval   int
 )
-
-// type Config struct {
-// 	flagRunAddr    string `env:"ADDRES"`
-// 	reportInterval int    `env:"REPORT_INTERVAL"`
-// 	// required требует, чтобы переменная TASK_DURATION была определена
-// 	polltInterval int `env:"POLL_INTERVAL"`
-// }
-
-// var config Config
 
 func parseFlags() {
 
