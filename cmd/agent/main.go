@@ -6,8 +6,8 @@ import (
 	"log"
 	"math/rand"
 	// "net/http"
-	"os"
-	"os/signal"
+	// "os"
+	// "os/signal"
 	"runtime"
 	"time"
 )
@@ -23,8 +23,9 @@ func main() {
 	var pollInterval = time.Duration(pollInterval) * time.Second
 	var reportInterval = time.Duration(reportInterval) * time.Second
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	// c := make(chan os.Signal, 1)
+	// signal.Notify(c, os.Interrupt)
+	c := make(chan bool, 1)
 
 	updTicker := time.NewTicker(pollInterval)
 	sendTicker := time.NewTicker(reportInterval)
