@@ -13,8 +13,11 @@ func main() {
 	parseFlags()
 	storage := storage.New()
 	handlers := handlers.New(storage)
-	url := fmt.Sprintf("http://%s", flagRunAddr)
-	server := server.New(url, handlers)
+	baseURL := fmt.Sprintf("http://%s", flagRunAddr)
+
+	server := server.New(flagRunAddr, handlers)
+	log.Println(flagRunAddr)
+	log.Println(baseURL)
 
 	err := server.Run()
 	if err != nil {
