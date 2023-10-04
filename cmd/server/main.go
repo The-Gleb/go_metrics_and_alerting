@@ -1,17 +1,20 @@
 package main
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/server"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
-	"log"
 )
 
 func main() {
 	parseFlags()
 	storage := storage.New()
 	handlers := handlers.New(storage)
-	server := server.New(flagRunAddr, handlers)
+	url := fmt.Sprintf("http://%s", flagRunAddr)
+	server := server.New(url, handlers)
 
 	err := server.Run()
 	if err != nil {
