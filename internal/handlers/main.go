@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
-	"strconv"
+	// "strconv"
 )
 
 type handlers struct {
@@ -33,24 +33,11 @@ func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) 
 
 	mType := chi.URLParam(r, "mType")
 	mName := chi.URLParam(r, "mName")
+	mValue := chi.URLParam(r, "mValue")
+	statusCode, err := handlers.storage.UpdateMetric(mType, mName, mValue)
 
-	switch mType {
-	case "gauge":
-		mValue, err := strconv.ParseFloat(chi.URLParam(r, "mValue"), 64)
-		if err != nil {
-			http.Error(rw, "incorrect metric value\ncannot parse to float64", http.StatusBadRequest)
-			return
-		}
-		handlers.storage.UpdateGauge(mName, mValue)
-	case "counter":
-		mValue, err := strconv.ParseInt(chi.URLParam(r, "mValue"), 10, 32)
-		if err != nil {
-			http.Error(rw, "incorrect metric value\ncannot parse to int32", http.StatusBadRequest)
-			return
-		}
-		handlers.storage.UpdateCounter(mName, mValue)
-	default:
-		http.Error(rw, "Invalid mertic type", http.StatusBadRequest)
+	if err != nil {
+		http.Error(rw, err.Error(), statusCode)
 	}
 }
 
@@ -59,22 +46,13 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 
 	mType := chi.URLParam(r, "mType")
 	mName := chi.URLParam(r, "mName")
-	var stringifiedValue string
-	switch mType {
-	case "gauge":
-		mValue, err := handlers.storage.GetGauge(mName)
-		if err != nil {
-			http.Error(rw, "metric doesn`t exist", http.StatusNotFound)
-		}
-		stringifiedValue = fmt.Sprintf("%v", mValue)
-	case "counter":
-		mValue, err := handlers.storage.GetCounter(mName)
-		if err != nil {
-			http.Error(rw, "metric doesn`t exist", http.StatusNotFound)
-		}
-		stringifiedValue = fmt.Sprintf("%v", mValue)
+	mValue, statusCode, err := handlers.storage.GetMetric(mType, mName)
+
+	if err != nil {
+		http.Error(rw, err.Error(), statusCode)
 	}
-	io.WriteString(rw, stringifiedValue)
+
+	io.WriteString(rw, mValue)
 }
 
 func (handlers *handlers) GetAllMetrics(rw http.ResponseWriter, r *http.Request) {
@@ -96,12 +74,15 @@ func (handlers *handlers) GetAllMetrics(rw http.ResponseWriter, r *http.Request)
 		</head>
 		<body>
 		<ul>`)
-	for key, value := range gaugeMap {
+	gaugeMap.Range(func(key, value any) bool {
 		fmt.Fprintf(b, "<li>%s = %f</li>", key, value)
-	}
-	for key, value := range counterMap {
+		return true
+	})
+	counterMap.Range(func(key, value any) bool {
 		fmt.Fprintf(b, "<li>%s = %d</li>", key, value)
-	}
+		return true
+	})
+
 	fmt.Fprintf(b, "</ul></body></body>")
 	io.WriteString(rw, b.String())
 }
