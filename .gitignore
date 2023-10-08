@@ -26,3 +26,7 @@ vendor/
 
 # Playground
 playground.go
+
+# Metrictest
+metricstest
+random
