@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -15,10 +16,10 @@ import (
 // TODO: make unit tests
 func main() {
 	parseFlags()
-
 	// map is not safe for concurrent use
 	// TODO: implement concurrency-safe solution
 	gaugeMap := make(map[string]float64)
+
 	var PollCount int64 = 0
 	var pollInterval = time.Duration(pollInterval) * time.Second
 	var reportInterval = time.Duration(reportInterval) * time.Second
@@ -37,41 +38,40 @@ func main() {
 		SetRetryWaitTime(1 * time.Second).
 		SetBaseURL(baseURL)
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	go func() {
-		defer func() { stop <- true }()
 		for {
 			select {
 			case <-pollTicker.C:
 				CollectMetrics(gaugeMap, &PollCount)
 			case <-stop:
+				wg.Done()
 				return
 			}
 		}
 	}()
-
+	wg.Add(1)
 	go func() {
-		defer func() { stop <- true }()
 		for {
 			select {
 			case <-reportTicker.C:
 				SendMetrics(gaugeMap, &PollCount, client)
 			case <-stop:
+				wg.Done()
 				return
 			}
 		}
 	}()
 
 	// Блокировка, пока не будет получен сигнал
-	test := <-c
-	fmt.Println("stop signal", test)
+	<-c
 	pollTicker.Stop()
 	reportTicker.Stop()
-
-	// Остановка горутины
 	stop <- true
-
-	// Ожидание до тех пор, пока не выполнится
-	<-stop
+	stop <- true
+	wg.Wait()
 }
 
 func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
@@ -141,8 +141,4 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 
 	log.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n ADDRES: %s", client.BaseURL)
 	log.Printf("client: status code: %d\n", res.StatusCode())
-}
-
-func MakeHTTPCall(URL string) {
-
 }
