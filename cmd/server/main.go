@@ -1,8 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/server"
@@ -13,15 +17,28 @@ func main() {
 	parseFlags()
 	storage := storage.New()
 	handlers := handlers.New(storage)
-	baseURL := fmt.Sprintf("http://%s", flagRunAddr)
 
-	server := server.New(flagRunAddr, handlers)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT)
+	s := server.New1(flagRunAddr, handlers)
 	log.Println(flagRunAddr)
-	log.Println(baseURL)
 
-	err := server.Run()
-	if err != nil {
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go server.Shutdown(s, c, &wg)
+
+	err := server.Run1(s)
+	if err != nil && err != http.ErrServerClosed {
 		panic(err)
 	}
 	log.Printf("server started")
+
+	// server := server.New(flagRunAddr, handlers)
+	// log.Println(flagRunAddr)
+
+	// err := server.Run()
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// log.Printf("server started")
 }
