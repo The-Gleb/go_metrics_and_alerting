@@ -10,8 +10,9 @@ import (
 
 func Test_storage_GetMetric(t *testing.T) {
 	var s storage
+	var c int64 = 123
 	s.gauge.Store("Alloc", 123.4)
-	s.counter.Store("Counter", 123)
+	s.counter.Store("Counter", &c)
 	type args struct {
 		mType string
 		mName string
@@ -69,8 +70,9 @@ func Test_storage_GetMetric(t *testing.T) {
 
 func Test_storage_UpdateMetric(t *testing.T) {
 	var s storage
+	var Counter int64 = 123
 	s.gauge.Store("Alloc", 123.4)
-	s.counter.Store("Counter", 123)
+	s.counter.Store("Counter", &Counter)
 	type args struct {
 		mType  string
 		mName  string

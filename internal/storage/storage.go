@@ -3,9 +3,11 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	// "reflect"
 )
 
@@ -28,7 +30,7 @@ type Repositiries interface {
 }
 
 func (s *storage) UpdateMetric(mType, mName, mValue string) (int, error) {
-
+	log.Printf("WILL IT EVEN PRINT")
 	switch mType {
 	case "gauge":
 		mValue, err := strconv.ParseFloat(mValue, 64)
@@ -42,13 +44,8 @@ func (s *storage) UpdateMetric(mType, mName, mValue string) (int, error) {
 			return http.StatusBadRequest, errors.New("incorrect metric value\ncannot parse to int32")
 		}
 
-		oldValue, ok := s.counter.Load(mName)
-		if ok {
-			newValue := oldValue.(int64) + mValue
-			s.counter.Store(mName, newValue)
-		} else {
-			s.counter.Store(mName, mValue)
-		}
+		val, _ := s.counter.LoadOrStore(mName, new(int64))
+		atomic.AddInt64(val.(*int64), mValue)
 
 	default:
 		return http.StatusBadRequest, errors.New("invalid mertic type")
@@ -79,8 +76,11 @@ func (s *storage) GetMetric(mType, mName string) (string, int, error) {
 		}
 	case "counter":
 		val, ok := s.counter.Load(mName)
+		log.Printf("VAL %v", val)
 		if ok {
-			return fmt.Sprintf("%d", val), http.StatusOK, nil
+			v := atomic.LoadInt64(val.(*int64))
+			log.Printf("V %v", v)
+			return fmt.Sprintf("%d", v), http.StatusOK, nil
 		}
 	default:
 		return "", http.StatusBadRequest, errors.New("invalid mertic type")
