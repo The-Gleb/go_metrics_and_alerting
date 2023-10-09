@@ -20,25 +20,18 @@ func main() {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT)
-	s := server.New1(flagRunAddr, handlers)
+	s := server.New(flagRunAddr, handlers)
 	log.Println(flagRunAddr)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go server.Shutdown(s, c, &wg)
-
-	err := server.Run1(s)
+	go func() {
+		defer wg.Done()
+		go server.Shutdown(s, c)
+	}()
+	err := server.Run(s)
 	if err != nil && err != http.ErrServerClosed {
 		panic(err)
 	}
-	log.Printf("server started")
-
-	// server := server.New(flagRunAddr, handlers)
-	// log.Println(flagRunAddr)
-
-	// err := server.Run()
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// log.Printf("server started")
+	log.Printf("server shutdown")
 }

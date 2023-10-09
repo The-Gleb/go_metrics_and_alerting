@@ -1,204 +1,131 @@
 package storage
 
 import (
-// "errors"
-// "reflect"
-// "sync"
-// "testing"
+	"errors"
+	"net/http"
+	"testing"
 
-// "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
-// Do not cover edge cases(empty name or value) as above layer won`t accept it`
+func Test_storage_GetMetric(t *testing.T) {
+	var s storage
+	s.gauge.Store("Alloc", 123.4)
+	s.counter.Store("Counter", 123)
+	type args struct {
+		mType string
+		mName string
+	}
+	tests := []struct {
+		name  string
+		s     *storage
+		args  args
+		want  string
+		want1 int
+		err   error
+	}{
+		{
+			name:  "pos gauge test #1",
+			s:     &s,
+			args:  args{"gauge", "Alloc"},
+			want:  "123.4",
+			want1: http.StatusOK,
+			err:   nil,
+		},
+		{
+			name:  "pos counter test #2",
+			s:     &s,
+			args:  args{"counter", "Counter"},
+			want:  "123",
+			want1: http.StatusOK,
+			err:   nil,
+		},
+		{
+			name:  "neg gauge test #3",
+			s:     &s,
+			args:  args{"gauge", "Malloc"},
+			want:  "",
+			want1: http.StatusNotFound,
+			err:   errors.New("metric doesn`t exist"),
+		},
+		{
+			name:  "neg bad request test #4",
+			s:     &s,
+			args:  args{"gaug", "Malloc"},
+			want:  "",
+			want1: http.StatusBadRequest,
+			err:   errors.New("invalid mertic type"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			val, code, err := tt.s.GetMetric(tt.args.mType, tt.args.mName)
+			assert.Equal(t, tt.err, err)
+			assert.Equal(t, tt.want, val)
+			assert.Equal(t, tt.want1, code)
+		})
+	}
+}
 
-// func Test_storage_UpdateGauge(t *testing.T) {
-// 	testStorage := New()
-// 	type args struct {
-// 		name  string
-// 		value float64
-// 	}
-
-// 	tests := []struct {
-// 		name string
-// 		s    *storage
-// 		args args
-// 	}{
-// 		{
-// 			name: "pos test #1",
-// 			s:    testStorage,
-// 			args: args{"alloc", 23.23},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			tt.s.UpdateGauge(tt.args.name, tt.args.value)
-// 			assert.Contains(t, tt.s.gauge, tt.args.name, tt.args.value)
-// 		})
-// 	}
-// }
-
-// func Test_storage_UpdateCounter(t *testing.T) {
-// 	testStorage := New()
-// 	type args struct {
-// 		name  string
-// 		value int64
-// 	}
-// 	// type want struct {
-
-// 	// }
-// 	tests := []struct {
-// 		name string
-// 		s    *storage
-// 		args args
-// 	}{
-// 		{
-// 			name: "pos test #1",
-// 			s:    testStorage,
-// 			args: args{"alloc", 22342424},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			tt.s.UpdateCounter(tt.args.name, tt.args.value)
-// 			assert.Contains(t, tt.s.counter, tt.args.name, tt.args.value)
-// 		})
-// 	}
-// }
-
-// func Test_storage_GetGauge(t *testing.T) {
-// 	s := New()
-// 	s.gauge["Alloc"] = 234.0
-
-// 	tests := []struct {
-// 		name  string
-// 		s     *storage
-// 		mName string
-// 		want  float64
-// 		err   error
-// 	}{
-// 		{
-// 			name:  "pos test #1",
-// 			s:     s,
-// 			mName: "Alloc",
-// 			want:  234.0,
-// 			err:   nil,
-// 		},
-// 		{
-// 			name:  "neg test #2",
-// 			s:     s,
-// 			mName: "metric",
-// 			want:  0.0,
-// 			err:   errors.New("metric doesn`t exist"),
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			val, err := s.GetGauge(tt.mName)
-// 			if err != nil {
-// 				assert.Equal(t, tt.err, err)
-// 			}
-// 			assert.Equal(t, tt.want, val)
-// 		})
-// 	}
-// }
-
-// func Test_storage_GetCounter(t *testing.T) {
-// 	s := New()
-// 	s.counter["PollCounter"] = 234
-
-// 	tests := []struct {
-// 		name  string
-// 		s     *storage
-// 		mName string
-// 		want  int64
-// 		err   error
-// 	}{
-// 		{
-// 			name:  "pos test #1",
-// 			s:     s,
-// 			mName: "PollCounter",
-// 			want:  234,
-// 			err:   nil,
-// 		},
-// 		{
-// 			name:  "neg test #2",
-// 			s:     s,
-// 			mName: "metric",
-// 			want:  0,
-// 			err:   errors.New("metric doesn`t exist"),
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			val, err := s.GetCounter(tt.mName)
-// 			if err != nil {
-// 				assert.Equal(t, tt.err, err)
-// 			}
-// 			assert.Equal(t, tt.want, val)
-// 		})
-// 	}
-// }
-
-// func Test_storage_GetAllMetrics(t *testing.T) {
-// 	tests := []struct {
-// 		name  string
-// 		s     *storage
-// 		want  map[string]float64
-// 		want1 map[string]int64
-// 	}{
-// 		{
-// 			name: "pos test #1",
-// 			s: &storage{
-// 				gauge:   map[string]float64{"Alloc": 123.4, "Malloc": 567.8},
-// 				counter: map[string]int64{"PollCounter": 10},
-// 			},
-// 			want:  map[string]float64{"Alloc": 123.4, "Malloc": 567.8},
-// 			want1: map[string]int64{"PollCounter": 10},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			got, got1 := tt.s.GetAllMetrics()
-// 			if !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("storage.GetAllMetrics() got = %v, want %v", got, tt.want)
-// 			}
-// 			if !reflect.DeepEqual(got1, tt.want1) {
-// 				t.Errorf("storage.GetAllMetrics() got1 = %v, want %v", got1, tt.want1)
-// 			}
-// 		})
-// 	}
-// }
-
-//sync.Map
-// func Test_storage_GetAllMetrics(t *testing.T) {
-// 	gm := sync.Map{}
-// 	gm.Store("Alloc", 123.4)
-// 	gm.Store("Malloc", 567.8)
-// 	tests := []struct {
-// 		name  string
-// 		s     *storage
-// 		want  map[string]float64
-// 		want1 map[string]int64
-// 	}{
-// 		{
-// 			name: "pos test #1",
-// 			s: &storage{
-// 				gauge:   gm,
-// 				counter: sync.Map{},//{"PollCounter": 10},
-// 			},
-// 			want:  map[string]float64{"Alloc": 123.4, "Malloc": 567.8},
-// 			want1: map[string]int64{"PollCounter": 10},
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			got, got1 := tt.s.GetAllMetrics()
-// 			if !reflect.DeepEqual(got, tt.want) {
-// 				t.Errorf("storage.GetAllMetrics() got = %v, want %v", got, tt.want)
-// 			}
-// 			if !reflect.DeepEqual(got1, tt.want1) {
-// 				t.Errorf("storage.GetAllMetrics() got1 = %v, want %v", got1, tt.want1)
-// 			}
-// 		})
-// 	}
-// }
+func Test_storage_UpdateMetric(t *testing.T) {
+	var s storage
+	s.gauge.Store("Alloc", 123.4)
+	s.counter.Store("Counter", 123)
+	type args struct {
+		mType  string
+		mName  string
+		mValue string
+	}
+	tests := []struct {
+		name       string
+		s          *storage
+		args       args
+		val        string
+		statusCode int
+		err        error
+	}{
+		{
+			name:       "pos counter test #1",
+			s:          &s,
+			args:       args{"counter", "Counter", "7"},
+			val:        "130",
+			statusCode: http.StatusOK,
+			err:        nil,
+		},
+		{
+			name:       "pos gauge test #2",
+			s:          &s,
+			args:       args{"gauge", "Alloc", "123.4"},
+			val:        "123.4",
+			statusCode: http.StatusOK,
+			err:        nil,
+		},
+		{
+			name:       "neg gauge test #3",
+			s:          &s,
+			args:       args{"gauge", "Alloc", "123j"},
+			val:        "123.4",
+			statusCode: http.StatusBadRequest,
+			err:        errors.New("incorrect metric value\ncannot parse to float64"),
+		},
+		{
+			name:       "wrong metric type test #4",
+			s:          &s,
+			args:       args{"gaug", "Alloc", "123"},
+			val:        "123.4",
+			statusCode: http.StatusBadRequest,
+			err:        errors.New("invalid mertic type"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			statusCode, err := s.UpdateMetric(tt.args.mType, tt.args.mName, tt.args.mValue)
+			assert.Equal(t, tt.statusCode, statusCode, "status codes are not equal")
+			assert.Equal(t, tt.err, err, "errors not equal")
+			if statusCode == 200 {
+				val, _, _ := tt.s.GetMetric(tt.args.mType, tt.args.mName)
+				assert.Equal(t, tt.val, val, "wrong value")
+			}
+		})
+	}
+}

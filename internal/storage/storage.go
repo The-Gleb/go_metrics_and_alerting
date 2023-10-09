@@ -37,10 +37,11 @@ func (s *storage) UpdateMetric(mType, mName, mValue string) (int, error) {
 		}
 		s.gauge.Store(mName, mValue)
 	case "counter":
-		mValue, err := strconv.ParseInt(mValue, 10, 32)
+		mValue, err := strconv.ParseInt(mValue, 10, 64)
 		if err != nil {
 			return http.StatusBadRequest, errors.New("incorrect metric value\ncannot parse to int32")
 		}
+
 		oldValue, ok := s.counter.Load(mName)
 		if ok {
 			newValue := oldValue.(int64) + mValue
@@ -52,7 +53,7 @@ func (s *storage) UpdateMetric(mType, mName, mValue string) (int, error) {
 	default:
 		return http.StatusBadRequest, errors.New("invalid mertic type")
 	}
-	return 200, nil
+	return http.StatusOK, nil
 }
 
 func (s *storage) GetAllMetrics() (*sync.Map, *sync.Map) {
