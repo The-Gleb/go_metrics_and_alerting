@@ -14,24 +14,24 @@ import (
 )
 
 func main() {
-	parseFlags()
+	config := NewConfigFromFlags()
 	storage := storage.New()
 	handlers := handlers.New(storage)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT)
-	s := server.New(flagRunAddr, handlers)
-	log.Println(flagRunAddr)
+	s := server.New(config.Addres, handlers)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		go server.Shutdown(s, c)
+		server.Shutdown(s, c)
 	}()
 	err := server.Run(s)
 	if err != nil && err != http.ErrServerClosed {
 		panic(err)
 	}
+	wg.Wait()
 	log.Printf("server shutdown")
 }

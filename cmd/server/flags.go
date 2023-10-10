@@ -5,14 +5,33 @@ import (
 	"os"
 )
 
-var flagRunAddr string
+type Config struct {
+	Addres string
+}
 
-func parseFlags() {
+type ConfigBuilder struct {
+	config Config
+}
+
+func (b ConfigBuilder) SetAddres(address string) ConfigBuilder {
+	b.config.Addres = address
+	return b
+}
+
+func NewConfigFromFlags() Config {
 	flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	flag.StringVar(&flagRunAddr, "a", ":8080", "address and port to run server")
+
+	var address string
+	flag.StringVar(&address, "a", ":8080", "address and port to run server")
+
 	flag.Parse()
 
-	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
-		flagRunAddr = envRunAddr
+	var builder ConfigBuilder
+
+	builder = builder.SetAddres(address)
+	if envAddress := os.Getenv("ADDRESS"); envAddress != "" {
+		builder = builder.SetAddres(envAddress)
 	}
+
+	return builder.config
 }

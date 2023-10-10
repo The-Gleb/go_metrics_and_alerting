@@ -12,17 +12,14 @@ import (
 	"time"
 )
 
-// TODO: create proper structure
-// TODO: make unit tests
 func main() {
-	parseFlags()
-	// map is not safe for concurrent use
-	// TODO: implement concurrency-safe solution
+	config := NewConfigFromFlags()
+
 	gaugeMap := make(map[string]float64)
 
 	var PollCount int64 = 0
-	var pollInterval = time.Duration(pollInterval) * time.Second
-	var reportInterval = time.Duration(reportInterval) * time.Second
+	var pollInterval = time.Duration(config.PollInterval) * time.Second
+	var reportInterval = time.Duration(config.ReportInterval) * time.Second
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -30,9 +27,9 @@ func main() {
 	pollTicker := time.NewTicker(pollInterval)
 	reportTicker := time.NewTicker(reportInterval)
 
-	stop := make(chan bool)
+	// stop := make(chan bool)
 
-	baseURL := fmt.Sprintf("http://%s", flagRunAddr)
+	baseURL := fmt.Sprintf("http://%s", config.Addres)
 	client := resty.New().
 		SetRetryCount(3).
 		SetRetryWaitTime(1 * time.Second).
@@ -41,37 +38,49 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	go func() {
-		for {
-			select {
-			case <-pollTicker.C:
-				CollectMetrics(gaugeMap, &PollCount)
-			case <-stop:
-				wg.Done()
-				return
-			}
-		}
-	}()
-	wg.Add(1)
-	go func() {
-		for {
-			select {
-			case <-reportTicker.C:
-				SendMetrics(gaugeMap, &PollCount, client)
-			case <-stop:
-				wg.Done()
-				return
-			}
-		}
-	}()
+	// go func() {
+	// for {
+	// 	select {
+	// 	case <-pollTicker.C:
+	// 		CollectMetrics(gaugeMap, &PollCount)
+	// 	case <-stop:
+	// 		wg.Done()
+	// 		return
+	// 	}
+	// }
+	// }()
+	// wg.Add(1)
+	// go func() {
+	// 	for {
+	// 		select {
+	// 		case <-reportTicker.C:
+	// 			SendMetrics(gaugeMap, &PollCount, client)
+	// 		case <-stop:
+	// 			wg.Done()
+	// 			return
+	// 		}
+	// 	}
+	// }()
 
+	for {
+		select {
+		case <-pollTicker.C:
+			CollectMetrics(gaugeMap, &PollCount)
+		case <-reportTicker.C:
+			SendMetrics(gaugeMap, &PollCount, client)
+		case <-c:
+			pollTicker.Stop()
+			reportTicker.Stop()
+			return
+		}
+	}
 	// Блокировка, пока не будет получен сигнал
-	<-c
-	pollTicker.Stop()
-	reportTicker.Stop()
-	stop <- true
-	stop <- true
-	wg.Wait()
+	// <-c
+	// pollTicker.Stop()
+	// reportTicker.Stop()
+	// stop <- true
+	// stop <- true
+	// wg.Wait()
 }
 
 func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
@@ -118,7 +127,7 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 	for name, val := range gaugeMap {
 		requestURL := fmt.Sprintf("%s/update/gauge/%s/%f", client.BaseURL, name, val)
 
-		res, err := client.R().
+		_, err := client.R().
 			SetHeader("Content-Type", "application/json").
 			Post(requestURL)
 		if err != nil {
@@ -126,12 +135,10 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 			return
 		}
 
-		log.Printf("client: status code: %d ", res.StatusCode())
 	}
-	log.Printf("gauge metrics sent")
 
 	requestURL := fmt.Sprintf("%s/update/counter/PollCount/%d", client.BaseURL, *PollCount)
-	res, err := client.R().
+	_, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		Post(requestURL)
 	if err != nil {
@@ -139,6 +146,6 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 		return
 	}
 
-	log.Printf("\n\nMETRICS WERE SENT TO THE SERVER!\n ADDRES: %s", client.BaseURL)
-	log.Printf("client: status code: %d\n", res.StatusCode())
+	log.Printf("METRICS SENT - ADDRES: %s\n\n", client.BaseURL)
+	// log.Printf("client: status code: %d\n", res.StatusCode())
 }
