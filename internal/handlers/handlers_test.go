@@ -133,7 +133,7 @@ func Test_handlers_UpdateMetric(t *testing.T) {
 			if tt.want.code != 200 {
 				return
 			}
-			val, _, _ := h.storage.GetMetric(tt.mType, tt.mName)
+			val, _ := h.storage.GetMetric(tt.mType, tt.mName)
 			assert.Equal(t, tt.mValue, val)
 
 		})

@@ -1,14 +1,25 @@
 package storage
 
 import (
-	"errors"
+	// "errors"
 	"fmt"
-	"log"
-	"net/http"
+	// "net/http"
 	"strconv"
 	"sync"
 	"sync/atomic"
-	// "reflect"
+)
+
+type StorageError struct {
+	ErrorString string
+}
+
+func (err *StorageError) Error() string { return err.ErrorString }
+
+var (
+	ErrInvalidMetricValueFloat64 = &StorageError{"incorrect metric value\ncannot parse to float64"}
+	ErrInvalidMetricValueInt64   = &StorageError{"incorrect metric value\ncannot parse to float64"}
+	ErrInvalidMetricType         = &StorageError{"invalid mertic type"}
+	ErrMetricDoesntExist         = &StorageError{"metric doesn`t exist"}
 )
 
 type storage struct {
@@ -24,33 +35,32 @@ func New() *storage {
 }
 
 type Repositiries interface {
-	UpdateMetric(mType, mName, mValue string) (int, error)
-	GetMetric(mType, mName string) (string, int, error)
+	UpdateMetric(mType, mName, mValue string) error
+	GetMetric(mType, mName string) (string, error)
 	GetAllMetrics() (*sync.Map, *sync.Map)
 }
 
-func (s *storage) UpdateMetric(mType, mName, mValue string) (int, error) {
-	log.Printf("WILL IT EVEN PRINT")
+func (s *storage) UpdateMetric(mType, mName, mValue string) error {
 	switch mType {
 	case "gauge":
 		mValue, err := strconv.ParseFloat(mValue, 64)
 		if err != nil {
-			return http.StatusBadRequest, errors.New("incorrect metric value\ncannot parse to float64")
+			return ErrInvalidMetricValueFloat64
 		}
 		s.gauge.Store(mName, mValue)
 	case "counter":
 		mValue, err := strconv.ParseInt(mValue, 10, 64)
 		if err != nil {
-			return http.StatusBadRequest, errors.New("incorrect metric value\ncannot parse to int32")
+			return ErrInvalidMetricValueInt64
 		}
 
 		val, _ := s.counter.LoadOrStore(mName, new(int64))
 		atomic.AddInt64(val.(*int64), mValue)
 
 	default:
-		return http.StatusBadRequest, errors.New("invalid mertic type")
+		return ErrInvalidMetricType
 	}
-	return http.StatusOK, nil
+	return nil
 }
 
 func (s *storage) GetAllMetrics() (*sync.Map, *sync.Map) {
@@ -67,23 +77,21 @@ func (s *storage) GetAllMetrics() (*sync.Map, *sync.Map) {
 	return &newGauge, &newCounter
 }
 
-func (s *storage) GetMetric(mType, mName string) (string, int, error) {
+func (s *storage) GetMetric(mType, mName string) (string, error) {
 	switch mType {
 	case "gauge":
 		val, ok := s.gauge.Load(mName)
 		if ok {
-			return fmt.Sprintf("%v", val), http.StatusOK, nil
+			return fmt.Sprintf("%v", val), nil
 		}
 	case "counter":
 		val, ok := s.counter.Load(mName)
-		log.Printf("VAL %v", val)
 		if ok {
 			v := atomic.LoadInt64(val.(*int64))
-			log.Printf("V %v", v)
-			return fmt.Sprintf("%d", v), http.StatusOK, nil
+			return fmt.Sprintf("%d", v), nil
 		}
 	default:
-		return "", http.StatusBadRequest, errors.New("invalid mertic type")
+		return "", ErrInvalidMetricType
 	}
-	return "", http.StatusNotFound, errors.New("metric doesn`t exist")
+	return "", ErrMetricDoesntExist
 }

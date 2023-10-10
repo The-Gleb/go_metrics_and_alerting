@@ -34,10 +34,10 @@ func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) 
 	mType := chi.URLParam(r, "mType")
 	mName := chi.URLParam(r, "mName")
 	mValue := chi.URLParam(r, "mValue")
-	statusCode, err := handlers.storage.UpdateMetric(mType, mName, mValue)
+	err := handlers.storage.UpdateMetric(mType, mName, mValue)
 
 	if err != nil {
-		http.Error(rw, err.Error(), statusCode)
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
 }
 
@@ -46,10 +46,16 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 
 	mType := chi.URLParam(r, "mType")
 	mName := chi.URLParam(r, "mName")
-	mValue, statusCode, err := handlers.storage.GetMetric(mType, mName)
+	mValue, err := handlers.storage.GetMetric(mType, mName)
 
 	if err != nil {
-		http.Error(rw, err.Error(), statusCode)
+		switch err {
+		case storage.ErrInvalidMetricType:
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+		case storage.ErrMetricDoesntExist:
+			http.Error(rw, err.Error(), http.StatusNotFound)
+		}
+
 	}
 
 	io.WriteString(rw, mValue)
