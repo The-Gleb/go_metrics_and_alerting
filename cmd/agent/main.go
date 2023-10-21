@@ -121,6 +121,6 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 		"ADDRES", client.BaseURL,
 		"Status", resp.StatusCode(),
 	)
-	// log.Printf("client: status code: %d\n", res.StatusCode())
+	log.Printf("client: status code: %d\n", resp.StatusCode())
 
 }

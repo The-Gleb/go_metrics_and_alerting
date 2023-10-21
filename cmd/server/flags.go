@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"log"
 	"os"
+	// "github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 )
 
 type Config struct {
@@ -30,7 +32,7 @@ func NewConfigFromFlags() Config {
 	flag.Parse()
 
 	var builder ConfigBuilder
-
+	log.Printf("ENV ADDRESS %v", os.Getenv("ADDRESS"))
 	builder = builder.SetAddres(address)
 	if envAddress := os.Getenv("ADDRESS"); envAddress != "" {
 		builder = builder.SetAddres(envAddress)
