@@ -6,22 +6,21 @@ import (
 	"fmt"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
 	"github.com/go-chi/chi/v5"
-	"io"
 	"net/http"
-	// "strconv"
+	"sync"
 )
 
+type Repositiries interface {
+	UpdateMetric(mType, mName, mValue string) error
+	GetMetric(mType, mName string) (string, error)
+	GetAllMetrics() (*sync.Map, *sync.Map)
+}
+
 type handlers struct {
-	storage storage.Repositiries
+	storage Repositiries
 }
 
-type Handlers interface {
-	UpdateMetric(rw http.ResponseWriter, r *http.Request)
-	GetAllMetrics(rw http.ResponseWriter, r *http.Request)
-	GetMetric(rw http.ResponseWriter, r *http.Request)
-}
-
-func New(store storage.Repositiries) *handlers {
+func New(store Repositiries) *handlers {
 
 	return &handlers{
 		storage: store,
@@ -37,8 +36,10 @@ func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) 
 	err := handlers.storage.UpdateMetric(mType, mName, mValue)
 
 	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
+	rw.WriteHeader(http.StatusOK)
 }
 
 func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
@@ -57,8 +58,8 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-
-	io.WriteString(rw, mValue)
+	rw.WriteHeader(http.StatusOK)
+	rw.Write([]byte(mValue))
 }
 
 func (handlers *handlers) GetAllMetrics(rw http.ResponseWriter, r *http.Request) {
@@ -90,5 +91,6 @@ func (handlers *handlers) GetAllMetrics(rw http.ResponseWriter, r *http.Request)
 	})
 
 	fmt.Fprintf(b, "</ul></body></body>")
-	io.WriteString(rw, b.String())
+	rw.WriteHeader(http.StatusOK)
+	rw.Write(b.Bytes())
 }

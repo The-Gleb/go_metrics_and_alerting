@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-resty/resty/v2"
 	"log"
 	"math/rand"
 	"os"
@@ -10,6 +9,9 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
+	"github.com/go-resty/resty/v2"
 )
 
 func main() {
@@ -38,30 +40,6 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
-	// go func() {
-	// for {
-	// 	select {
-	// 	case <-pollTicker.C:
-	// 		CollectMetrics(gaugeMap, &PollCount)
-	// 	case <-stop:
-	// 		wg.Done()
-	// 		return
-	// 	}
-	// }
-	// }()
-	// wg.Add(1)
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case <-reportTicker.C:
-	// 			SendMetrics(gaugeMap, &PollCount, client)
-	// 		case <-stop:
-	// 			wg.Done()
-	// 			return
-	// 		}
-	// 	}
-	// }()
-
 	for {
 		select {
 		case <-pollTicker.C:
@@ -74,13 +52,6 @@ func main() {
 			return
 		}
 	}
-	// Блокировка, пока не будет получен сигнал
-	// <-c
-	// pollTicker.Stop()
-	// reportTicker.Stop()
-	// stop <- true
-	// stop <- true
-	// wg.Wait()
 }
 
 func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
@@ -138,7 +109,7 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 	}
 
 	requestURL := fmt.Sprintf("%s/update/counter/PollCount/%d", client.BaseURL, *PollCount)
-	_, err := client.R().
+	resp, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		Post(requestURL)
 	if err != nil {
@@ -146,6 +117,10 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 		return
 	}
 
-	log.Printf("METRICS SENT - ADDRES: %s\n\n", client.BaseURL)
+	logger.Log.Infow("METRICS SENT - : %s\nStatus: %d\n",
+		"ADDRES", client.BaseURL,
+		"Status", resp.StatusCode(),
+	)
 	// log.Printf("client: status code: %d\n", res.StatusCode())
+
 }

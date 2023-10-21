@@ -9,12 +9,17 @@ import (
 	"syscall"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/server"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
 )
 
 func main() {
 	config := NewConfigFromFlags()
+	if err := logger.Initialize(config.LogLevel); err != nil {
+		log.Fatal(err)
+		return
+	}
 	storage := storage.New()
 	handlers := handlers.New(storage)
 

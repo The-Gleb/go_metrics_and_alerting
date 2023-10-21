@@ -34,12 +34,6 @@ func New() *storage {
 	}
 }
 
-type Repositiries interface {
-	UpdateMetric(mType, mName, mValue string) error
-	GetMetric(mType, mName string) (string, error)
-	GetAllMetrics() (*sync.Map, *sync.Map)
-}
-
 func (s *storage) UpdateMetric(mType, mName, mValue string) error {
 	switch mType {
 	case "gauge":

@@ -6,7 +6,8 @@ import (
 )
 
 type Config struct {
-	Addres string
+	Addres   string
+	LogLevel string
 }
 
 type ConfigBuilder struct {
@@ -23,6 +24,8 @@ func NewConfigFromFlags() Config {
 
 	var address string
 	flag.StringVar(&address, "a", ":8080", "address and port to run server")
+	var loglevel string
+	flag.StringVar(&loglevel, "l", "info", "address and port to run server")
 
 	flag.Parse()
 
