@@ -85,6 +85,9 @@ func SendTestGetJSON(client *resty.Client) {
 		SetHeader("Content-Type", "application/json").
 		SetBody(body).
 		Post(requestURL)
+	if err != nil {
+		return
+	}
 	// log.Println(string(resp.Body()))
 }
 

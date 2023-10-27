@@ -47,9 +47,15 @@ func (a *app) UpdateMetricFromJSON(body io.Reader) ([]byte, error) {
 	case "gauge":
 		a.storage.UpdateGauge(metricObj.MType, *metricObj.Value)
 		metricObj.Value, err = a.storage.GetGauge(metricObj.MType)
+		if err != nil {
+			return make([]byte, 0), err
+		}
 	case "counter":
 		a.storage.UpdateCounter(metricObj.MType, *metricObj.Delta)
 		metricObj.Delta, err = a.storage.GetCounter(metricObj.MType)
+		if err != nil {
+			return make([]byte, 0), err
+		}
 	default:
 		return ret, ErrInvalidMetricType
 	}
