@@ -1,9 +1,10 @@
 package logger
 
 import (
-	"go.uber.org/zap"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 var Log *zap.SugaredLogger = zap.NewNop().Sugar()
@@ -45,7 +46,7 @@ func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 }
 
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
-	// записываем код статуса, используя оригинальный http.ResponseWriter
+	// log.Println("WriteHeader from Logger called")
 	r.ResponseWriter.WriteHeader(statusCode)
 	r.responseData.status = statusCode // захватываем код статуса
 }
@@ -63,13 +64,15 @@ func LogRequest(handleFunc http.HandlerFunc) http.HandlerFunc {
 			responseData:   responseData,
 		}
 		handleFunc(&lw, r)
-
+		buf := make([]byte, 0)
+		r.Body.Read(buf)
 		duration := time.Since(start)
 
 		Log.Infow(
 			"Got request ",
 			"method", r.Method,
 			"uri", r.RequestURI,
+			"request body", string(buf),
 			"status", responseData.status,
 			"duration", duration,
 			"size", responseData.size,

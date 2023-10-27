@@ -48,13 +48,41 @@ func (s *storage) UpdateMetric(mType, mName, mValue string) error {
 			return ErrInvalidMetricValueInt64
 		}
 
-		val, _ := s.counter.LoadOrStore(mName, new(int64))
-		atomic.AddInt64(val.(*int64), mValue)
+		val, _ := s.counter.LoadOrStore(mName, new(*atomic.Int64))
+		// atomic.AddInt64(val.(*int64), mValue)
+		val.(*atomic.Int64).Add(mValue)
 
 	default:
 		return ErrInvalidMetricType
 	}
 	return nil
+}
+
+func (s *storage) UpdateGauge(name string, value float64) {
+	s.gauge.Store(name, value)
+}
+
+func (s *storage) UpdateCounter(name string, value int64) {
+	val, _ := s.counter.LoadOrStore(name, new(atomic.Int64))
+	val.(*atomic.Int64).Add(value)
+}
+
+func (s *storage) GetGauge(name string) (*float64, error) {
+	val, ok := s.gauge.Load(name)
+	if ok {
+		v := val.(float64)
+		return &v, nil
+	}
+	return nil, ErrMetricDoesntExist
+}
+
+func (s *storage) GetCounter(name string) (*int64, error) {
+	val, ok := s.counter.Load(name)
+	if ok {
+		v := val.(*atomic.Int64).Load()
+		return &v, nil
+	}
+	return nil, ErrMetricDoesntExist
 }
 
 func (s *storage) GetAllMetrics() (*sync.Map, *sync.Map) {
@@ -81,7 +109,7 @@ func (s *storage) GetMetric(mType, mName string) (string, error) {
 	case "counter":
 		val, ok := s.counter.Load(mName)
 		if ok {
-			v := atomic.LoadInt64(val.(*int64))
+			v := val.(*atomic.Int64).Load()
 			return fmt.Sprintf("%d", v), nil
 		}
 	default:

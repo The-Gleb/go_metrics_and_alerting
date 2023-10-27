@@ -11,8 +11,11 @@ import (
 
 type Handlers interface {
 	UpdateMetric(rw http.ResponseWriter, r *http.Request)
-	GetAllMetrics(rw http.ResponseWriter, r *http.Request)
+	UpdateMetricJSON(rw http.ResponseWriter, r *http.Request)
 	GetMetric(rw http.ResponseWriter, r *http.Request)
+	GetMetricJSON(rw http.ResponseWriter, r *http.Request)
+	GetAllMetricsHTML(rw http.ResponseWriter, r *http.Request)
+	GetAllMetricsJSON(rw http.ResponseWriter, r *http.Request)
 }
 
 func New(address string, handlers Handlers) *http.Server {
@@ -31,8 +34,10 @@ func Shutdown(s *http.Server, c chan os.Signal) {
 
 func SetupRoutes(r *chi.Mux, h Handlers) {
 	r.Post("/update/{mType}/{mName}/{mValue}", logger.LogRequest(h.UpdateMetric))
-	r.Get("/", logger.LogRequest(h.GetAllMetrics))
+	r.Post("/update/", logger.LogRequest(h.UpdateMetricJSON))
 	r.Get("/value/{mType}/{mName}", logger.LogRequest(h.GetMetric))
+	r.Post("/value/", logger.LogRequest(h.GetMetricJSON))
+	r.Get("/", logger.LogRequest(h.GetAllMetricsJSON))
 }
 
 func Run(s *http.Server) error {

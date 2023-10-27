@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,9 +9,10 @@ import (
 
 func Test_storage_GetMetric(t *testing.T) {
 	var s storage
-	var c int64 = 123
+	var counter atomic.Int64
+	counter.Store(123)
 	s.gauge.Store("Alloc", 123.4)
-	s.counter.Store("Counter", &c)
+	s.counter.Store("Counter", &counter)
 	type args struct {
 		mType string
 		mName string
@@ -65,9 +67,10 @@ func Test_storage_GetMetric(t *testing.T) {
 
 func Test_storage_UpdateMetric(t *testing.T) {
 	var s storage
-	var Counter int64 = 123
+	var counter atomic.Int64
+	counter.Store(123)
 	s.gauge.Store("Alloc", 123.4)
-	s.counter.Store("Counter", &Counter)
+	s.counter.Store("Counter", &counter)
 	type args struct {
 		mType  string
 		mName  string

@@ -1,53 +1,81 @@
 package handlers
 
 import (
-	// "fmt"
-	"bytes"
-	"fmt"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
-	"github.com/go-chi/chi/v5"
+	"io"
+	"log"
+	// "log"
 	"net/http"
 	"sync"
+
+	// "github.com/The-Gleb/go_metrics_and_alerting/internal/models"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
+	"github.com/go-chi/chi/v5"
 )
 
 type Repositiries interface {
 	UpdateMetric(mType, mName, mValue string) error
 	GetMetric(mType, mName string) (string, error)
 	GetAllMetrics() (*sync.Map, *sync.Map)
+	UpdateGauge(name string, value float64)
+	UpdateCounter(name string, value int64)
+}
+
+type App interface {
+	UpdateMetricFromJSON(body io.Reader) ([]byte, error)
+	UpdateMetricFromParams(mType, mName, mValue string) ([]byte, error)
+	GetMetricFromParams(mType, mName string) ([]byte, error)
+	GetMetricFromJSON(body io.Reader) ([]byte, error)
+	GetAllMetricsHTML() []byte
+	GetAllMetricsJSON() ([]byte, error)
+	// ParamsToStruct(mType, mName, mValue string) (models.Metrics, error)
 }
 
 type handlers struct {
 	storage Repositiries
+	app     App
 }
 
-func New(store Repositiries) *handlers {
-
+func New(store Repositiries, app App) *handlers {
 	return &handlers{
 		storage: store,
+		app:     app,
 	}
 }
 
 func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Set("Content-Type", "text/plain; charset=UTF-8")
+	rw.Header().Set("Content-Type", "application/json")
 
 	mType := chi.URLParam(r, "mType")
 	mName := chi.URLParam(r, "mName")
 	mValue := chi.URLParam(r, "mValue")
-	err := handlers.storage.UpdateMetric(mType, mName, mValue)
-
+	body, err := handlers.app.UpdateMetricFromParams(mType, mName, mValue)
+	// log.Printf("Body is:\n%s", body)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
 	rw.WriteHeader(http.StatusOK)
+	rw.Write(body)
+}
+
+func (handlers *handlers) UpdateMetricJSON(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Content-Type", "application/json")
+	body, err := handlers.app.UpdateMetricFromJSON(r.Body)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+	}
+	rw.WriteHeader(http.StatusOK)
+	rw.Write(body)
 }
 
 func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Set("Content-Type", "text/plain; charset=UTF-8")
-
+	rw.Header().Set("Content-Type", "application/json")
+	log.Println("GetMetric handler started")
 	mType := chi.URLParam(r, "mType")
 	mName := chi.URLParam(r, "mName")
-	mValue, err := handlers.storage.GetMetric(mType, mName)
+	resp, err := handlers.app.GetMetricFromParams(mType, mName)
+	// log.Printf("Body is: \n%s\n", resp)
+	// log.Printf("Error is: \n%v\n", err)
 
 	if err != nil {
 		switch err {
@@ -59,38 +87,37 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 
 	}
 	rw.WriteHeader(http.StatusOK)
-	rw.Write([]byte(mValue))
+	rw.Write(resp)
 }
 
-func (handlers *handlers) GetAllMetrics(rw http.ResponseWriter, r *http.Request) {
+func (handlers *handlers) GetMetricJSON(rw http.ResponseWriter, r *http.Request) {
+
+	rw.Header().Set("Content-Type", "application/json")
+
+	resp, err := handlers.app.GetMetricFromJSON(r.Body)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusNotFound)
+	}
+	rw.WriteHeader(http.StatusOK)
+	rw.Write(resp)
+}
+
+func (handlers *handlers) GetAllMetricsJSON(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Content-Type", "application/json")
+	body, err := handlers.app.GetAllMetricsJSON()
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusNotFound)
+	}
+
+	rw.WriteHeader(http.StatusOK)
+	rw.Write(body)
+}
+
+func (handlers *handlers) GetAllMetricsHTML(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	gaugeMap, counterMap := handlers.storage.GetAllMetrics()
+	body := handlers.app.GetAllMetricsHTML()
 
-	b := new(bytes.Buffer)
-	fmt.Fprintf(b, `
-	<html>
-		<head>
-			<meta charset="utf-8">
-			<title>list-style-type</title>
-			<style>
-				ul {
-					list-style-type: none;
-				}
-			</style>
-		</head>
-		<body>
-		<ul>`)
-	gaugeMap.Range(func(key, value any) bool {
-		fmt.Fprintf(b, "<li>%s = %f</li>", key, value)
-		return true
-	})
-	counterMap.Range(func(key, value any) bool {
-		fmt.Fprintf(b, "<li>%s = %d</li>", key, value)
-		return true
-	})
-
-	fmt.Fprintf(b, "</ul></body></body>")
 	rw.WriteHeader(http.StatusOK)
-	rw.Write(b.Bytes())
+	rw.Write(body)
 }

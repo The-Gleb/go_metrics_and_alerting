@@ -8,12 +8,14 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/app"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/server"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
 )
 
+// TODO: fix status in logger
 func main() {
 	config := NewConfigFromFlags()
 	if err := logger.Initialize(config.LogLevel); err != nil {
@@ -21,7 +23,8 @@ func main() {
 		return
 	}
 	storage := storage.New()
-	handlers := handlers.New(storage)
+	app := app.NewApp(storage)
+	handlers := handlers.New(storage, app)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT)

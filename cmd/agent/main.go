@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -45,13 +47,45 @@ func main() {
 		case <-pollTicker.C:
 			CollectMetrics(gaugeMap, &PollCount)
 		case <-reportTicker.C:
-			SendMetrics(gaugeMap, &PollCount, client)
+			SendMetricsJSON(gaugeMap, &PollCount, client)
 		case <-c:
 			pollTicker.Stop()
 			reportTicker.Stop()
+
+			// SendTestGet(client)
+
 			return
 		}
 	}
+}
+
+func SendTestGet(client *resty.Client) {
+	requestURL := fmt.Sprintf("%s/value/gauge/Alloc", client.BaseURL)
+
+	resp, _ := client.R().
+		SetHeader("Content-Type", "application/json").
+		Get(requestURL)
+	log.Println(string(resp.Body()))
+}
+
+func SendTestGetJSON(client *resty.Client) {
+	requestURL := fmt.Sprintf("%s/value", client.BaseURL)
+	metricObj := models.Metrics{
+		ID:    "gauge",
+		MType: "Alloc",
+	}
+	body, err := json.Marshal(metricObj)
+	// log.Println(string(body))
+	if err != nil {
+		log.Printf("client: error marshalling to json: %s\n", err)
+		return
+	}
+
+	_, err = client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(body).
+		Post(requestURL)
+	// log.Println(string(resp.Body()))
 }
 
 func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
@@ -94,17 +128,67 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 
 }
 
+func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, client *resty.Client) {
+	requestURL := fmt.Sprintf("%s/update/", client.BaseURL)
+	for name, val := range gaugeMap {
+		metricObj := models.Metrics{
+			ID:    "gauge",
+			MType: name,
+			Value: &val,
+		}
+
+		body, err := json.Marshal(metricObj)
+		if err != nil {
+			log.Printf("client: error marshalling to json: %s\n", err)
+			return
+		}
+
+		_, err = client.R().
+			SetHeader("Content-Type", "application/json").
+			SetBody(body).
+			Post(requestURL)
+		if err != nil {
+			log.Printf("client: error making http request: %s\n", err)
+			return
+		}
+		// log.Println(string(resp.Body()))
+
+	}
+	metricObj := models.Metrics{
+		ID:    "counter",
+		MType: "PollCount",
+		Delta: PollCount,
+	}
+
+	body, err := json.Marshal(metricObj)
+	if err != nil {
+		log.Printf("client: error marshalling to json: %s\n", err)
+		return
+	}
+
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(body).
+		Post(requestURL)
+	if err != nil {
+		log.Printf("client: error making http request: %s\n", err)
+		return
+	}
+	log.Println(string(resp.Body()))
+}
+
 func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Client) {
 	for name, val := range gaugeMap {
 		requestURL := fmt.Sprintf("%s/update/gauge/%s/%f", client.BaseURL, name, val)
 
-		_, err := client.R().
+		resp, err := client.R().
 			SetHeader("Content-Type", "application/json").
 			Post(requestURL)
 		if err != nil {
 			log.Printf("client: error making http request: %s\n", err)
 			return
 		}
+		log.Println(string(resp.Body()))
 
 	}
 
@@ -122,5 +206,6 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 		"Status", resp.StatusCode(),
 	)
 	log.Printf("client: status code: %d\n", resp.StatusCode())
+	log.Println(string(resp.Body()))
 
 }
