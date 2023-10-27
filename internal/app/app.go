@@ -37,22 +37,25 @@ func NewApp(s Repositiries) *app {
 }
 
 func (a *app) UpdateMetricFromJSON(body io.Reader) ([]byte, error) {
+
 	var metricObj models.Metrics
 	var ret []byte
+
 	err := json.NewDecoder(body).Decode(&metricObj)
 	if err != nil {
 		return ret, err
 	}
-	switch metricObj.ID {
+	// log.Printf("struct is\n%v", metricObj)
+	switch metricObj.MType {
 	case "gauge":
-		a.storage.UpdateGauge(metricObj.MType, *metricObj.Value)
-		metricObj.Value, err = a.storage.GetGauge(metricObj.MType)
+		a.storage.UpdateGauge(metricObj.ID, *metricObj.Value)
+		metricObj.Value, err = a.storage.GetGauge(metricObj.ID)
 		if err != nil {
 			return make([]byte, 0), err
 		}
 	case "counter":
-		a.storage.UpdateCounter(metricObj.MType, *metricObj.Delta)
-		metricObj.Delta, err = a.storage.GetCounter(metricObj.MType)
+		a.storage.UpdateCounter(metricObj.ID, *metricObj.Delta)
+		metricObj.Delta, err = a.storage.GetCounter(metricObj.ID)
 		if err != nil {
 			return make([]byte, 0), err
 		}
@@ -72,6 +75,7 @@ func (a *app) UpdateMetricFromParams(mType, mName, mValue string) ([]byte, error
 }
 
 func (a *app) GetMetricFromJSON(body io.Reader) ([]byte, error) {
+
 	var metricObj models.Metrics
 	var ret []byte
 	err := json.NewDecoder(body).Decode(&metricObj)
@@ -80,14 +84,14 @@ func (a *app) GetMetricFromJSON(body io.Reader) ([]byte, error) {
 	}
 	// log.Printf("Struct is: \n%v\n", metricObj)
 
-	switch metricObj.ID {
+	switch metricObj.MType {
 	case "gauge":
-		metricObj.Value, err = a.storage.GetGauge(metricObj.MType)
+		metricObj.Value, err = a.storage.GetGauge(metricObj.ID)
 		if err != nil {
 			return make([]byte, 0), err
 		}
 	case "counter":
-		metricObj.Delta, err = a.storage.GetCounter(metricObj.MType)
+		metricObj.Delta, err = a.storage.GetCounter(metricObj.ID)
 		if err != nil {
 			return make([]byte, 0), err
 		}
@@ -175,13 +179,13 @@ func ParamsToJSON(mType, mName, mValue string) ([]byte, error) {
 			"id": "%s",
 			"type": "%s",
 			"value": %s
-		}`, mType, mName, mValue)
+		}`, mName, mType, mValue)
 	case "counter":
 		json = fmt.Sprintf(`{
 			"id": "%s",
 			"type": "%s",
 			"delta": %s
-		}`, mType, mName, mValue)
+		}`, mName, mType, mValue)
 	default:
 		return make([]byte, 0), ErrInvalidMetricType
 	}

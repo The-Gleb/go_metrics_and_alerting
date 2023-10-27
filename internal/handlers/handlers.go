@@ -64,7 +64,6 @@ func (handlers *handlers) UpdateMetricJSON(rw http.ResponseWriter, r *http.Reque
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
-	rw.WriteHeader(http.StatusOK)
 	rw.Write(body)
 }
 
@@ -98,12 +97,12 @@ func (handlers *handlers) GetMetricJSON(rw http.ResponseWriter, r *http.Request)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusNotFound)
 	}
-	rw.WriteHeader(http.StatusOK)
+	// rw.WriteHeader(http.StatusOK)
 	rw.Write(resp)
 }
 
 func (handlers *handlers) GetAllMetricsJSON(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Set("Content-Type", "application/json")
+	rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	body, err := handlers.app.GetAllMetricsJSON()
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusNotFound)
