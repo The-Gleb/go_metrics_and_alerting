@@ -54,20 +54,19 @@ func main() {
 			pollTicker.Stop()
 			reportTicker.Stop()
 
-			// SendTestGetJSON(req)
+			SendTestGet(req)
 
 			return
 		}
 	}
 }
 
-func SendTestGet(client *resty.Client) {
-	requestURL := fmt.Sprintf("%s/value/gauge/Alloc", client.BaseURL)
+func SendTestGet(req *resty.Request) {
 
-	resp, _ := client.R().
-		SetHeader("Content-Type", "application/json").
-		Get(requestURL)
+	resp, _ := req.
+		Get("/value/gauge/unnown")
 	log.Println(string(resp.Body()))
+	log.Println(resp.StatusCode())
 }
 
 func SendTestGetJSON(req *resty.Request) {
@@ -87,6 +86,7 @@ func SendTestGetJSON(req *resty.Request) {
 		return
 	}
 	log.Printf("\nWe got %v\n", result)
+
 }
 
 func CollectMetrics(gaugeMap map[string]float64, counter *int64) {

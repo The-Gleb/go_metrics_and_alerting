@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"errors"
+	// "errors"
 	"io"
 	"log"
 
@@ -77,7 +77,7 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 	// log.Printf("Error is: \n%v\n", err)
 
 	if err != nil {
-		if err == errors.New("metric was not found") {
+		if err.Error() == "metric was not found" {
 			http.Error(rw, err.Error(), http.StatusNotFound)
 		} else {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
