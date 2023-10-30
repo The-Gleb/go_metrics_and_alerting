@@ -1,6 +1,7 @@
 package main
 
 import (
+	// "compress/gzip"
 	"fmt"
 	"log"
 	"math/rand"
@@ -73,6 +74,8 @@ func SendTestGetJSON(req *resty.Request) {
 
 	var result models.Metrics
 	_, err := req.
+		SetHeader("Content-Encoding", "gzip").
+		SetHeader("Accept-Encoding", "gzip").
 		SetBody(&models.Metrics{
 			ID:    "Alloc",
 			MType: "gauge",
@@ -165,6 +168,8 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 
 		resp, err := client.R().
 			SetHeader("Content-Type", "application/json").
+			SetHeader("Content-Encoding", "gzip").
+			SetHeader("Accept-Encoding", "gzip").
 			Post(requestURL)
 		if err != nil {
 			log.Printf("client: error making http request: %s\n", err)

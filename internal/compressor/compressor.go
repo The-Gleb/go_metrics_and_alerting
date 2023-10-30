@@ -3,6 +3,7 @@ package compressor
 import (
 	"compress/gzip"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -71,6 +72,7 @@ func (c *compressReader) Close() error {
 
 func GzipMiddleware(h http.Handler) http.HandlerFunc {
 	gzipMiddleware := func(rw http.ResponseWriter, r *http.Request) {
+		log.Printf("\nReq body encoded: %v\n", r.Body)
 		ow := rw
 
 		acceptEncoding := r.Header.Get("Accept-Encoding")
