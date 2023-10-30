@@ -14,7 +14,6 @@ import (
 
 var (
 	ErrInvalidMetricType error = errors.New("invalid mertic type")
-	ErrMetricNotFound    error = errors.New(("metric was not found"))
 )
 
 type Repositiries interface {

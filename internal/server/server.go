@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/compressor"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/go-chi/chi/v5"
 )
@@ -23,7 +24,7 @@ func New(address string, handlers Handlers) *http.Server {
 	SetupRoutes(r, handlers)
 	return &http.Server{
 		Addr:    address,
-		Handler: r,
+		Handler: logger.LogRequest(compressor.GzipMiddleware(r)),
 	}
 }
 
@@ -33,11 +34,11 @@ func Shutdown(s *http.Server, c chan os.Signal) {
 }
 
 func SetupRoutes(r *chi.Mux, h Handlers) {
-	r.Post("/update/{mType}/{mName}/{mValue}", logger.LogRequest(h.UpdateMetric))
-	r.Post("/update/", logger.LogRequest(h.UpdateMetricJSON))
-	r.Get("/value/{mType}/{mName}", logger.LogRequest(h.GetMetric))
-	r.Post("/value/", logger.LogRequest(h.GetMetricJSON))
-	r.Get("/", logger.LogRequest(h.GetAllMetricsJSON))
+	r.Post("/update/{mType}/{mName}/{mValue}", h.UpdateMetric)
+	r.Post("/update/", h.UpdateMetricJSON)
+	r.Get("/value/{mType}/{mName}", h.GetMetric)
+	r.Post("/value/", h.GetMetricJSON)
+	r.Get("/", h.GetAllMetricsHTML)
 }
 
 func Run(s *http.Server) error {

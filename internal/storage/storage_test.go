@@ -43,7 +43,7 @@ func Test_storage_GetMetric(t *testing.T) {
 			s:    &s,
 			args: args{"gauge", "Malloc"},
 			want: "",
-			err:  ErrMetricDoesntExist,
+			err:  ErrMetricNotFound,
 		},
 		{
 			name: "neg bad request test #4",

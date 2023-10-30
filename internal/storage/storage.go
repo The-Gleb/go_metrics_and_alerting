@@ -1,7 +1,7 @@
 package storage
 
 import (
-	// "errors"
+	"errors"
 	"fmt"
 	// "net/http"
 	"strconv"
@@ -9,17 +9,11 @@ import (
 	"sync/atomic"
 )
 
-type StorageError struct {
-	ErrorString string
-}
-
-func (err *StorageError) Error() string { return err.ErrorString }
-
 var (
-	ErrInvalidMetricValueFloat64 = &StorageError{"incorrect metric value\ncannot parse to float64"}
-	ErrInvalidMetricValueInt64   = &StorageError{"incorrect metric value\ncannot parse to float64"}
-	ErrInvalidMetricType         = &StorageError{"invalid mertic type"}
-	ErrMetricDoesntExist         = &StorageError{"metric doesn`t exist"}
+	ErrInvalidMetricValueFloat64 error = errors.New("incorrect metric value\ncannot parse to float64")
+	ErrInvalidMetricValueInt64   error = errors.New("incorrect metric value\ncannot parse to int64")
+	ErrInvalidMetricType         error = errors.New("invalid mertic type")
+	ErrMetricNotFound            error = errors.New(("metric was not found"))
 )
 
 type storage struct {
@@ -73,7 +67,7 @@ func (s *storage) GetGauge(name string) (*float64, error) {
 		v := val.(float64)
 		return &v, nil
 	}
-	return nil, ErrMetricDoesntExist
+	return nil, ErrMetricNotFound
 }
 
 func (s *storage) GetCounter(name string) (*int64, error) {
@@ -82,7 +76,7 @@ func (s *storage) GetCounter(name string) (*int64, error) {
 		v := val.(*atomic.Int64).Load()
 		return &v, nil
 	}
-	return nil, ErrMetricDoesntExist
+	return nil, ErrMetricNotFound
 }
 
 func (s *storage) GetAllMetrics() (*sync.Map, *sync.Map) {
@@ -115,5 +109,5 @@ func (s *storage) GetMetric(mType, mName string) (string, error) {
 	default:
 		return "", ErrInvalidMetricType
 	}
-	return "", ErrMetricDoesntExist
+	return "", ErrMetricNotFound
 }

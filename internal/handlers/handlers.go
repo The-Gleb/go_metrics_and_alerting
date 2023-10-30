@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"io"
 	"log"
 
@@ -9,7 +10,7 @@ import (
 	"sync"
 
 	// "github.com/The-Gleb/go_metrics_and_alerting/internal/models"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/app"
+
 	"github.com/go-chi/chi/v5"
 )
 
@@ -76,7 +77,7 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 	// log.Printf("Error is: \n%v\n", err)
 
 	if err != nil {
-		if err == app.ErrMetricNotFound {
+		if err == errors.New("metric was not found") {
 			http.Error(rw, err.Error(), http.StatusNotFound)
 		} else {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
@@ -111,10 +112,13 @@ func (handlers *handlers) GetAllMetricsJSON(rw http.ResponseWriter, r *http.Requ
 }
 
 func (handlers *handlers) GetAllMetricsHTML(rw http.ResponseWriter, r *http.Request) {
-	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
+	log.Println("Get all handler starts")
+	rw.Header().Set("Content-Type", "text/html")
 
 	body := handlers.app.GetAllMetricsHTML()
+	log.Println(body)
 
-	rw.WriteHeader(http.StatusOK)
+	// rw.WriteHeader(http.StatusOK)
 	rw.Write(body)
+
 }
