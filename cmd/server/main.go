@@ -24,11 +24,11 @@ func main() {
 	}
 	storage := storage.New()
 	app := app.NewApp(storage)
-	handlers := handlers.New(storage, app)
+	handlers := handlers.New(app)
+	s := server.New(config.Addres, handlers)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGINT)
-	s := server.New(config.Addres, handlers)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

@@ -3,12 +3,13 @@ package handlers
 import (
 	"io"
 	"log"
+
 	// "log"
 	"net/http"
 	"sync"
 
 	// "github.com/The-Gleb/go_metrics_and_alerting/internal/models"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/app"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -31,14 +32,12 @@ type App interface {
 }
 
 type handlers struct {
-	storage Repositiries
-	app     App
+	app App
 }
 
-func New(store Repositiries, app App) *handlers {
+func New(app App) *handlers {
 	return &handlers{
-		storage: store,
-		app:     app,
+		app: app,
 	}
 }
 
@@ -77,14 +76,13 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 	// log.Printf("Error is: \n%v\n", err)
 
 	if err != nil {
-		switch err {
-		case storage.ErrInvalidMetricType:
-			http.Error(rw, err.Error(), http.StatusBadRequest)
-		case storage.ErrMetricDoesntExist:
+		if err == app.ErrMetricNotFound {
 			http.Error(rw, err.Error(), http.StatusNotFound)
+		} else {
+			http.Error(rw, err.Error(), http.StatusBadRequest)
 		}
-
 	}
+
 	rw.WriteHeader(http.StatusOK)
 	rw.Write(resp)
 }

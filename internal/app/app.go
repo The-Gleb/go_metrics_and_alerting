@@ -14,6 +14,7 @@ import (
 
 var (
 	ErrInvalidMetricType error = errors.New("invalid mertic type")
+	ErrMetricNotFound    error = errors.New(("metric was not found"))
 )
 
 type Repositiries interface {
@@ -45,6 +46,7 @@ func (a *app) UpdateMetricFromJSON(body io.Reader) ([]byte, error) {
 	if err != nil {
 		return ret, err
 	}
+
 	// log.Printf("struct is\n%v", metricObj)
 	switch metricObj.MType {
 	case "gauge":
