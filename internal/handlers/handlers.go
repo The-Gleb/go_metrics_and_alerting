@@ -3,12 +3,10 @@ package handlers
 import (
 	// "errors"
 	"io"
-	"log"
 
-	// "log"
+	"log"
 	"net/http"
 	"sync"
-
 	// "github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 
 	"github.com/go-chi/chi/v5"
@@ -54,7 +52,6 @@ func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) 
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
-	rw.WriteHeader(http.StatusOK)
 	rw.Write(body)
 }
 
@@ -62,6 +59,7 @@ func (handlers *handlers) UpdateMetricJSON(rw http.ResponseWriter, r *http.Reque
 	rw.Header().Set("Content-Type", "application/json")
 	body, err := handlers.app.UpdateMetricFromJSON(r.Body)
 	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
 	rw.Write(body)
@@ -69,7 +67,6 @@ func (handlers *handlers) UpdateMetricJSON(rw http.ResponseWriter, r *http.Reque
 
 func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json")
-	log.Println("GetMetric handler started")
 	mType := chi.URLParam(r, "mType")
 	mName := chi.URLParam(r, "mName")
 	resp, err := handlers.app.GetMetricFromParams(mType, mName)
@@ -78,13 +75,14 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		if err.Error() == "metric was not found" {
+			rw.WriteHeader(http.StatusNotFound)
 			http.Error(rw, err.Error(), http.StatusNotFound)
 		} else {
+			rw.WriteHeader(http.StatusBadRequest)
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 		}
 	}
 
-	rw.WriteHeader(http.StatusOK)
 	rw.Write(resp)
 }
 
@@ -93,7 +91,9 @@ func (handlers *handlers) GetMetricJSON(rw http.ResponseWriter, r *http.Request)
 	rw.Header().Set("Content-Type", "application/json")
 
 	resp, err := handlers.app.GetMetricFromJSON(r.Body)
+	log.Printf("ОШИБКААа %v", err)
 	if err != nil {
+		rw.WriteHeader(http.StatusNotFound)
 		http.Error(rw, err.Error(), http.StatusNotFound)
 	}
 	// rw.WriteHeader(http.StatusOK)
@@ -104,19 +104,17 @@ func (handlers *handlers) GetAllMetricsJSON(rw http.ResponseWriter, r *http.Requ
 	rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	body, err := handlers.app.GetAllMetricsJSON()
 	if err != nil {
+		rw.WriteHeader(http.StatusNotFound)
 		http.Error(rw, err.Error(), http.StatusNotFound)
 	}
-
-	rw.WriteHeader(http.StatusOK)
 	rw.Write(body)
 }
 
 func (handlers *handlers) GetAllMetricsHTML(rw http.ResponseWriter, r *http.Request) {
-	log.Println("Get all handler starts")
 	rw.Header().Set("Content-Type", "text/html")
 
 	body := handlers.app.GetAllMetricsHTML()
-	log.Println(body)
+	// log.Println(body)
 
 	// rw.WriteHeader(http.StatusOK)
 	rw.Write(body)

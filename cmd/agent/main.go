@@ -20,8 +20,8 @@ func main() {
 	config := NewConfigFromFlags()
 
 	gaugeMap := make(map[string]float64)
+	var PollCount int64 = 1
 
-	var PollCount int64 = 0
 	var pollInterval = time.Duration(config.PollInterval) * time.Second
 	var reportInterval = time.Duration(config.ReportInterval) * time.Second
 
@@ -54,8 +54,6 @@ func main() {
 			pollTicker.Stop()
 			reportTicker.Stop()
 
-			SendTestGet(req)
-
 			return
 		}
 	}
@@ -64,7 +62,7 @@ func main() {
 func SendTestGet(req *resty.Request) {
 
 	resp, _ := req.
-		Get("/value/gauge/unnown")
+		Get("/value/counter/PollCount")
 	log.Println(string(resp.Body()))
 	log.Println(resp.StatusCode())
 }
@@ -73,11 +71,11 @@ func SendTestGetJSON(req *resty.Request) {
 
 	var result models.Metrics
 	_, err := req.
-		SetHeader("Content-Encoding", "gzip").
+		// SetHeader("Content-Encoding", "gzip").
 		SetHeader("Accept-Encoding", "gzip").
 		SetBody(&models.Metrics{
-			ID:    "Alloc",
-			MType: "gauge",
+			ID:    "PollCount",
+			MType: "counter",
 		}).
 		SetResult(&result).
 		Post("/value/")
@@ -85,7 +83,7 @@ func SendTestGetJSON(req *resty.Request) {
 	if err != nil {
 		return
 	}
-	log.Printf("\nWe got %v\n", result)
+	log.Printf("PollCount is %d", *result.Delta)
 
 }
 
@@ -121,7 +119,7 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 	gaugeMap["Sys"] = float64(rtm.Sys)
 	gaugeMap["TotalAlloc"] = float64(rtm.TotalAlloc)
 	gaugeMap["RandomValue"] = rand.Float64()
-	*counter++
+	// *counter++
 
 	// b, _ := json.Marshal(gaugeMap)
 	// fmt.Println(string(b))

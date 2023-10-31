@@ -3,6 +3,8 @@ package storage
 import (
 	"errors"
 	"fmt"
+	"log"
+
 	// "net/http"
 	"strconv"
 	"sync"
@@ -74,6 +76,7 @@ func (s *storage) GetCounter(name string) (*int64, error) {
 	val, ok := s.counter.Load(name)
 	if ok {
 		v := val.(*atomic.Int64).Load()
+		log.Printf("Got in storage %d ", v)
 		return &v, nil
 	}
 	return nil, ErrMetricNotFound

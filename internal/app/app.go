@@ -1,14 +1,18 @@
 package app
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"sync"
+	"sync/atomic"
 
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 )
 
@@ -26,14 +30,72 @@ type Repositiries interface {
 	GetCounter(name string) (*int64, error)
 }
 
-type app struct {
-	storage Repositiries
+type FileWriter interface {
+	SaveMetrics(data []byte) error
+	NeedToSyncWrite() bool
 }
 
-func NewApp(s Repositiries) *app {
+type app struct {
+	storage         Repositiries
+	fileStoragePath string
+	storeInterval   int
+}
+
+func NewApp(s Repositiries, path string, interval int) *app {
 	return &app{
-		storage: s,
+		storage:         s,
+		fileStoragePath: path,
+		storeInterval:   interval,
 	}
+}
+
+func (a *app) LoadDataFromFile() error {
+	var maps models.MetricsMaps
+	file, err := os.Open(a.fileStoragePath)
+	if err != nil {
+		return err
+	}
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	data := scanner.Bytes()
+	log.Printf("JSON data in file is %s\n\n", string(data))
+	err = json.Unmarshal(data, &maps)
+	if err != nil {
+		logger.Log.Fatal(err)
+	}
+	// log.Printf("\ngauge map is %v\n", maps.Gauge)
+	// log.Printf("\ncounter map is %v\n", maps.Counter)
+
+	for k, v := range maps.Gauge {
+		a.storage.UpdateGauge(k, v)
+	}
+	for k, v := range maps.Counter {
+		a.storage.UpdateCounter(k, v)
+	}
+	stor, _ := a.GetAllMetricsJSON()
+	log.Printf("loaded and got %v", string(stor))
+	return nil
+}
+
+func (a *app) StoreDataToFile() {
+	data, err := a.GetAllMetricsJSON()
+	if err != nil {
+		logger.Log.Fatal(err)
+	}
+	log.Printf("JSON data in file is %s", string(data))
+	var maps models.MetricsMaps
+	err = json.Unmarshal(data, &maps)
+	if err != nil {
+		logger.Log.Fatal(err)
+	}
+	log.Printf("\ngauge map is %v\n", maps.Gauge)
+	log.Printf("\ncounter map is %v\n", maps.Counter)
+	file, err := os.Create(a.fileStoragePath)
+	if err != nil {
+		log.Fatal("couldn`t open file to store data")
+	}
+	file.Write(data)
+	file.Close()
 }
 
 func (a *app) UpdateMetricFromJSON(body io.Reader) ([]byte, error) {
@@ -55,13 +117,19 @@ func (a *app) UpdateMetricFromJSON(body io.Reader) ([]byte, error) {
 			return make([]byte, 0), err
 		}
 	case "counter":
+		// log.Printf("\nPOST REQ BODY TO UPDATE %v", metricObj)
+		// log.Printf("to update key: %s, val: %d", metricObj.ID, *metricObj.Delta)
 		a.storage.UpdateCounter(metricObj.ID, *metricObj.Delta)
 		metricObj.Delta, err = a.storage.GetCounter(metricObj.ID)
 		if err != nil {
 			return make([]byte, 0), err
 		}
+		// log.Printf("Updated key: %s, val: %d\n", metricObj.ID, *metricObj.Delta)
 	default:
 		return ret, ErrInvalidMetricType
+	}
+	if a.storeInterval == 0 {
+		a.StoreDataToFile()
 	}
 	return json.Marshal(metricObj)
 }
@@ -83,7 +151,6 @@ func (a *app) GetMetricFromJSON(body io.Reader) ([]byte, error) {
 	if err != nil {
 		return ret, err
 	}
-	// log.Printf("Struct is: \n%v\n", metricObj)
 
 	switch metricObj.MType {
 	case "gauge":
@@ -92,11 +159,15 @@ func (a *app) GetMetricFromJSON(body io.Reader) ([]byte, error) {
 			return make([]byte, 0), err
 		}
 	case "counter":
+		// log.Printf("\nREQ GET BOODY IS %v", metricObj)
+		// log.Printf("Wanna get %s", metricObj.ID)
 		metricObj.Delta, err = a.storage.GetCounter(metricObj.ID)
 		if err != nil {
 			return make([]byte, 0), err
 		}
-		log.Printf("Changed struct is: \n%v\n", metricObj)
+		// log.Printf("Got err %v ", err)
+		// log.Printf("\n GoT BOODY %v", metricObj)
+		// log.Printf("Got value %d\n", *metricObj.Delta)
 
 	default:
 		return ret, ErrInvalidMetricType
@@ -126,20 +197,32 @@ func (a *app) GetMetricFromParams(mType, mName string) ([]byte, error) {
 }
 
 func (a *app) GetAllMetricsJSON() ([]byte, error) {
-	gaugeMap, counterMap := a.storage.GetAllMetrics()
+	syncGaugeMap, syncCounterMap := a.storage.GetAllMetrics()
+	maps := models.MetricsMaps{
+		Gauge:   make(map[string]float64),
+		Counter: make(map[string]int64),
+	}
+
 	b := new(bytes.Buffer)
-	fmt.Fprintf(b, "{")
 
-	gaugeMap.Range(func(key, value any) bool {
-		fmt.Fprintf(b, `"%s":%v,`, key, value)
+	syncGaugeMap.Range(func(key, value any) bool {
+		maps.Gauge[key.(string)] = value.(float64)
 		return true
 	})
-	counterMap.Range(func(key, value any) bool {
-		fmt.Fprintf(b, `"%s":%v`, key, value)
+	syncCounterMap.Range(func(key, value any) bool {
+		v := value.(*atomic.Int64).Load()
+
+		maps.Counter[key.(string)] = v
 		return true
 	})
 
-	fmt.Fprintf(b, "}")
+	jsonMaps, err := json.Marshal(&maps)
+	// log.Printf("jsoned map %s\n", string(jsonMaps))
+	if err != nil {
+		return make([]byte, 0), err
+	}
+
+	fmt.Fprint(b, string(jsonMaps))
 	return b.Bytes(), nil
 }
 
