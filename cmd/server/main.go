@@ -2,6 +2,7 @@ package main
 
 import (
 	// "bufio"
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -40,19 +41,19 @@ func main() {
 	}
 
 	var wg sync.WaitGroup
+	ctx, cancel := context.WithCancel(context.Background())
 
 	if config.StoreInterval > 0 {
-		fTicker := time.NewTicker(time.Duration(config.StoreInterval) * time.Second)
-		fSignal := make(chan os.Signal, 1)
-		signal.Notify(fSignal, syscall.SIGINT)
+		saveTicker := time.NewTicker(time.Duration(config.StoreInterval) * time.Second)
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for {
 				select {
-				case <-fTicker.C:
+				case <-saveTicker.C:
 					app.StoreDataToFile()
-				case <-fSignal:
+				case <-ctx.Done():
+					logger.Log.Debug("stop saving to file")
 					return
 				}
 			}
@@ -60,12 +61,15 @@ func main() {
 		}()
 	}
 
-	ServerShutdownSignal := make(chan os.Signal, 1)
-	signal.Notify(ServerShutdownSignal, syscall.SIGINT)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		server.Shutdown(s, ServerShutdownSignal)
+		ServerShutdownSignal := make(chan os.Signal, 1)
+		signal.Notify(ServerShutdownSignal, syscall.SIGINT)
+		<-ServerShutdownSignal
+		s.Shutdown(context.Background())
+		logger.Log.Debug("stop saving to file")
+		cancel()
 	}()
 
 	err := server.Run(s)
