@@ -10,14 +10,14 @@ import (
 	"sync"
 	"syscall"
 
-	// "time"
+	"time"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/app"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/database"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/server"
-	// "github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
 )
 
 // TODO: fix status in logger
@@ -30,40 +30,47 @@ func main() {
 	}
 	logger.Log.Info(config)
 
-	// storage := storage.New()
-	storage, err := database.ConnectDB(config.DatabaseDSN)
-	if err != nil {
-		log.Fatal(err)
-		return
+	var rep app.Repositiries
+
+	if config.DatabaseDSN != "" {
+		db, err := database.ConnectDB(config.DatabaseDSN)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		rep = db
+	} else {
+		rep = storage.New()
 	}
-	app := app.NewApp(storage, config.FileStoragePath, config.StoreInterval)
+
+	app := app.NewApp(rep, config.FileStoragePath, config.StoreInterval)
 	handlers := handlers.New(app)
 	s := server.New(config.Addres, handlers)
 
 	if config.Restore {
-		// app.LoadDataFromFile()
+		app.LoadDataFromFile()
 	}
 
 	var wg sync.WaitGroup
-	_, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
 
-	// if config.StoreInterval > 0 {
-	// 	saveTicker := time.NewTicker(time.Duration(config.StoreInterval) * time.Second)
-	// 	wg.Add(1)
-	// 	go func() {
-	// 		defer wg.Done()
-	// 		for {
-	// 			select {
-	// 			case <-saveTicker.C:
-	// 				app.StoreDataToFile()
-	// 			case <-ctx.Done():
-	// 				logger.Log.Debug("stop saving to file")
-	// 				return
-	// 			}
-	// 		}
+	if config.StoreInterval > 0 {
+		saveTicker := time.NewTicker(time.Duration(config.StoreInterval) * time.Second)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-saveTicker.C:
+					app.StoreDataToFile()
+				case <-ctx.Done():
+					logger.Log.Debug("stop saving to file")
+					return
+				}
+			}
 
-	// 	}()
-	// }
+		}()
+	}
 
 	wg.Add(1)
 	go func() {
@@ -76,7 +83,7 @@ func main() {
 		cancel()
 	}()
 
-	err = server.Run(s)
+	err := server.Run(s)
 	if err != nil && err != http.ErrServerClosed {
 		panic(err)
 	}

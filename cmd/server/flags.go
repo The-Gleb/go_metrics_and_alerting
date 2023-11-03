@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"fmt"
 	"github.com/caarlos0/env"
 	// "github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 )
@@ -63,8 +62,7 @@ func NewConfigFromFlags() Config {
 	var restore bool
 	flag.BoolVar(&restore, "r", true, "bool, wether or not store metrics to file")
 	var databaseDSN string
-	flag.StringVar(&databaseDSN, "d", fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
-		`localhost`, `videos`, `userpassword`, `videos`),
+	flag.StringVar(&databaseDSN, "d", "",
 		"info to connect to database, host=host port=port user=myuser password=xxxx dbname=mydb sslmode=disable")
 
 	flag.Parse()
