@@ -1,25 +1,21 @@
 package storage
 
 import (
-	// "errors"
+	"errors"
 	"fmt"
+	"log"
+
 	// "net/http"
 	"strconv"
 	"sync"
 	"sync/atomic"
 )
 
-type StorageError struct {
-	ErrorString string
-}
-
-func (err *StorageError) Error() string { return err.ErrorString }
-
 var (
-	ErrInvalidMetricValueFloat64 = &StorageError{"incorrect metric value\ncannot parse to float64"}
-	ErrInvalidMetricValueInt64   = &StorageError{"incorrect metric value\ncannot parse to float64"}
-	ErrInvalidMetricType         = &StorageError{"invalid mertic type"}
-	ErrMetricDoesntExist         = &StorageError{"metric doesn`t exist"}
+	ErrInvalidMetricValueFloat64 error = errors.New("incorrect metric value\ncannot parse to float64")
+	ErrInvalidMetricValueInt64   error = errors.New("incorrect metric value\ncannot parse to int64")
+	ErrInvalidMetricType         error = errors.New("invalid mertic type")
+	ErrMetricNotFound            error = errors.New(("metric was not found"))
 )
 
 type storage struct {
@@ -32,12 +28,6 @@ func New() *storage {
 		gauge:   sync.Map{},
 		counter: sync.Map{},
 	}
-}
-
-type Repositiries interface {
-	UpdateMetric(mType, mName, mValue string) error
-	GetMetric(mType, mName string) (string, error)
-	GetAllMetrics() (*sync.Map, *sync.Map)
 }
 
 func (s *storage) UpdateMetric(mType, mName, mValue string) error {
@@ -54,13 +44,42 @@ func (s *storage) UpdateMetric(mType, mName, mValue string) error {
 			return ErrInvalidMetricValueInt64
 		}
 
-		val, _ := s.counter.LoadOrStore(mName, new(int64))
-		atomic.AddInt64(val.(*int64), mValue)
+		val, _ := s.counter.LoadOrStore(mName, new(*atomic.Int64))
+		// atomic.AddInt64(val.(*int64), mValue)
+		val.(*atomic.Int64).Add(mValue)
 
 	default:
 		return ErrInvalidMetricType
 	}
 	return nil
+}
+
+func (s *storage) UpdateGauge(name string, value float64) {
+	s.gauge.Store(name, value)
+}
+
+func (s *storage) UpdateCounter(name string, value int64) {
+	val, _ := s.counter.LoadOrStore(name, new(atomic.Int64))
+	val.(*atomic.Int64).Add(value)
+}
+
+func (s *storage) GetGauge(name string) (*float64, error) {
+	val, ok := s.gauge.Load(name)
+	if ok {
+		v := val.(float64)
+		return &v, nil
+	}
+	return nil, ErrMetricNotFound
+}
+
+func (s *storage) GetCounter(name string) (*int64, error) {
+	val, ok := s.counter.Load(name)
+	if ok {
+		v := val.(*atomic.Int64).Load()
+		log.Printf("Got in storage %d ", v)
+		return &v, nil
+	}
+	return nil, ErrMetricNotFound
 }
 
 func (s *storage) GetAllMetrics() (*sync.Map, *sync.Map) {
@@ -87,11 +106,11 @@ func (s *storage) GetMetric(mType, mName string) (string, error) {
 	case "counter":
 		val, ok := s.counter.Load(mName)
 		if ok {
-			v := atomic.LoadInt64(val.(*int64))
+			v := val.(*atomic.Int64).Load()
 			return fmt.Sprintf("%d", v), nil
 		}
 	default:
 		return "", ErrInvalidMetricType
 	}
-	return "", ErrMetricDoesntExist
+	return "", ErrMetricNotFound
 }

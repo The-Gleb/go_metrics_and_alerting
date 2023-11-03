@@ -1,8 +1,8 @@
 package main
 
 import (
+	// "compress/gzip"
 	"fmt"
-	"github.com/go-resty/resty/v2"
 	"log"
 	"math/rand"
 	"os"
@@ -10,14 +10,18 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
+	"github.com/go-resty/resty/v2"
 )
 
 func main() {
 	config := NewConfigFromFlags()
 
 	gaugeMap := make(map[string]float64)
+	var PollCount int64 = 1
 
-	var PollCount int64 = 0
 	var pollInterval = time.Duration(config.PollInterval) * time.Second
 	var reportInterval = time.Duration(config.ReportInterval) * time.Second
 
@@ -30,57 +34,57 @@ func main() {
 	// stop := make(chan bool)
 
 	baseURL := fmt.Sprintf("http://%s", config.Addres)
-	client := resty.New().
+	req := resty.New().
+		SetHeader("Content-Type", "application/json").
 		SetRetryCount(3).
 		SetRetryWaitTime(1 * time.Second).
-		SetBaseURL(baseURL)
+		SetBaseURL(baseURL).
+		R()
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-
-	// go func() {
-	// for {
-	// 	select {
-	// 	case <-pollTicker.C:
-	// 		CollectMetrics(gaugeMap, &PollCount)
-	// 	case <-stop:
-	// 		wg.Done()
-	// 		return
-	// 	}
-	// }
-	// }()
-	// wg.Add(1)
-	// go func() {
-	// 	for {
-	// 		select {
-	// 		case <-reportTicker.C:
-	// 			SendMetrics(gaugeMap, &PollCount, client)
-	// 		case <-stop:
-	// 			wg.Done()
-	// 			return
-	// 		}
-	// 	}
-	// }()
 
 	for {
 		select {
 		case <-pollTicker.C:
 			CollectMetrics(gaugeMap, &PollCount)
 		case <-reportTicker.C:
-			SendMetrics(gaugeMap, &PollCount, client)
+			SendMetricsJSON(gaugeMap, &PollCount, req)
 		case <-c:
 			pollTicker.Stop()
 			reportTicker.Stop()
+
 			return
 		}
 	}
-	// Блокировка, пока не будет получен сигнал
-	// <-c
-	// pollTicker.Stop()
-	// reportTicker.Stop()
-	// stop <- true
-	// stop <- true
-	// wg.Wait()
+}
+
+func SendTestGet(req *resty.Request) {
+
+	resp, _ := req.
+		Get("/value/counter/PollCount")
+	log.Println(string(resp.Body()))
+	log.Println(resp.StatusCode())
+}
+
+func SendTestGetJSON(req *resty.Request) {
+
+	var result models.Metrics
+	_, err := req.
+		// SetHeader("Content-Encoding", "gzip").
+		SetHeader("Accept-Encoding", "gzip").
+		SetBody(&models.Metrics{
+			ID:    "PollCount",
+			MType: "counter",
+		}).
+		SetResult(&result).
+		Post("/value/")
+
+	if err != nil {
+		return
+	}
+	log.Printf("PollCount is %d", *result.Delta)
+
 }
 
 func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
@@ -115,7 +119,7 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 	gaugeMap["Sys"] = float64(rtm.Sys)
 	gaugeMap["TotalAlloc"] = float64(rtm.TotalAlloc)
 	gaugeMap["RandomValue"] = rand.Float64()
-	*counter++
+	// *counter++
 
 	// b, _ := json.Marshal(gaugeMap)
 	// fmt.Println(string(b))
@@ -123,22 +127,58 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 
 }
 
+func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.Request) {
+	for name, val := range gaugeMap {
+		var result models.Metrics
+		_, err := req.
+			SetBody(&models.Metrics{
+				ID:    name,
+				MType: "gauge",
+				Value: &val,
+			}).
+			SetResult(&result).
+			Post("/update/")
+
+		if err != nil {
+			return
+		}
+
+	}
+	var result models.Metrics
+	_, err := req.
+		SetBody(&models.Metrics{
+			ID:    "PollCount",
+			MType: "counter",
+			Delta: PollCount,
+		}).
+		SetResult(&result).
+		Post("/update/")
+
+	if err != nil {
+		return
+	}
+	log.Printf("\nUpdated to %v\n", result)
+}
+
 func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Client) {
 	for name, val := range gaugeMap {
 		requestURL := fmt.Sprintf("%s/update/gauge/%s/%f", client.BaseURL, name, val)
 
-		_, err := client.R().
+		resp, err := client.R().
 			SetHeader("Content-Type", "application/json").
+			SetHeader("Content-Encoding", "gzip").
+			SetHeader("Accept-Encoding", "gzip").
 			Post(requestURL)
 		if err != nil {
 			log.Printf("client: error making http request: %s\n", err)
 			return
 		}
+		log.Println(string(resp.Body()))
 
 	}
 
 	requestURL := fmt.Sprintf("%s/update/counter/PollCount/%d", client.BaseURL, *PollCount)
-	_, err := client.R().
+	resp, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		Post(requestURL)
 	if err != nil {
@@ -146,6 +186,11 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 		return
 	}
 
-	log.Printf("METRICS SENT - ADDRES: %s\n\n", client.BaseURL)
-	// log.Printf("client: status code: %d\n", res.StatusCode())
+	logger.Log.Infow("METRICS SENT - : %s\nStatus: %d\n",
+		"ADDRES", client.BaseURL,
+		"Status", resp.StatusCode(),
+	)
+	log.Printf("client: status code: %d\n", resp.StatusCode())
+	log.Println(string(resp.Body()))
+
 }

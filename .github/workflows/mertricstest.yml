@@ -353,6 +353,33 @@ jobs:
         run: |
           go test -v -race ./...
 
+          # SERVER_PORT=$(./random unused-port)
+          # ADDRESS="localhost:${SERVER_PORT}"
+          # TEMP_FILE=$(./random tempfile)
+          # ./metricstest -test.v -test.run=^TestIteration9$ \
+          #   -agent-binary-path=cmd/agent/agent \
+          #   -binary-path=cmd/server/server \
+          #   -file-storage-path=$TEMP_FILE \
+          #   -server-port=$SERVER_PORT \
+          #   -source-path=.
+
+          # SERVER_PORT=$(./random unused-port)
+          # ADDRESS="localhost:${SERVER_PORT}"
+          # TEMP_FILE=$(./random tempfile)
+          # ./metricstest -test.v -test.run=^TestIteration8$ \
+          #   -agent-binary-path=cmd/agent/agent \
+          #   -binary-path=cmd/server/server \
+          #   -server-port=$SERVER_PORT \
+          #   -source-path=.
+
+          # SERVER_PORT=$(./random unused-port)
+          # ADDRESS="localhost:${SERVER_PORT}"
+          # TEMP_FILE=$(./random tempfile)
+          # ./metricstest -test.v -test.run=^TestIteration6$ \
+          #   -agent-binary-path=cmd/agent/agent \
+          #   -binary-path=cmd/server/server \
+          #   -server-port=$SERVER_PORT \
+          #   -source-path=.
 
           # SERVER_PORT=$(./random unused-port)
           # ADDRESS="localhost:${SERVER_PORT}"
@@ -362,13 +389,3 @@ jobs:
           #   -binary-path=cmd/server/server \
           #   -server-port=$SERVER_PORT \
           #   -source-path=.
-
-
-          #   SERVER_PORT=$(./random unused-port)
-          # ADDRESS="localhost:${SERVER_PORT}"
-          # TEMP_FILE=$(./random tempfile)
-          # ./metricstest '-test.v' '-test.run=^TestIteration5$' \
-          #   '-agent-binary-path=cmd/agent/agent' \
-          #   '-binary-path=cmd/server/server' \
-          #   '-server-port=$SERVER_PORT' \
-          #   '-source-path=.'
