@@ -1,10 +1,9 @@
 package logger
 
 import (
+	"go.uber.org/zap"
 	"net/http"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 var Log *zap.SugaredLogger = zap.NewNop().Sugar()
@@ -39,15 +38,13 @@ type (
 )
 
 func (r *loggingResponseWriter) Write(b []byte) (int, error) {
-	// записываем ответ, используя оригинальный http.ResponseWriter
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size // захватываем размер
-	r.responseData.status = 200
+	// r.responseData.status = 200
 	return size, err
 }
 
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
-	// log.Println("WriteHeader from Logger called")
 	r.ResponseWriter.WriteHeader(statusCode)
 	r.responseData.status = statusCode // захватываем код статуса
 }

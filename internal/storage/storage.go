@@ -114,3 +114,7 @@ func (s *storage) GetMetric(mType, mName string) (string, error) {
 	}
 	return "", ErrMetricNotFound
 }
+
+func (s *storage) PingDB() error {
+	return nil
+}

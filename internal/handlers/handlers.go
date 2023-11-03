@@ -6,19 +6,19 @@ import (
 
 	"log"
 	"net/http"
-	"sync"
+	// "sync"
 	// "github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 
 	"github.com/go-chi/chi/v5"
 )
 
-type Repositiries interface {
-	UpdateMetric(mType, mName, mValue string) error
-	GetMetric(mType, mName string) (string, error)
-	GetAllMetrics() (*sync.Map, *sync.Map)
-	UpdateGauge(name string, value float64)
-	UpdateCounter(name string, value int64)
-}
+// type Repositiries interface {
+// 	UpdateMetric(mType, mName, mValue string) error
+// 	GetMetric(mType, mName string) (string, error)
+// 	GetAllMetrics() (*sync.Map, *sync.Map)
+// 	UpdateGauge(name string, value float64)
+// 	UpdateCounter(name string, value int64)
+// }
 
 type App interface {
 	UpdateMetricFromJSON(body io.Reader) ([]byte, error)
@@ -27,6 +27,7 @@ type App interface {
 	GetMetricFromJSON(body io.Reader) ([]byte, error)
 	GetAllMetricsHTML() []byte
 	GetAllMetricsJSON() ([]byte, error)
+	PingDB() error
 	// ParamsToStruct(mType, mName, mValue string) (models.Metrics, error)
 }
 
@@ -38,6 +39,15 @@ func New(app App) *handlers {
 	return &handlers{
 		app: app,
 	}
+}
+
+func (handlers *handlers) PingDB(rw http.ResponseWriter, r *http.Request) {
+	err := handlers.app.PingDB()
+	if err != nil {
+		rw.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	rw.WriteHeader(http.StatusOK)
 }
 
 func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) {

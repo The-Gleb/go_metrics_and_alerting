@@ -21,13 +21,12 @@ var (
 )
 
 type Repositiries interface {
-	// UpdateMetric(mType, mName, mValue string) error
-	// GetMetric(mType, mName string) (string, error)
 	GetAllMetrics() (*sync.Map, *sync.Map)
 	UpdateGauge(name string, value float64)
 	UpdateCounter(name string, value int64)
 	GetGauge(name string) (*float64, error)
 	GetCounter(name string) (*int64, error)
+	PingDB() error
 }
 
 type FileWriter interface {
@@ -47,6 +46,10 @@ func NewApp(s Repositiries, path string, interval int) *app {
 		fileStoragePath: path,
 		storeInterval:   interval,
 	}
+}
+
+func (a *app) PingDB() error {
+	return a.storage.PingDB()
 }
 
 func (a *app) LoadDataFromFile() error {
