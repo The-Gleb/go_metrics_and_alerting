@@ -9,8 +9,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"sync"
-	"sync/atomic"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
@@ -21,7 +19,7 @@ var (
 )
 
 type Repositiries interface {
-	GetAllMetrics() (*sync.Map, *sync.Map)
+	GetAllMetrics() (map[string]float64, map[string]int64)
 	UpdateGauge(name string, value float64)
 	UpdateCounter(name string, value int64)
 	GetGauge(name string) (*float64, error)
@@ -200,24 +198,14 @@ func (a *app) GetMetricFromParams(mType, mName string) ([]byte, error) {
 }
 
 func (a *app) GetAllMetricsJSON() ([]byte, error) {
-	syncGaugeMap, syncCounterMap := a.storage.GetAllMetrics()
+	gaugeMap, counterMap := a.storage.GetAllMetrics()
 	maps := models.MetricsMaps{
-		Gauge:   make(map[string]float64),
-		Counter: make(map[string]int64),
+		Gauge:   gaugeMap,
+		Counter: counterMap,
 	}
 
 	b := new(bytes.Buffer)
 
-	syncGaugeMap.Range(func(key, value any) bool {
-		maps.Gauge[key.(string)] = value.(float64)
-		return true
-	})
-	syncCounterMap.Range(func(key, value any) bool {
-		v := value.(*atomic.Int64).Load()
-
-		maps.Counter[key.(string)] = v
-		return true
-	})
 
 	jsonMaps, err := json.Marshal(&maps)
 	// log.Printf("jsoned map %s\n", string(jsonMaps))
@@ -246,14 +234,12 @@ func (a *app) GetAllMetricsHTML() []byte {
 		</head>
 		<body>
 		<ul>`)
-	gaugeMap.Range(func(key, value any) bool {
+	for key, value := range gaugeMap {
 		fmt.Fprintf(b, "<li>%s = %f</li>", key, value)
-		return true
-	})
-	counterMap.Range(func(key, value any) bool {
+	}
+	for key, value := range counterMap {
 		fmt.Fprintf(b, "<li>%s = %d</li>", key, value)
-		return true
-	})
+	}
 	fmt.Fprintf(b, "</ul></body></body>")
 	return b.Bytes()
 }

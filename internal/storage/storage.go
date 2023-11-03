@@ -82,18 +82,19 @@ func (s *storage) GetCounter(name string) (*int64, error) {
 	return nil, ErrMetricNotFound
 }
 
-func (s *storage) GetAllMetrics() (*sync.Map, *sync.Map) {
-	var newGauge sync.Map
+func (s *storage) GetAllMetrics() (map[string]float64, map[string]int64) {
+	newGauge := make(map[string]float64)
 	s.gauge.Range(func(key any, value any) bool {
-		newGauge.Store(key, value)
+		newGauge[key.(string)] = value.(float64)
 		return true
 	})
-	var newCounter sync.Map
+	newCounter := make(map[string]int64)
 	s.counter.Range(func(key any, value any) bool {
-		newCounter.Store(key, value)
+		v := value.(*atomic.Int64).Load()
+		newCounter[key.(string)] = v
 		return true
 	})
-	return &newGauge, &newCounter
+	return newGauge, newCounter
 }
 
 func (s *storage) GetMetric(mType, mName string) (string, error) {

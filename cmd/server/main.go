@@ -20,6 +20,8 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
 )
 
+// postgres://metrics:metrics@localhost/metrics?sslmode=disable
+
 // TODO: fix status in logger
 func main() {
 	config := NewConfigFromFlags()
@@ -47,14 +49,14 @@ func main() {
 	handlers := handlers.New(app)
 	s := server.New(config.Addres, handlers)
 
-	if config.Restore {
+	if config.Restore && config.DatabaseDSN == "" {
 		app.LoadDataFromFile()
 	}
 
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
 
-	if config.StoreInterval > 0 {
+	if config.StoreInterval > 0 && config.DatabaseDSN == "" {
 		saveTicker := time.NewTicker(time.Duration(config.StoreInterval) * time.Second)
 		wg.Add(1)
 		go func() {
