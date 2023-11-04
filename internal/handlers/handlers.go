@@ -89,7 +89,9 @@ func (handlers *handlers) UpdateMetricJSON(rw http.ResponseWriter, r *http.Reque
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
+
 	rw.Write(body)
+	rw.WriteHeader(http.StatusOK)
 }
 
 func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {

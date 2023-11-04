@@ -69,7 +69,7 @@ func (s *storage) UpdateCounter(ctx context.Context, metricObj models.Metrics) e
 func (s *storage) GetGauge(ctx context.Context, metricObj models.Metrics) (models.Metrics, error) {
 	val, ok := s.gauge.Load(metricObj.ID)
 	if ok {
-		*metricObj.Value = val.(float64)
+		metricObj.Value = val.(*float64)
 		return metricObj, nil
 	}
 	return metricObj, ErrMetricNotFound

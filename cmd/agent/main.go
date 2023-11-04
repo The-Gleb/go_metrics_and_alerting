@@ -49,7 +49,8 @@ func main() {
 		case <-pollTicker.C:
 			CollectMetrics(gaugeMap, &PollCount)
 		case <-reportTicker.C:
-			SendMetricsInOneRequest(gaugeMap, &PollCount, req)
+			SendMetricsJSON(gaugeMap, &PollCount, req)
+			// SendMetricsInOneRequest(gaugeMap, &PollCount, req)
 		case <-c:
 			pollTicker.Stop()
 			reportTicker.Stop()

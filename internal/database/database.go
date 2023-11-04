@@ -119,6 +119,9 @@ func (db *database) GetAllMetrics(ctx context.Context) ([]models.Metrics, []mode
 	if err != nil {
 		return nil, nil, err
 	}
+	if rows.Err() != nil {
+		return nil, nil, err
+	}
 	defer rows.Close()
 
 	gaugeMetrics := make([]models.Metrics, 0)
@@ -136,6 +139,9 @@ func (db *database) GetAllMetrics(ctx context.Context) ([]models.Metrics, []mode
 
 	rows, err = tx.QueryContext(ctx, `SELECT m_name, m_value FROM counter_metrics`)
 	if err != nil {
+		return nil, nil, err
+	}
+	if rows.Err() != nil {
 		return nil, nil, err
 	}
 	defer rows.Close()

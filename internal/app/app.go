@@ -9,9 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
 
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 )
 
@@ -29,25 +27,22 @@ type Repositiries interface {
 	PingDB() error
 }
 
-type FileWriter interface {
-	StoreMetrics(data []byte) error
+type FileStorage interface {
+	WriteData(data []byte) error
 	ReadData() ([]byte, error)
 	SyncWrite() bool
 }
 
 type app struct {
-	storage         Repositiries
-	fileWriter      FileWriter
-	fileStoragePath string
-	storeInterval   int
+	storage     Repositiries
+	fileStorage FileStorage
 }
 
 // TODO: add FileWriter
-func NewApp(s Repositiries, path string, interval int) *app {
+func NewApp(s Repositiries, fs FileStorage) *app {
 	return &app{
-		storage:         s,
-		fileStoragePath: path,
-		storeInterval:   interval,
+		storage:     s,
+		fileStorage: fs,
 	}
 }
 
@@ -56,15 +51,8 @@ func (a *app) PingDB() error {
 }
 
 func (a *app) LoadDataFromFile(ctx context.Context) error {
-	// file, err := os.Open(a.fileStoragePath)
-	// if err != nil {
-	// 	return err
-	// }
-	// scanner := bufio.NewScanner(file)
-	// scanner.Scan()
-	// data := scanner.Bytes()
 
-	data, err := a.fileWriter.ReadData()
+	data, err := a.fileStorage.ReadData()
 	if err != nil {
 		return err
 	}
@@ -73,7 +61,7 @@ func (a *app) LoadDataFromFile(ctx context.Context) error {
 	log.Printf("JSON data in file is %s\n\n", string(data))
 	err = json.Unmarshal(data, &maps)
 	if err != nil {
-		logger.Log.Fatal(err)
+		return err
 	}
 	// log.Printf("\ngauge map is %v\n", maps.Gauge)
 	// log.Printf("\ncounter map is %v\n", maps.Counter)
@@ -98,25 +86,16 @@ func (a *app) LoadDataFromFile(ctx context.Context) error {
 	return nil
 }
 
-func (a *app) StoreDataToFile(ctx context.Context) {
+func (a *app) StoreDataToFile(ctx context.Context) error {
 	data, err := a.GetAllMetricsJSON(ctx)
 	if err != nil {
-		logger.Log.Fatal(err)
+		return err
 	}
-	log.Printf("JSON data in file is %s", string(data))
-	var maps models.MetricsMaps
-	err = json.Unmarshal(data, &maps)
+	err = a.fileStorage.WriteData(data)
 	if err != nil {
-		logger.Log.Fatal(err)
+		return err
 	}
-	log.Printf("\ngauge map is %v\n", maps.Gauge)
-	log.Printf("\ncounter map is %v\n", maps.Counter)
-	file, err := os.Create(a.fileStoragePath)
-	if err != nil {
-		log.Fatal("couldn`t open file to store data")
-	}
-	file.Write(data)
-	file.Close()
+	return nil
 }
 
 func (a *app) UpdateMetricSet(ctx context.Context, body io.Reader) ([]byte, error) {
@@ -126,7 +105,7 @@ func (a *app) UpdateMetricSet(ctx context.Context, body io.Reader) ([]byte, erro
 		return make([]byte, 0), err
 	}
 	if len(metrics) == 0 {
-		return make([]byte, 0), fmt.Errorf("No metrics were sent")
+		return make([]byte, 0), fmt.Errorf("no metrics were sent")
 	}
 	n, err := a.storage.UpdateMetricSet(ctx, metrics)
 	if err != nil {
@@ -172,7 +151,7 @@ func (a *app) UpdateMetricFromJSON(ctx context.Context, body io.Reader) ([]byte,
 	default:
 		return ret, ErrInvalidMetricType
 	}
-	if a.storeInterval == 0 {
+	if a.fileStorage.SyncWrite() {
 		a.StoreDataToFile(ctx)
 	}
 	return json.Marshal(metricObj)

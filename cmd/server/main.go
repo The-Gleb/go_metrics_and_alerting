@@ -14,6 +14,7 @@ import (
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/app"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/database"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/filestorage"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/server"
@@ -32,7 +33,8 @@ func main() {
 	}
 	logger.Log.Info(config)
 
-	var rep app.Repositiries
+	var repository app.Repositiries
+	var fileStorage app.FileStorage
 
 	if config.DatabaseDSN != "" {
 		db, err := database.ConnectDB(config.DatabaseDSN)
@@ -40,12 +42,13 @@ func main() {
 			log.Fatal(err)
 			return
 		}
-		rep = db
+		repository = db
 	} else {
-		rep = storage.New()
+		repository = storage.New()
+		fileStorage = filestorage.NewFileStorage(config.FileStoragePath, config.StoreInterval, config.Restore)
 	}
 
-	app := app.NewApp(rep, config.FileStoragePath, config.StoreInterval)
+	app := app.NewApp(repository, fileStorage)
 	handlers := handlers.New(app)
 	s := server.New(config.Addres, handlers)
 
