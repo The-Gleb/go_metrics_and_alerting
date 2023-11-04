@@ -41,7 +41,7 @@ func SetupRoutes(r *chi.Mux, h Handlers) {
 	r.Post("/updates/", h.UpdateMetricSet)
 	r.Get("/value/{mType}/{mName}", h.GetMetric)
 	r.Post("/value/", h.GetMetricJSON)
-	r.Get("/", h.GetAllMetricsJSON)
+	r.Get("/", h.GetAllMetricsHTML)
 	r.Get("/ping", h.PingDB)
 }
 
