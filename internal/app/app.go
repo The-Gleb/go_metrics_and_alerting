@@ -125,7 +125,7 @@ func (a *app) UpdateMetricFromJSON(ctx context.Context, body io.Reader) ([]byte,
 		return ret, err
 	}
 
-	// log.Printf("struct is\n%v", metricObj)
+	log.Printf("struct is\n%v", metricObj)
 	switch metricObj.MType {
 	case "gauge":
 		err := a.storage.UpdateGauge(ctx, metricObj)
@@ -151,7 +151,7 @@ func (a *app) UpdateMetricFromJSON(ctx context.Context, body io.Reader) ([]byte,
 	default:
 		return ret, ErrInvalidMetricType
 	}
-	if a.fileStorage.SyncWrite() {
+	if a.fileStorage != nil && a.fileStorage.SyncWrite() {
 		a.StoreDataToFile(ctx)
 	}
 	return json.Marshal(metricObj)
