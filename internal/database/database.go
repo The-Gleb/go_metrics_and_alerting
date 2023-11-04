@@ -94,7 +94,7 @@ func (db *database) UpdateMetricSet(ctx context.Context, metrics []models.Metric
 				INSERT INTO counter_metrics (m_name, m_value)
 				VALUES ($1, $2)
 				ON CONFLICT (m_name) DO UPDATE
-				SET m_value = $2;
+				SET m_value = counter_metrics.m_value + EXCLUDED.m_value;
 			`, metric.ID, metric.Delta)
 			if err != nil {
 				return 0, err
