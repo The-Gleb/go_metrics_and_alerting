@@ -50,7 +50,7 @@ func main() {
 	s := server.New(config.Addres, handlers)
 
 	if config.Restore && config.DatabaseDSN == "" {
-		app.LoadDataFromFile()
+		app.LoadDataFromFile(context.Background())
 	}
 
 	var wg sync.WaitGroup
@@ -64,7 +64,7 @@ func main() {
 			for {
 				select {
 				case <-saveTicker.C:
-					app.StoreDataToFile()
+					app.StoreDataToFile(context.Background())
 				case <-ctx.Done():
 					logger.Log.Debug("stop saving to file")
 					return

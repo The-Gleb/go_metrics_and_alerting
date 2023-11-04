@@ -1,8 +1,9 @@
 package app
 
 import (
-	"bufio"
+	// "bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,25 +20,29 @@ var (
 )
 
 type Repositiries interface {
-	GetAllMetrics() (map[string]float64, map[string]int64)
-	UpdateGauge(name string, value float64)
-	UpdateCounter(name string, value int64)
-	GetGauge(name string) (*float64, error)
-	GetCounter(name string) (*int64, error)
+	GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Metrics, error)
+	UpdateGauge(ctx context.Context, metricObj models.Metrics) error
+	UpdateCounter(ctx context.Context, metricObj models.Metrics) error
+	UpdateMetricSet(ctx context.Context, metrics []models.Metrics) (int64, error)
+	GetGauge(ctx context.Context, metricObj models.Metrics) (models.Metrics, error)
+	GetCounter(ctx context.Context, metricObj models.Metrics) (models.Metrics, error)
 	PingDB() error
 }
 
 type FileWriter interface {
-	SaveMetrics(data []byte) error
-	NeedToSyncWrite() bool
+	StoreMetrics(data []byte) error
+	ReadData() ([]byte, error)
+	SyncWrite() bool
 }
 
 type app struct {
 	storage         Repositiries
+	fileWriter      FileWriter
 	fileStoragePath string
 	storeInterval   int
 }
 
+// TODO: add FileWriter
 func NewApp(s Repositiries, path string, interval int) *app {
 	return &app{
 		storage:         s,
@@ -50,15 +55,21 @@ func (a *app) PingDB() error {
 	return a.storage.PingDB()
 }
 
-func (a *app) LoadDataFromFile() error {
-	var maps models.MetricsMaps
-	file, err := os.Open(a.fileStoragePath)
+func (a *app) LoadDataFromFile(ctx context.Context) error {
+	// file, err := os.Open(a.fileStoragePath)
+	// if err != nil {
+	// 	return err
+	// }
+	// scanner := bufio.NewScanner(file)
+	// scanner.Scan()
+	// data := scanner.Bytes()
+
+	data, err := a.fileWriter.ReadData()
 	if err != nil {
 		return err
 	}
-	scanner := bufio.NewScanner(file)
-	scanner.Scan()
-	data := scanner.Bytes()
+	var maps models.MetricsMaps
+
 	log.Printf("JSON data in file is %s\n\n", string(data))
 	err = json.Unmarshal(data, &maps)
 	if err != nil {
@@ -67,19 +78,28 @@ func (a *app) LoadDataFromFile() error {
 	// log.Printf("\ngauge map is %v\n", maps.Gauge)
 	// log.Printf("\ncounter map is %v\n", maps.Counter)
 
-	for k, v := range maps.Gauge {
-		a.storage.UpdateGauge(k, v)
+	for _, metric := range maps.Gauge {
+		err := a.storage.UpdateGauge(ctx, metric)
+		if err != nil {
+			return err
+		}
 	}
-	for k, v := range maps.Counter {
-		a.storage.UpdateCounter(k, v)
+	for _, metric := range maps.Counter {
+		err := a.storage.UpdateCounter(ctx, metric)
+		if err != nil {
+			return err
+		}
 	}
-	stor, _ := a.GetAllMetricsJSON()
+
+	// just check
+	stor, _ := a.GetAllMetricsJSON(ctx)
 	log.Printf("loaded and got %v", string(stor))
+
 	return nil
 }
 
-func (a *app) StoreDataToFile() {
-	data, err := a.GetAllMetricsJSON()
+func (a *app) StoreDataToFile(ctx context.Context) {
+	data, err := a.GetAllMetricsJSON(ctx)
 	if err != nil {
 		logger.Log.Fatal(err)
 	}
@@ -99,7 +119,24 @@ func (a *app) StoreDataToFile() {
 	file.Close()
 }
 
-func (a *app) UpdateMetricFromJSON(body io.Reader) ([]byte, error) {
+func (a *app) UpdateMetricSet(ctx context.Context, body io.Reader) ([]byte, error) {
+	metrics := make([]models.Metrics, 0)
+	err := json.NewDecoder(body).Decode(&metrics)
+	if err != nil {
+		return make([]byte, 0), err
+	}
+	if len(metrics) == 0 {
+		return make([]byte, 0), fmt.Errorf("No metrics were sent")
+	}
+	n, err := a.storage.UpdateMetricSet(ctx, metrics)
+	if err != nil {
+		return make([]byte, 0), err
+	}
+	ret := fmt.Sprintf("%d metrics were successfuly updated", n)
+	return []byte(ret), nil
+}
+
+func (a *app) UpdateMetricFromJSON(ctx context.Context, body io.Reader) ([]byte, error) {
 
 	var metricObj models.Metrics
 	var ret []byte
@@ -112,16 +149,22 @@ func (a *app) UpdateMetricFromJSON(body io.Reader) ([]byte, error) {
 	// log.Printf("struct is\n%v", metricObj)
 	switch metricObj.MType {
 	case "gauge":
-		a.storage.UpdateGauge(metricObj.ID, *metricObj.Value)
-		metricObj.Value, err = a.storage.GetGauge(metricObj.ID)
+		err := a.storage.UpdateGauge(ctx, metricObj)
+		if err != nil {
+			return make([]byte, 0), err
+		}
+		metricObj, err = a.storage.GetGauge(ctx, metricObj)
 		if err != nil {
 			return make([]byte, 0), err
 		}
 	case "counter":
 		// log.Printf("\nPOST REQ BODY TO UPDATE %v", metricObj)
 		// log.Printf("to update key: %s, val: %d", metricObj.ID, *metricObj.Delta)
-		a.storage.UpdateCounter(metricObj.ID, *metricObj.Delta)
-		metricObj.Delta, err = a.storage.GetCounter(metricObj.ID)
+		err := a.storage.UpdateCounter(ctx, metricObj)
+		if err != nil {
+			return make([]byte, 0), err
+		}
+		metricObj, err = a.storage.GetCounter(ctx, metricObj)
 		if err != nil {
 			return make([]byte, 0), err
 		}
@@ -130,21 +173,21 @@ func (a *app) UpdateMetricFromJSON(body io.Reader) ([]byte, error) {
 		return ret, ErrInvalidMetricType
 	}
 	if a.storeInterval == 0 {
-		a.StoreDataToFile()
+		a.StoreDataToFile(ctx)
 	}
 	return json.Marshal(metricObj)
 }
 
-func (a *app) UpdateMetricFromParams(mType, mName, mValue string) ([]byte, error) {
+func (a *app) UpdateMetricFromParams(ctx context.Context, mType, mName, mValue string) ([]byte, error) {
 	jsonObj, err := ParamsToJSON(mType, mName, mValue)
 
 	if err != nil {
 		return make([]byte, 0), err
 	}
-	return a.UpdateMetricFromJSON(bytes.NewBuffer(jsonObj))
+	return a.UpdateMetricFromJSON(ctx, bytes.NewBuffer(jsonObj))
 }
 
-func (a *app) GetMetricFromJSON(body io.Reader) ([]byte, error) {
+func (a *app) GetMetricFromJSON(ctx context.Context, body io.Reader) ([]byte, error) {
 
 	var metricObj models.Metrics
 	var ret []byte
@@ -155,14 +198,14 @@ func (a *app) GetMetricFromJSON(body io.Reader) ([]byte, error) {
 
 	switch metricObj.MType {
 	case "gauge":
-		metricObj.Value, err = a.storage.GetGauge(metricObj.ID)
+		metricObj, err = a.storage.GetGauge(ctx, metricObj)
 		if err != nil {
 			return make([]byte, 0), err
 		}
 	case "counter":
 		// log.Printf("\nREQ GET BOODY IS %v", metricObj)
 		// log.Printf("Wanna get %s", metricObj.ID)
-		metricObj.Delta, err = a.storage.GetCounter(metricObj.ID)
+		metricObj, err = a.storage.GetCounter(ctx, metricObj)
 		if err != nil {
 			return make([]byte, 0), err
 		}
@@ -176,36 +219,39 @@ func (a *app) GetMetricFromJSON(body io.Reader) ([]byte, error) {
 	return json.Marshal(metricObj)
 }
 
-func (a *app) GetMetricFromParams(mType, mName string) ([]byte, error) {
-	var strVal string
+func (a *app) GetMetricFromParams(ctx context.Context, mType, mName string) ([]byte, error) {
+	var result string
+	metricObj := models.Metrics{ID: mName, MType: mType}
 	switch mType {
 	case "gauge":
-		val, err := a.storage.GetGauge(mName)
+		metricObj, err := a.storage.GetGauge(ctx, metricObj)
 		if err != nil {
 			return make([]byte, 0), err
 		}
-		strVal = fmt.Sprintf("%v", *val)
+		result = fmt.Sprintf("%v", *metricObj.Value)
 	case "counter":
-		val, err := a.storage.GetCounter(mName)
+		metricObj, err := a.storage.GetCounter(ctx, metricObj)
 		if err != nil {
 			return make([]byte, 0), err
 		}
-		strVal = fmt.Sprintf("%d", *val)
+		result = fmt.Sprintf("%d", *metricObj.Delta)
 	default:
 		return make([]byte, 0), ErrInvalidMetricType
 	}
-	return []byte(strVal), nil
+	return []byte(result), nil
 }
 
-func (a *app) GetAllMetricsJSON() ([]byte, error) {
-	gaugeMap, counterMap := a.storage.GetAllMetrics()
+func (a *app) GetAllMetricsJSON(ctx context.Context) ([]byte, error) {
+	gaugeMap, counterMap, err := a.storage.GetAllMetrics(ctx)
+	if err != nil {
+		return make([]byte, 0), err
+	}
 	maps := models.MetricsMaps{
 		Gauge:   gaugeMap,
 		Counter: counterMap,
 	}
 
 	b := new(bytes.Buffer)
-
 
 	jsonMaps, err := json.Marshal(&maps)
 	// log.Printf("jsoned map %s\n", string(jsonMaps))
@@ -217,9 +263,11 @@ func (a *app) GetAllMetricsJSON() ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func (a *app) GetAllMetricsHTML() []byte {
-	gaugeMap, counterMap := a.storage.GetAllMetrics()
-
+func (a *app) GetAllMetricsHTML(ctx context.Context) ([]byte, error) {
+	gaugeMap, counterMap, err := a.storage.GetAllMetrics(ctx)
+	if err != nil {
+		return make([]byte, 0), err
+	}
 	b := new(bytes.Buffer)
 	fmt.Fprintf(b, `
 	<html>
@@ -234,14 +282,14 @@ func (a *app) GetAllMetricsHTML() []byte {
 		</head>
 		<body>
 		<ul>`)
-	for key, value := range gaugeMap {
-		fmt.Fprintf(b, "<li>%s = %f</li>", key, value)
+	for _, metric := range gaugeMap {
+		fmt.Fprintf(b, "<li>%s = %f</li>", metric.ID, *metric.Value)
 	}
-	for key, value := range counterMap {
-		fmt.Fprintf(b, "<li>%s = %d</li>", key, value)
+	for _, metric := range counterMap {
+		fmt.Fprintf(b, "<li>%s = %d</li>", metric.ID, *metric.Delta)
 	}
 	fmt.Fprintf(b, "</ul></body></body>")
-	return b.Bytes()
+	return b.Bytes(), nil
 }
 
 func ParamsToJSON(mType, mName, mValue string) ([]byte, error) {

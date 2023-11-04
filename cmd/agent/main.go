@@ -49,7 +49,7 @@ func main() {
 		case <-pollTicker.C:
 			CollectMetrics(gaugeMap, &PollCount)
 		case <-reportTicker.C:
-			SendMetricsJSON(gaugeMap, &PollCount, req)
+			SendMetricsInOneRequest(gaugeMap, &PollCount, req)
 		case <-c:
 			pollTicker.Stop()
 			reportTicker.Stop()
@@ -87,44 +87,29 @@ func SendTestGetJSON(req *resty.Request) {
 
 }
 
-func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
-	var rtm runtime.MemStats
-	runtime.ReadMemStats(&rtm)
+func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, req *resty.Request) {
+	metrics := make([]models.Metrics, 0)
 
-	gaugeMap["Alloc"] = float64(rtm.Alloc)
-	gaugeMap["BuckHashSys"] = float64(rtm.BuckHashSys)
-	gaugeMap["Frees"] = float64(rtm.Frees)
-	gaugeMap["GCCPUFraction"] = float64(rtm.GCCPUFraction)
-	gaugeMap["GCSys"] = float64(rtm.GCSys)
-	gaugeMap["HeapAlloc"] = float64(rtm.HeapAlloc)
-	gaugeMap["HeapIdle"] = float64(rtm.HeapIdle)
-	gaugeMap["HeapInuse"] = float64(rtm.HeapInuse)
-	gaugeMap["HeapObjects"] = float64(rtm.HeapObjects)
-	gaugeMap["HeapReleased"] = float64(rtm.HeapReleased)
-	gaugeMap["HeapSys"] = float64(rtm.HeapSys)
-	gaugeMap["LastGC"] = float64(rtm.LastGC)
-	gaugeMap["Lookups"] = float64(rtm.Lookups)
-	gaugeMap["MCacheInuse"] = float64(rtm.MCacheInuse)
-	gaugeMap["MCacheSys"] = float64(rtm.MCacheSys)
-	gaugeMap["MSpanInuse"] = float64(rtm.MSpanInuse)
-	gaugeMap["MSpanSys"] = float64(rtm.MSpanSys)
-	gaugeMap["Mallocs"] = float64(rtm.Mallocs)
-	gaugeMap["NextGC"] = float64(rtm.NextGC)
-	gaugeMap["NumForcedGC"] = float64(rtm.NumForcedGC)
-	gaugeMap["NumGC"] = float64(rtm.NumGC)
-	gaugeMap["OtherSys"] = float64(rtm.OtherSys)
-	gaugeMap["PauseTotalNs"] = float64(rtm.PauseTotalNs)
-	gaugeMap["StackInuse"] = float64(rtm.StackInuse)
-	gaugeMap["StackSys"] = float64(rtm.StackSys)
-	gaugeMap["Sys"] = float64(rtm.Sys)
-	gaugeMap["TotalAlloc"] = float64(rtm.TotalAlloc)
-	gaugeMap["RandomValue"] = rand.Float64()
-	// *counter++
+	for name, value := range gaugeMap {
+		metrics = append(metrics, models.Metrics{
+			MType: "gauge",
+			ID:    name,
+			Value: &value,
+		})
+	}
+	metrics = append(metrics, models.Metrics{
+		MType: "counter",
+		ID:    "PollCount",
+		Delta: PollCount,
+	})
 
-	// b, _ := json.Marshal(gaugeMap)
-	// fmt.Println(string(b))
-	log.Printf("METRICS COLLECTED \n\n")
-
+	resp, err := req.
+		SetBody(&metrics).
+		Post("/updates/")
+	if err != nil {
+		return
+	}
+	log.Println(string(resp.Body()))
 }
 
 func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.Request) {
@@ -192,5 +177,45 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 	)
 	log.Printf("client: status code: %d\n", resp.StatusCode())
 	log.Println(string(resp.Body()))
+
+}
+
+func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
+	var rtm runtime.MemStats
+	runtime.ReadMemStats(&rtm)
+
+	gaugeMap["Alloc"] = float64(rtm.Alloc)
+	gaugeMap["BuckHashSys"] = float64(rtm.BuckHashSys)
+	gaugeMap["Frees"] = float64(rtm.Frees)
+	gaugeMap["GCCPUFraction"] = float64(rtm.GCCPUFraction)
+	gaugeMap["GCSys"] = float64(rtm.GCSys)
+	gaugeMap["HeapAlloc"] = float64(rtm.HeapAlloc)
+	gaugeMap["HeapIdle"] = float64(rtm.HeapIdle)
+	gaugeMap["HeapInuse"] = float64(rtm.HeapInuse)
+	gaugeMap["HeapObjects"] = float64(rtm.HeapObjects)
+	gaugeMap["HeapReleased"] = float64(rtm.HeapReleased)
+	gaugeMap["HeapSys"] = float64(rtm.HeapSys)
+	gaugeMap["LastGC"] = float64(rtm.LastGC)
+	gaugeMap["Lookups"] = float64(rtm.Lookups)
+	gaugeMap["MCacheInuse"] = float64(rtm.MCacheInuse)
+	gaugeMap["MCacheSys"] = float64(rtm.MCacheSys)
+	gaugeMap["MSpanInuse"] = float64(rtm.MSpanInuse)
+	gaugeMap["MSpanSys"] = float64(rtm.MSpanSys)
+	gaugeMap["Mallocs"] = float64(rtm.Mallocs)
+	gaugeMap["NextGC"] = float64(rtm.NextGC)
+	gaugeMap["NumForcedGC"] = float64(rtm.NumForcedGC)
+	gaugeMap["NumGC"] = float64(rtm.NumGC)
+	gaugeMap["OtherSys"] = float64(rtm.OtherSys)
+	gaugeMap["PauseTotalNs"] = float64(rtm.PauseTotalNs)
+	gaugeMap["StackInuse"] = float64(rtm.StackInuse)
+	gaugeMap["StackSys"] = float64(rtm.StackSys)
+	gaugeMap["Sys"] = float64(rtm.Sys)
+	gaugeMap["TotalAlloc"] = float64(rtm.TotalAlloc)
+	gaugeMap["RandomValue"] = rand.Float64()
+	// *counter++
+
+	// b, _ := json.Marshal(gaugeMap)
+	// fmt.Println(string(b))
+	log.Printf("METRICS COLLECTED \n\n")
 
 }

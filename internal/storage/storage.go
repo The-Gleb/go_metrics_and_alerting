@@ -1,14 +1,14 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"log"
-
-	// "net/http"
 	"strconv"
 	"sync"
 	"sync/atomic"
+
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 )
 
 var (
@@ -54,47 +54,83 @@ func (s *storage) UpdateMetric(mType, mName, mValue string) error {
 	return nil
 }
 
-func (s *storage) UpdateGauge(name string, value float64) {
-	s.gauge.Store(name, value)
+func (s *storage) UpdateGauge(ctx context.Context, metricObj models.Metrics) error {
+	s.gauge.Store(metricObj.ID, metricObj.Value)
+	return nil
 }
 
-func (s *storage) UpdateCounter(name string, value int64) {
-	val, _ := s.counter.LoadOrStore(name, new(atomic.Int64))
-	val.(*atomic.Int64).Add(value)
+func (s *storage) UpdateCounter(ctx context.Context, metricObj models.Metrics) error {
+	val, _ := s.counter.LoadOrStore(metricObj.ID, new(atomic.Int64))
+	val.(*atomic.Int64).Add(*metricObj.Delta)
+	return nil
 }
 
-func (s *storage) GetGauge(name string) (*float64, error) {
-	val, ok := s.gauge.Load(name)
+// TODO: check
+func (s *storage) GetGauge(ctx context.Context, metricObj models.Metrics) (models.Metrics, error) {
+	val, ok := s.gauge.Load(metricObj.ID)
 	if ok {
-		v := val.(float64)
-		return &v, nil
+		*metricObj.Value = val.(float64)
+		return metricObj, nil
 	}
-	return nil, ErrMetricNotFound
+	return metricObj, ErrMetricNotFound
 }
 
-func (s *storage) GetCounter(name string) (*int64, error) {
-	val, ok := s.counter.Load(name)
+func (s *storage) GetCounter(ctx context.Context, metricObj models.Metrics) (models.Metrics, error) {
+	val, ok := s.counter.Load(metricObj.ID)
 	if ok {
-		v := val.(*atomic.Int64).Load()
-		log.Printf("Got in storage %d ", v)
-		return &v, nil
+		*metricObj.Delta = val.(*atomic.Int64).Load()
+		return metricObj, nil
 	}
-	return nil, ErrMetricNotFound
+	return metricObj, ErrMetricNotFound
 }
 
-func (s *storage) GetAllMetrics() (map[string]float64, map[string]int64) {
-	newGauge := make(map[string]float64)
+func (s *storage) UpdateMetricSet(ctx context.Context, metrics []models.Metrics) (int64, error) {
+	var updated int64
+	newGauge := *CopySyncMap(&s.gauge)
+	newCounter := *CopySyncMap(&s.counter)
+	// var newCounter sync.Map
+	for _, metric := range metrics {
+		switch metric.MType {
+		case "gauge":
+			newGauge.Store(metric.ID, metric.Value)
+
+			updated++
+		case "counter":
+			val, _ := newCounter.LoadOrStore(metric.ID, new(atomic.Int64))
+			val.(*atomic.Int64).Add(*metric.Delta)
+			updated++
+		default:
+			return 0, fmt.Errorf("invalid mertic type: %s", metric.MType)
+		}
+	}
+	s.gauge = *CopySyncMap(&newGauge)
+	s.counter = *CopySyncMap(&newCounter)
+	return updated, nil
+}
+
+func (s *storage) GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Metrics, error) {
+	newGauge := make([]models.Metrics, 0)
 	s.gauge.Range(func(key any, value any) bool {
-		newGauge[key.(string)] = value.(float64)
+		metric := models.Metrics{
+			MType: "gauge",
+			ID:    key.(string),
+			Value: value.(*float64),
+		}
+		newGauge = append(newGauge, metric)
 		return true
 	})
-	newCounter := make(map[string]int64)
+	newCounter := make([]models.Metrics, 0)
 	s.counter.Range(func(key any, value any) bool {
 		v := value.(*atomic.Int64).Load()
-		newCounter[key.(string)] = v
+		metric := models.Metrics{
+			MType: "counter",
+			ID:    key.(string),
+			Delta: &v,
+		}
+		newCounter = append(newCounter, metric)
 		return true
 	})
-	return newGauge, newCounter
+	return newGauge, newCounter, nil
 }
 
 func (s *storage) GetMetric(mType, mName string) (string, error) {
@@ -118,4 +154,16 @@ func (s *storage) GetMetric(mType, mName string) (string, error) {
 
 func (s *storage) PingDB() error {
 	return nil
+}
+
+func CopySyncMap(m *sync.Map) *sync.Map {
+	var cp sync.Map
+
+	m.Range(func(k, v any) bool {
+		cp.Store(k, v)
+
+		return true
+	})
+
+	return &cp
 }

@@ -1,15 +1,12 @@
 package handlers
 
 import (
-	// "errors"
 	"io"
 
+	"context"
+	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
-	// "sync"
-	// "github.com/The-Gleb/go_metrics_and_alerting/internal/models"
-
-	"github.com/go-chi/chi/v5"
 )
 
 // type Repositiries interface {
@@ -21,12 +18,13 @@ import (
 // }
 
 type App interface {
-	UpdateMetricFromJSON(body io.Reader) ([]byte, error)
-	UpdateMetricFromParams(mType, mName, mValue string) ([]byte, error)
-	GetMetricFromParams(mType, mName string) ([]byte, error)
-	GetMetricFromJSON(body io.Reader) ([]byte, error)
-	GetAllMetricsHTML() []byte
-	GetAllMetricsJSON() ([]byte, error)
+	UpdateMetricFromJSON(ctx context.Context, body io.Reader) ([]byte, error)
+	UpdateMetricFromParams(ctx context.Context, mType, mName, mValue string) ([]byte, error)
+	UpdateMetricSet(ctx context.Context, body io.Reader) ([]byte, error)
+	GetMetricFromParams(ctx context.Context, mType, mName string) ([]byte, error)
+	GetMetricFromJSON(ctx context.Context, body io.Reader) ([]byte, error)
+	GetAllMetricsHTML(ctx context.Context) ([]byte, error)
+	GetAllMetricsJSON(ctx context.Context) ([]byte, error)
 	PingDB() error
 	// ParamsToStruct(mType, mName, mValue string) (models.Metrics, error)
 }
@@ -50,24 +48,43 @@ func (handlers *handlers) PingDB(rw http.ResponseWriter, r *http.Request) {
 	rw.WriteHeader(http.StatusOK)
 }
 
-func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) {
+func (handlers *handlers) UpdateMetricSet(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	rw.Header().Set("Content-Type", "application/json")
 
-	mType := chi.URLParam(r, "mType")
-	mName := chi.URLParam(r, "mName")
-	mValue := chi.URLParam(r, "mValue")
-	body, err := handlers.app.UpdateMetricFromParams(mType, mName, mValue)
-	// log.Printf("Body is:\n%s", body)
+	body, err := handlers.app.UpdateMetricSet(ctx, r.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
 	rw.Write(body)
+	rw.WriteHeader(http.StatusOK)
+
+}
+
+func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	rw.Header().Set("Content-Type", "application/json")
+
+	mType := chi.URLParam(r, "mType")
+	mName := chi.URLParam(r, "mName")
+	mValue := chi.URLParam(r, "mValue")
+	body, err := handlers.app.UpdateMetricFromParams(ctx, mType, mName, mValue)
+	// log.Printf("Body is:\n%s", body)
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+	}
+	rw.WriteHeader(http.StatusOK)
+	rw.Write(body)
 }
 
 func (handlers *handlers) UpdateMetricJSON(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	rw.Header().Set("Content-Type", "application/json")
-	body, err := handlers.app.UpdateMetricFromJSON(r.Body)
+	body, err := handlers.app.UpdateMetricFromJSON(ctx, r.Body)
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
@@ -76,10 +93,12 @@ func (handlers *handlers) UpdateMetricJSON(rw http.ResponseWriter, r *http.Reque
 }
 
 func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	rw.Header().Set("Content-Type", "application/json")
 	mType := chi.URLParam(r, "mType")
 	mName := chi.URLParam(r, "mName")
-	resp, err := handlers.app.GetMetricFromParams(mType, mName)
+	resp, err := handlers.app.GetMetricFromParams(ctx, mType, mName)
 	// log.Printf("Body is: \n%s\n", resp)
 	// log.Printf("Error is: \n%v\n", err)
 
@@ -97,10 +116,11 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (handlers *handlers) GetMetricJSON(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
 	rw.Header().Set("Content-Type", "application/json")
 
-	resp, err := handlers.app.GetMetricFromJSON(r.Body)
+	resp, err := handlers.app.GetMetricFromJSON(ctx, r.Body)
 	log.Printf("ОШИБКААа %v", err)
 	if err != nil {
 		rw.WriteHeader(http.StatusNotFound)
@@ -111,8 +131,10 @@ func (handlers *handlers) GetMetricJSON(rw http.ResponseWriter, r *http.Request)
 }
 
 func (handlers *handlers) GetAllMetricsJSON(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	body, err := handlers.app.GetAllMetricsJSON()
+	body, err := handlers.app.GetAllMetricsJSON(ctx)
 	if err != nil {
 		rw.WriteHeader(http.StatusNotFound)
 		http.Error(rw, err.Error(), http.StatusNotFound)
@@ -121,9 +143,14 @@ func (handlers *handlers) GetAllMetricsJSON(rw http.ResponseWriter, r *http.Requ
 }
 
 func (handlers *handlers) GetAllMetricsHTML(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	rw.Header().Set("Content-Type", "text/html")
 
-	body := handlers.app.GetAllMetricsHTML()
+	body, err := handlers.app.GetAllMetricsHTML(ctx)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusNotFound)
+	}
 	// log.Println(body)
 
 	// rw.WriteHeader(http.StatusOK)
