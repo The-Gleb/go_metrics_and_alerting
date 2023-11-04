@@ -78,7 +78,8 @@ func (s *storage) GetGauge(ctx context.Context, metricObj models.Metrics) (model
 func (s *storage) GetCounter(ctx context.Context, metricObj models.Metrics) (models.Metrics, error) {
 	val, ok := s.counter.Load(metricObj.ID)
 	if ok {
-		*metricObj.Delta = val.(*atomic.Int64).Load()
+		v := val.(*atomic.Int64).Load()
+		metricObj.Delta = &v
 		return metricObj, nil
 	}
 	return metricObj, ErrMetricNotFound
