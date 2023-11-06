@@ -2,10 +2,14 @@ package compressor
 
 import (
 	"compress/gzip"
+	"fmt"
 	"io"
+
 	// "log"
 	"net/http"
 	"strings"
+
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 )
 
 type compressWriter struct {
@@ -50,7 +54,7 @@ type compressReader struct {
 func newCompressReader(r io.ReadCloser) (*compressReader, error) {
 	zr, err := gzip.NewReader(r)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gzip.NewReader: %w", err)
 	}
 
 	return &compressReader{
@@ -76,6 +80,7 @@ func GzipMiddleware(h http.Handler) http.HandlerFunc {
 
 		acceptEncoding := r.Header.Get("Accept-Encoding")
 		supportsGzip := strings.Contains(acceptEncoding, "gzip")
+		logger.Log.Debugw("Request Accept-Encoding", "gzip", supportsGzip)
 		if supportsGzip {
 			cw := newCompressWriter(rw)
 			ow = cw
@@ -84,9 +89,11 @@ func GzipMiddleware(h http.Handler) http.HandlerFunc {
 
 		contentEncoding := r.Header.Get("Content-Encoding")
 		sendsGzip := strings.Contains(contentEncoding, "gzip")
+		logger.Log.Debugw("Request Content-Encoding", "gzip", sendsGzip)
 		if sendsGzip {
 			cr, err := newCompressReader(r.Body)
 			if err != nil {
+				logger.Log.Error(err)
 				rw.WriteHeader(http.StatusInternalServerError)
 				return
 			}

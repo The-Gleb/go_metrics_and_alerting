@@ -2,6 +2,9 @@ package main
 
 import (
 	// "compress/gzip"
+	"bytes"
+	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -36,8 +39,13 @@ func main() {
 	baseURL := fmt.Sprintf("http://%s", config.Addres)
 	req := resty.New().
 		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Encoding", "gzip").
+		SetHeader("Accept-Encoding", "gzip").
 		SetRetryCount(3).
 		SetRetryWaitTime(1 * time.Second).
+		// SetRetryAfter(func(c *resty.Client, r *resty.Response) (time.Duration, error) {
+		// 	return 2, nil
+		// }).
 		SetBaseURL(baseURL).
 		R()
 
@@ -68,26 +76,6 @@ func SendTestGet(req *resty.Request) {
 	log.Println(resp.StatusCode())
 }
 
-func SendTestGetJSON(req *resty.Request) {
-
-	var result models.Metrics
-	_, err := req.
-		// SetHeader("Content-Encoding", "gzip").
-		SetHeader("Accept-Encoding", "gzip").
-		SetBody(&models.Metrics{
-			ID:    "PollCount",
-			MType: "counter",
-		}).
-		SetResult(&result).
-		Post("/value/")
-
-	if err != nil {
-		return
-	}
-	log.Printf("PollCount is %d", *result.Delta)
-
-}
-
 func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, req *resty.Request) {
 	metrics := make([]models.Metrics, 0)
 
@@ -103,13 +91,25 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, req 
 		ID:    "PollCount",
 		Delta: PollCount,
 	})
-
+	data, err := json.Marshal(&metrics)
+	if err != nil {
+		log.Fatal(err)
+	}
+	buf := bytes.Buffer{}
+	gw := gzip.NewWriter(&buf)
+	gw.Write(data)
+	err = gw.Close()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 	resp, err := req.
-		SetBody(&metrics).
+		SetBody(buf.Bytes()).
 		Post("/updates/")
 	if err != nil {
 		return
 	}
+	log.Println(resp.Header().Get("Content-Encoding"))
 	log.Println(string(resp.Body()))
 }
 
@@ -218,5 +218,26 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 	// b, _ := json.Marshal(gaugeMap)
 	// fmt.Println(string(b))
 	log.Printf("METRICS COLLECTED \n\n")
+
+}
+
+func SendTestGetJSON(req *resty.Request) {
+
+	var result models.Metrics
+	_, err := req.
+		// SetHeader("Content-Encoding", "gzip").
+		SetHeader("Accept-Encoding", "gzip").
+		// SetHeader("Content-Encoding", "gzip").
+		SetBody(&models.Metrics{
+			ID:    "PollCount",
+			MType: "counter",
+		}).
+		SetResult(&result).
+		Post("/value/")
+
+	if err != nil {
+		return
+	}
+	log.Printf("PollCount is %d", *result.Delta)
 
 }
