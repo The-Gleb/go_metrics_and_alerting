@@ -2,6 +2,7 @@ package logger
 
 import (
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"net/http"
 	"time"
 )
@@ -15,6 +16,7 @@ func Initialize(level string) error {
 	}
 	cfg := zap.NewDevelopmentConfig()
 	cfg.Level = lvl
+	cfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	zl, err := cfg.Build()
 	if err != nil {
 		return err

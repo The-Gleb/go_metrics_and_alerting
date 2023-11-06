@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 )
@@ -58,7 +57,6 @@ func (a *app) LoadDataFromFile(ctx context.Context) error {
 	}
 	var maps models.MetricsMaps
 
-	log.Printf("JSON data in file is %s\n\n", string(data))
 	err = json.Unmarshal(data, &maps)
 	if err != nil {
 		return err
@@ -78,10 +76,6 @@ func (a *app) LoadDataFromFile(ctx context.Context) error {
 			return err
 		}
 	}
-
-	// just check
-	stor, _ := a.GetAllMetricsJSON(ctx)
-	log.Printf("loaded and got %v", string(stor))
 
 	return nil
 }
@@ -125,7 +119,6 @@ func (a *app) UpdateMetricFromJSON(ctx context.Context, body io.Reader) ([]byte,
 		return ret, err
 	}
 
-	log.Printf("struct is\n%v", metricObj)
 	switch metricObj.MType {
 	case "gauge":
 		err := a.storage.UpdateGauge(ctx, metricObj)

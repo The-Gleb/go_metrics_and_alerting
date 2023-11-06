@@ -3,7 +3,6 @@ package main
 import (
 	// "bufio"
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,7 +27,7 @@ func main() {
 	config := NewConfigFromFlags()
 
 	if err := logger.Initialize(config.LogLevel); err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 		return
 	}
 	logger.Log.Info(config)
@@ -39,7 +38,7 @@ func main() {
 	if config.DatabaseDSN != "" {
 		db, err := database.ConnectDB(config.DatabaseDSN)
 		if err != nil {
-			log.Fatal(err)
+			logger.Log.Fatal(err)
 			return
 		}
 		repository = db
@@ -94,5 +93,5 @@ func main() {
 	}
 
 	wg.Wait()
-	log.Printf("server shutdown")
+	logger.Log.Info("server shutdown")
 }
