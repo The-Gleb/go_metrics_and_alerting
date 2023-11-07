@@ -4,6 +4,7 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,14 +44,14 @@ func Test_storage_GetMetric(t *testing.T) {
 			s:    &s,
 			args: args{"gauge", "Malloc"},
 			want: "",
-			err:  ErrMetricNotFound,
+			err:  repositories.ErrNotFound,
 		},
 		{
 			name: "neg bad request test #4",
 			s:    &s,
 			args: args{"gaug", "Malloc"},
 			want: "",
-			err:  ErrInvalidMetricType,
+			err:  repositories.ErrNotFound,
 		},
 	}
 	for _, tt := range tests {

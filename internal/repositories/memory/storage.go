@@ -9,13 +9,14 @@ import (
 	"sync/atomic"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
 )
 
 var (
 	ErrInvalidMetricValueFloat64 error = errors.New("incorrect metric value\ncannot parse to float64")
 	ErrInvalidMetricValueInt64   error = errors.New("incorrect metric value\ncannot parse to int64")
 	ErrInvalidMetricType         error = errors.New("invalid mertic type")
-	ErrMetricNotFound            error = errors.New(("metric was not found"))
+	// ErrMetricNotFound            error = errors.New(("metric was not found"))
 )
 
 type storage struct {
@@ -72,7 +73,7 @@ func (s *storage) GetGauge(ctx context.Context, metricObj models.Metrics) (model
 		metricObj.Value = val.(*float64)
 		return metricObj, nil
 	}
-	return metricObj, ErrMetricNotFound
+	return metricObj, repositories.ErrNotFound
 }
 
 func (s *storage) GetCounter(ctx context.Context, metricObj models.Metrics) (models.Metrics, error) {
@@ -82,7 +83,7 @@ func (s *storage) GetCounter(ctx context.Context, metricObj models.Metrics) (mod
 		metricObj.Delta = &v
 		return metricObj, nil
 	}
-	return metricObj, ErrMetricNotFound
+	return metricObj, repositories.ErrNotFound
 }
 
 func (s *storage) UpdateMetricSet(ctx context.Context, metrics []models.Metrics) (int64, error) {
@@ -150,7 +151,7 @@ func (s *storage) GetMetric(mType, mName string) (string, error) {
 	default:
 		return "", ErrInvalidMetricType
 	}
-	return "", ErrMetricNotFound
+	return "", repositories.ErrNotFound
 }
 
 func (s *storage) PingDB() error {

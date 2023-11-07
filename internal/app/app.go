@@ -211,7 +211,32 @@ func (a *app) GetMetricFromParams(ctx context.Context, mType, mName string) ([]b
 	if err != nil {
 		return make([]byte, 0), fmt.Errorf("GetMetricFromParams: %w", err)
 	}
-	return a.GetMetricFromJSON(ctx, bytes.NewBuffer(jsonObj))
+	data, err := a.GetMetricFromJSON(ctx, bytes.NewBuffer(jsonObj))
+	if err != nil {
+		return make([]byte, 0), fmt.Errorf("GetMetricFromParams: %w", err)
+	}
+	var metricObj models.Metrics
+	err = json.Unmarshal(data, &metricObj)
+	if err != nil {
+		return make([]byte, 0), fmt.Errorf("GetMetricFromParams: %w", err)
+	}
+	b := new(bytes.Buffer)
+	switch metricObj.MType {
+	case "gauge":
+		_, err = fmt.Fprintf(b, "%v", *metricObj.Value)
+		if err != nil {
+			return make([]byte, 0), fmt.Errorf("GetMetricFromParams: %w", err)
+		}
+		return b.Bytes(), err
+	case "counter":
+		_, err = fmt.Fprintf(b, "%v", *metricObj.Delta)
+		if err != nil {
+			return make([]byte, 0), fmt.Errorf("GetMetricFromParams: %w", err)
+		}
+		return b.Bytes(), err
+	default:
+		return b.Bytes(), ErrInvalidMetricType
+	}
 }
 
 func (a *app) GetAllMetricsJSON(ctx context.Context) ([]byte, error) {
