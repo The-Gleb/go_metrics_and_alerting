@@ -51,7 +51,7 @@ func Test_storage_GetMetric(t *testing.T) {
 			s:    &s,
 			args: args{"gaug", "Malloc"},
 			want: "",
-			err:  repositories.ErrNotFound,
+			err:  ErrInvalidMetricType,
 		},
 	}
 	for _, tt := range tests {
