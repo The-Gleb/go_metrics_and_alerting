@@ -1,12 +1,17 @@
 package handlers
 
 import (
+	"errors"
+	"fmt"
 	"io"
 
 	"context"
-	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
+
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
+	"github.com/go-chi/chi/v5"
 )
 
 // type Repositiries interface {
@@ -42,7 +47,8 @@ func New(app App) *handlers {
 func (handlers *handlers) PingDB(rw http.ResponseWriter, r *http.Request) {
 	err := handlers.app.PingDB()
 	if err != nil {
-		rw.WriteHeader(http.StatusInternalServerError)
+		err = fmt.Errorf("handlers.PingDB: %w", err)
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 	rw.WriteHeader(http.StatusOK)
@@ -55,7 +61,7 @@ func (handlers *handlers) UpdateMetricSet(rw http.ResponseWriter, r *http.Reques
 
 	body, err := handlers.app.UpdateMetricSet(ctx, r.Body)
 	if err != nil {
-		rw.WriteHeader(http.StatusBadRequest)
+		err = fmt.Errorf("handlers.UpdateMetricSet: %w", err)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
 	rw.Write(body)
@@ -73,6 +79,7 @@ func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) 
 	body, err := handlers.app.UpdateMetricFromParams(ctx, mType, mName, mValue)
 	// log.Printf("Body is:\n%s", body)
 	if err != nil {
+		err = fmt.Errorf("handlers.UpdateMetric: %w", err)
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
@@ -86,6 +93,7 @@ func (handlers *handlers) UpdateMetricJSON(rw http.ResponseWriter, r *http.Reque
 	rw.Header().Set("Content-Type", "application/json")
 	body, err := handlers.app.UpdateMetricFromJSON(ctx, r.Body)
 	if err != nil {
+		err = fmt.Errorf("handlers.UpdateMetricJSON: %w", err)
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
@@ -105,7 +113,11 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 	// log.Printf("Error is: \n%v\n", err)
 
 	if err != nil {
-		if err.Error() == "metric was not found" {
+		err = fmt.Errorf("handlers.GetMetric: %w", err)
+		logger.Log.Error(err)
+
+		if errors.Is(err, repositories.ErrNotFound) {
+			logger.Log.Debug("Yes it IS NOT FOUND ERROR")
 			rw.WriteHeader(http.StatusNotFound)
 			http.Error(rw, err.Error(), http.StatusNotFound)
 		} else {

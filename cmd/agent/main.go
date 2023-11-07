@@ -34,20 +34,33 @@ func main() {
 	pollTicker := time.NewTicker(pollInterval)
 	reportTicker := time.NewTicker(reportInterval)
 
-	// stop := make(chan bool)
-
 	baseURL := fmt.Sprintf("http://%s", config.Addres)
-	req := resty.New().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Content-Encoding", "gzip").
-		SetHeader("Accept-Encoding", "gzip").
+	client := resty.New()
+	client.
 		SetRetryCount(3).
-		SetRetryWaitTime(1 * time.Second).
-		// SetRetryAfter(func(c *resty.Client, r *resty.Response) (time.Duration, error) {
-		// 	return 2, nil
-		// }).
-		SetBaseURL(baseURL).
-		R()
+		SetRetryMaxWaitTime(5 * time.Second).
+		// SetRetryWaitTime(1 * time.Second).
+		SetRetryAfter(func(c *resty.Client, r *resty.Response) (time.Duration, error) {
+			log.Printf("attempt: %d", r.Request.Attempt)
+			dur := time.Duration(r.Request.Attempt*2-1) * time.Second
+			return dur, nil
+		}).
+		SetBaseURL(baseURL)
+
+	// := resty.New().
+	// 	SetHeader("Content-Type", "application/json").
+	// 	SetHeader("Content-Encoding", "gzip").
+	// 	SetHeader("Accept-Encoding", "gzip").
+	// 	SetRetryMaxWaitTime(time.Duration(5) * time.Second).
+	// 	// SetRetryWaitTime(1 * time.Second).
+	// 	SetRetryAfter(func(c *resty.Client, r *resty.Response) (time.Duration, error) {
+	// 		log.Printf("attempt: %d", r.Request.Attempt)
+	// 		dur := time.Duration(r.Request.Attempt*2-1) * time.Second
+	// 		return dur, nil
+	// 	}).
+	// 	SetBaseURL(baseURL).
+	// 	SetRetryCount(1).
+	// 	R()
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -58,7 +71,7 @@ func main() {
 			CollectMetrics(gaugeMap, &PollCount)
 		case <-reportTicker.C:
 			// SendMetricsJSON(gaugeMap, &PollCount, req)
-			SendMetricsInOneRequest(gaugeMap, &PollCount, req)
+			SendMetricsInOneRequest(gaugeMap, &PollCount, client)
 		case <-c:
 			pollTicker.Stop()
 			reportTicker.Stop()
@@ -76,7 +89,7 @@ func SendTestGet(req *resty.Request) {
 	log.Println(resp.StatusCode())
 }
 
-func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, req *resty.Request) {
+func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, req *resty.Client) {
 	metrics := make([]models.Metrics, 0)
 
 	for name, value := range gaugeMap {
@@ -103,7 +116,10 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, req 
 		log.Fatal(err)
 		return
 	}
-	resp, err := req.
+	resp, err := req.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Encoding", "gzip").
+		SetHeader("Accept-Encoding", "gzip").
 		SetBody(buf.Bytes()).
 		Post("/updates/")
 	if err != nil {

@@ -12,12 +12,14 @@ import (
 	"time"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/app"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/database"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/filestorage"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories/database"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories/memory"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/retry"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/server"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
 )
 
 // postgres://metrics:metrics@localhost/metrics?sslmode=disable
@@ -32,18 +34,27 @@ func main() {
 	}
 	logger.Log.Info(config)
 
-	var repository app.Repositiries
+	var repository repositories.Repositiries
 	var fileStorage app.FileStorage
 
 	if config.DatabaseDSN != "" {
-		db, err := database.ConnectDB(config.DatabaseDSN)
+		var db *database.DB
+		var err error
+		err = retry.DefaultRetry(
+			context.Background(),
+			func(ctx context.Context) error {
+				db, err = database.ConnectDB(config.DatabaseDSN)
+				return err
+			},
+		)
+
 		if err != nil {
 			logger.Log.Fatal(err)
 			return
 		}
 		repository = db
 	} else {
-		repository = storage.New()
+		repository = memory.New()
 		fileStorage = filestorage.NewFileStorage(config.FileStoragePath, config.StoreInterval, config.Restore)
 	}
 
