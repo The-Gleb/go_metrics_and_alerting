@@ -6,7 +6,6 @@ import (
 	"io"
 
 	"context"
-	"log"
 	"net/http"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
@@ -135,11 +134,19 @@ func (handlers *handlers) GetMetricJSON(rw http.ResponseWriter, r *http.Request)
 	rw.Header().Set("Content-Type", "application/json")
 
 	resp, err := handlers.app.GetMetricFromJSON(ctx, r.Body)
-	log.Printf("ОШИБКААа %v", err)
 	if err != nil {
-		rw.WriteHeader(http.StatusNotFound)
-		http.Error(rw, err.Error(), http.StatusNotFound)
+		err = fmt.Errorf("handlers.GetMetricJSON: %w", err)
+		logger.Log.Error(err)
+
+		if !errors.Is(err, repositories.ErrNotFound) {
+			rw.WriteHeader(http.StatusBadRequest)
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+		} else {
+			rw.WriteHeader(http.StatusNotFound)
+			http.Error(rw, err.Error(), http.StatusNotFound)
+		}
 	}
+
 	// rw.WriteHeader(http.StatusOK)
 	rw.Write(resp)
 }

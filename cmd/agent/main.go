@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"sync"
 	"time"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
@@ -46,24 +45,6 @@ func main() {
 			return dur, nil
 		}).
 		SetBaseURL(baseURL)
-
-	// := resty.New().
-	// 	SetHeader("Content-Type", "application/json").
-	// 	SetHeader("Content-Encoding", "gzip").
-	// 	SetHeader("Accept-Encoding", "gzip").
-	// 	SetRetryMaxWaitTime(time.Duration(5) * time.Second).
-	// 	// SetRetryWaitTime(1 * time.Second).
-	// 	SetRetryAfter(func(c *resty.Client, r *resty.Response) (time.Duration, error) {
-	// 		log.Printf("attempt: %d", r.Request.Attempt)
-	// 		dur := time.Duration(r.Request.Attempt*2-1) * time.Second
-	// 		return dur, nil
-	// 	}).
-	// 	SetBaseURL(baseURL).
-	// 	SetRetryCount(1).
-	// 	R()
-
-	var wg sync.WaitGroup
-	wg.Add(1)
 
 	for {
 		select {

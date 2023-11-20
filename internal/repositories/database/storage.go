@@ -128,7 +128,7 @@ func (db *DB) GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Met
 		var value float64
 		err := rows.Scan(&metric.ID, &value)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, checkForConectionErr("GetAllMetrics", err)
 		}
 		metric.Value = &value
 		metric.MType = "gauge"
@@ -150,7 +150,7 @@ func (db *DB) GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Met
 		var value int64
 		err := rows.Scan(&metric.ID, &value)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, checkForConectionErr("GetAllMetrics", err)
 		}
 		metric.Delta = &value
 		metric.MType = "counter"
@@ -207,7 +207,7 @@ func (db *DB) GetCounter(ctx context.Context, metricObj models.Metrics) (models.
 	var value int64
 	err := row.Scan(&value)
 	if err != nil {
-		return metricObj, err
+		return metricObj, checkForConectionErr("GetCounter", err)
 	}
 	metricObj.Delta = &value
 	return metricObj, nil
