@@ -4,6 +4,9 @@ import (
 	// "compress/gzip"
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -20,6 +23,8 @@ import (
 
 func main() {
 	config := NewConfigFromFlags()
+
+	logger.Initialize("debug")
 
 	gaugeMap := make(map[string]float64)
 	var PollCount int64 = 1
@@ -52,7 +57,7 @@ func main() {
 			CollectMetrics(gaugeMap, &PollCount)
 		case <-reportTicker.C:
 			// SendMetricsJSON(gaugeMap, &PollCount, req)
-			SendMetricsInOneRequest(gaugeMap, &PollCount, client)
+			SendMetricsInOneRequest(gaugeMap, &PollCount, client, config.SignKey)
 		case <-c:
 			pollTicker.Stop()
 			reportTicker.Stop()
@@ -70,7 +75,7 @@ func SendTestGet(req *resty.Request) {
 	log.Println(resp.StatusCode())
 }
 
-func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, req *resty.Client) {
+func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, client *resty.Client, signKey []byte) {
 	metrics := make([]models.Metrics, 0)
 
 	for name, value := range gaugeMap {
@@ -85,6 +90,7 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, req 
 		ID:    "PollCount",
 		Delta: PollCount,
 	})
+
 	data, err := json.Marshal(&metrics)
 	if err != nil {
 		log.Fatal(err)
@@ -97,17 +103,43 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, req 
 		log.Fatal(err)
 		return
 	}
-	resp, err := req.R().
+	body := buf.Bytes()
+
+	var sign []byte
+	if len(signKey) > 0 {
+		sign, err = hash(body, signKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// sign, err = []byte(hex.EncodeToString())
+		log.Println(signKey)
+		log.Println(string(sign))
+	}
+
+	resp, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip").
 		SetHeader("Accept-Encoding", "gzip").
-		SetBody(buf.Bytes()).
+		SetHeader("HashSHA256", hex.EncodeToString(sign)).
+		SetBody(body).
 		Post("/updates/")
 	if err != nil {
 		return
 	}
 	log.Println(resp.Header().Get("Content-Encoding"))
 	log.Println(string(resp.Body()))
+}
+
+func hash(data, key []byte) ([]byte, error) {
+	h := hmac.New(sha256.New, key)
+	_, err := h.Write(data)
+	if err != nil {
+		return make([]byte, 0), err
+	}
+
+	sign := h.Sum(nil)
+
+	return sign, nil
 }
 
 func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.Request) {

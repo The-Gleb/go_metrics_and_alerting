@@ -10,6 +10,7 @@ type Config struct {
 	Addres         string
 	PollInterval   int
 	ReportInterval int
+	SignKey        []byte
 }
 
 type ConfigBuilder struct {
@@ -31,6 +32,11 @@ func (b ConfigBuilder) SetReportInterval(interval int) ConfigBuilder {
 	return b
 }
 
+func (b ConfigBuilder) SetSignKey(key string) ConfigBuilder {
+	b.config.SignKey = []byte(key)
+	return b
+}
+
 func NewConfigFromFlags() Config {
 	flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
@@ -43,13 +49,17 @@ func NewConfigFromFlags() Config {
 	var reportInterval int
 	flag.IntVar(&reportInterval, "r", 10, "interval between collecting metric from runtime")
 
+	var key string
+	flag.StringVar(&key, "k", "", "key for signing")
+
 	flag.Parse()
 
 	var builder ConfigBuilder
 
 	builder = builder.SetAddres(address).
 		SetPollInterval(pollInterval).
-		SetReportInterval(reportInterval)
+		SetReportInterval(reportInterval).
+		SetSignKey(key)
 
 	if envAddress := os.Getenv("ADDRESS"); envAddress != "" {
 		builder = builder.SetAddres(envAddress)
@@ -59,6 +69,9 @@ func NewConfigFromFlags() Config {
 	}
 	if envReportInterval := os.Getenv("REPORT_INTERVAL"); envReportInterval != "" {
 		builder = builder.SetReportInterval(reportInterval)
+	}
+	if envSignKey := os.Getenv("KEY"); envSignKey != "" {
+		builder = builder.SetSignKey(envSignKey)
 	}
 
 	return builder.config

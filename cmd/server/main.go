@@ -60,7 +60,7 @@ func main() {
 
 	app := app.NewApp(repository, fileStorage)
 	handlers := handlers.New(app)
-	s := server.New(config.Addres, handlers)
+	s := server.New(config.Addres, handlers, config.SignKey)
 
 	if config.Restore && config.DatabaseDSN == "" {
 		app.LoadDataFromFile(context.Background())
