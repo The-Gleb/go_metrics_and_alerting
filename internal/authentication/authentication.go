@@ -56,6 +56,7 @@ func CheckSignature(signKey []byte, handleFunc http.HandlerFunc) http.HandlerFun
 			logger.Log.Debug("hash signatures are not equal")
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
 
 		r.Body = io.NopCloser(bytes.NewBuffer(data))
