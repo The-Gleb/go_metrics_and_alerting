@@ -62,7 +62,7 @@ func main() {
 	handlers := handlers.New(app)
 	s := server.New(config.Addres, handlers, []byte(config.SignKey))
 
-	if config.Restore && config.DatabaseDSN == "" {
+	if config.Restore {
 		app.LoadDataFromFile(context.Background())
 	}
 
