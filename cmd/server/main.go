@@ -37,6 +37,11 @@ func main() {
 	var repository repositories.Repositiries
 	var fileStorage app.FileStorage
 
+	if config.FileStoragePath != "" {
+		repository = memory.New()
+		fileStorage = filestorage.NewFileStorage(config.FileStoragePath, config.StoreInterval, config.Restore)
+	}
+
 	if config.DatabaseDSN != "" {
 		var db *database.DB
 		var err error
@@ -53,9 +58,6 @@ func main() {
 			return
 		}
 		repository = db
-	} else {
-		repository = memory.New()
-		fileStorage = filestorage.NewFileStorage(config.FileStoragePath, config.StoreInterval, config.Restore)
 	}
 
 	app := app.NewApp(repository, fileStorage)
