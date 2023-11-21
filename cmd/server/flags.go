@@ -16,7 +16,7 @@ type Config struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Restore         bool   `env:"RESTORE"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
-	SignKey         []byte `env:"KEY"`
+	SignKey         string `env:"KEY"`
 }
 
 type ConfigBuilder struct {
@@ -50,7 +50,7 @@ func (b ConfigBuilder) SetDatabaseDSN(dsn string) ConfigBuilder {
 }
 
 func (b ConfigBuilder) SetSignKey(key string) ConfigBuilder {
-	b.config.SignKey = []byte(key)
+	b.config.SignKey = key
 	return b
 }
 

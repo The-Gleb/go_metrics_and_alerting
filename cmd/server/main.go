@@ -60,7 +60,7 @@ func main() {
 
 	app := app.NewApp(repository, fileStorage)
 	handlers := handlers.New(app)
-	s := server.New(config.Addres, handlers, config.SignKey)
+	s := server.New(config.Addres, handlers, []byte(config.SignKey))
 
 	if config.Restore && config.DatabaseDSN == "" {
 		app.LoadDataFromFile(context.Background())
@@ -94,7 +94,6 @@ func main() {
 		signal.Notify(ServerShutdownSignal, syscall.SIGINT)
 		<-ServerShutdownSignal
 		s.Shutdown(context.Background())
-		logger.Log.Debug("stop saving to file")
 		cancel()
 	}()
 
