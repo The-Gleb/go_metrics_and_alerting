@@ -10,7 +10,7 @@ type Config struct {
 	Addres         string
 	PollInterval   int
 	ReportInterval int
-	SignKey        []byte
+	SignKey        string
 }
 
 type ConfigBuilder struct {
@@ -33,7 +33,7 @@ func (b ConfigBuilder) SetReportInterval(interval int) ConfigBuilder {
 }
 
 func (b ConfigBuilder) SetSignKey(key string) ConfigBuilder {
-	b.config.SignKey = []byte(key)
+	b.config.SignKey = key
 	return b
 }
 

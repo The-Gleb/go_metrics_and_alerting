@@ -29,15 +29,23 @@ func (w *signingResponseWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-func CheckSignature(signKey []byte, handleFunc http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if len(signKey) == 0 {
-			handleFunc(w, r)
+func CheckSignature(signKey []byte, next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if len(signKey) == 0 || r.Header.Get("Hash") == "none" || r.Header.Get("Hashsha256") == "" {
+			logger.Log.Debug("key is empty")
+			next.ServeHTTP(w, r)
 			return
 		}
-		logger.Log.Debug(string(signKey))
+
+		if r.Header.Get("Hash") == "none" {
+			logger.Log.Debug("key is empty")
+			next.ServeHTTP(w, r)
+			return
+		}
 
 		gotSign, err := hex.DecodeString(r.Header.Get("HashSHA256"))
+		// gotSign := r.Header.Get("HashSHA256")
+
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
@@ -52,7 +60,13 @@ func CheckSignature(signKey []byte, handleFunc http.HandlerFunc) http.HandlerFun
 		}
 		sign := h.Sum(nil)
 
-		if !hmac.Equal(sign, gotSign) {
+		logger.Log.Debug("sign key is ", string(signKey))
+		logger.Log.Debug("received body is ", string(data))
+		logger.Log.Debug("received hex signature: ", r.Header.Get("HashSHA256"))
+		logger.Log.Debug("calculated hex signature: ", hex.EncodeToString(sign))
+		logger.Log.Debug("Headers: ", r.Header)
+
+		if !hmac.Equal(sign, []byte(gotSign)) {
 			logger.Log.Debug("hash signatures are not equal")
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
@@ -64,7 +78,8 @@ func CheckSignature(signKey []byte, handleFunc http.HandlerFunc) http.HandlerFun
 			ResponseWriter: w,
 			key:            signKey,
 		}
-		handleFunc(&srw, r)
+		next.ServeHTTP(&srw, r)
 
 	}
+	return http.HandlerFunc(fn)
 }

@@ -61,7 +61,7 @@ func NewConfigFromFlags() Config {
 	flag.StringVar(&address, "a", ":8080", "address and port to run server")
 
 	var loglevel string
-	flag.StringVar(&loglevel, "l", "info", "address and port to run server")
+	flag.StringVar(&loglevel, "l", "debug", "address and port to run server")
 
 	var storeInterval int
 	flag.IntVar(&storeInterval, "i", 300, "seconds between storing metrics to file")
@@ -70,7 +70,7 @@ func NewConfigFromFlags() Config {
 	flag.StringVar(&fileStoragePath, "f", "/tmp/metrics-db.json", "path to file to store metrics")
 
 	var restore bool
-	flag.BoolVar(&restore, "r", true, "bool, wether or not store metrics to file")
+	flag.BoolVar(&restore, "r", true, "bool, wether or not restore metrics from file")
 
 	var databaseDSN string
 	flag.StringVar(&databaseDSN, "d", "",

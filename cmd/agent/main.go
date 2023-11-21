@@ -57,7 +57,7 @@ func main() {
 			CollectMetrics(gaugeMap, &PollCount)
 		case <-reportTicker.C:
 			// SendMetricsJSON(gaugeMap, &PollCount, req)
-			SendMetricsInOneRequest(gaugeMap, &PollCount, client, config.SignKey)
+			SendMetricsInOneRequest(gaugeMap, &PollCount, client, []byte(config.SignKey))
 		case <-c:
 			pollTicker.Stop()
 			reportTicker.Stop()
@@ -95,6 +95,21 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, clie
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	logger.Log.Debug("sent body is", string(data))
+
+	var sign []byte
+	if len(signKey) > 0 {
+		sign, err = hash(data, signKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// sign, err = []byte(hex.EncodeToString())
+
+		logger.Log.Debug("signKey is ", string(signKey))
+		logger.Log.Debug("hex encoded signature is ", hex.EncodeToString(sign))
+	}
+
 	buf := bytes.Buffer{}
 	gw := gzip.NewWriter(&buf)
 	gw.Write(data)
@@ -104,17 +119,6 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, clie
 		return
 	}
 	body := buf.Bytes()
-
-	var sign []byte
-	if len(signKey) > 0 {
-		sign, err = hash(body, signKey)
-		if err != nil {
-			log.Fatal(err)
-		}
-		// sign, err = []byte(hex.EncodeToString())
-		log.Println(signKey)
-		log.Println(string(sign))
-	}
 
 	resp, err := client.R().
 		SetHeader("Content-Type", "application/json").

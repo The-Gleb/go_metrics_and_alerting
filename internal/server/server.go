@@ -27,7 +27,7 @@ func New(address string, handlers Handlers, signKey []byte) *http.Server {
 	SetupRoutes(r, handlers)
 	return &http.Server{
 		Addr:    address,
-		Handler: logger.LogRequest(authentication.CheckSignature(signKey, compressor.GzipMiddleware(r))),
+		Handler: logger.LogRequest(compressor.GzipMiddleware(authentication.CheckSignature(signKey, r))),
 	}
 }
 
