@@ -116,7 +116,7 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 		logger.Log.Error(err)
 
 		if errors.Is(err, repositories.ErrNotFound) {
-			logger.Log.Debug("Yes it IS NOT FOUND ERROR")
+			logger.Log.Debug("Yes it is NOT FOUND ERROR")
 			rw.WriteHeader(http.StatusNotFound)
 			http.Error(rw, err.Error(), http.StatusNotFound)
 		} else {

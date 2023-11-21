@@ -54,6 +54,7 @@ func CheckSignature(signKey []byte, handleFunc http.HandlerFunc) http.HandlerFun
 
 		if !hmac.Equal(sign, gotSign) {
 			logger.Log.Debug("hash signatures are not equal")
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusBadRequest)
 		}
 
