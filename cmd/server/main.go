@@ -3,47 +3,73 @@ package main
 import (
 	// "bufio"
 	"context"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+
 	"time"
 
-	// "time"
-
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/app"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/filestorage"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories/database"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories/memory"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/retry"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/server"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/storage"
 )
+
+// postgres://metrics:metrics@localhost/metrics?sslmode=disable
 
 // TODO: fix status in logger
 func main() {
 	config := NewConfigFromFlags()
 
 	if err := logger.Initialize(config.LogLevel); err != nil {
-		log.Fatal(err)
+		logger.Log.Fatal(err)
 		return
 	}
 	logger.Log.Info(config)
 
-	storage := storage.New()
-	app := app.NewApp(storage, config.FileStoragePath, config.StoreInterval)
+	var repository repositories.Repositiries
+	var fileStorage app.FileStorage
+
+	if config.DatabaseDSN != "" {
+		var db *database.DB
+		var err error
+		err = retry.DefaultRetry(
+			context.Background(),
+			func(ctx context.Context) error {
+				db, err = database.ConnectDB(config.DatabaseDSN)
+				return err
+			},
+		)
+
+		if err != nil {
+			logger.Log.Fatal(err)
+			return
+		}
+		repository = db
+	} else {
+		repository = memory.New()
+		fileStorage = filestorage.NewFileStorage(config.FileStoragePath, config.StoreInterval, config.Restore)
+	}
+
+	app := app.NewApp(repository, fileStorage)
 	handlers := handlers.New(app)
 	s := server.New(config.Addres, handlers)
 
-	if config.Restore {
-		log.Println("try to load")
-		app.LoadDataFromFile()
+	if config.Restore && config.DatabaseDSN == "" {
+		app.LoadDataFromFile(context.Background())
 	}
 
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())
 
-	if config.StoreInterval > 0 {
+	if config.StoreInterval > 0 && config.DatabaseDSN == "" {
 		saveTicker := time.NewTicker(time.Duration(config.StoreInterval) * time.Second)
 		wg.Add(1)
 		go func() {
@@ -51,7 +77,7 @@ func main() {
 			for {
 				select {
 				case <-saveTicker.C:
-					app.StoreDataToFile()
+					app.StoreDataToFile(context.Background())
 				case <-ctx.Done():
 					logger.Log.Debug("stop saving to file")
 					return
@@ -78,5 +104,5 @@ func main() {
 	}
 
 	wg.Wait()
-	log.Printf("server shutdown")
+	logger.Log.Info("server shutdown")
 }

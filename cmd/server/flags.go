@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/caarlos0/env"
 	// "github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 )
@@ -16,6 +15,7 @@ type Config struct {
 	StoreInterval   int    `env:"STORE_INTERVAL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Restore         bool   `env:"RESTORE"`
+	DatabaseDSN     string `env:"DATABASE_DSN"`
 }
 
 type ConfigBuilder struct {
@@ -43,6 +43,11 @@ func (b ConfigBuilder) SetRestore(restore bool) ConfigBuilder {
 	return b
 }
 
+func (b ConfigBuilder) SetDatabaseDSN(dsn string) ConfigBuilder {
+	b.config.DatabaseDSN = dsn
+	return b
+}
+
 func NewConfigFromFlags() Config {
 	flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
@@ -56,10 +61,11 @@ func NewConfigFromFlags() Config {
 	flag.StringVar(&fileStoragePath, "f", "/tmp/metrics-db.json", "path to file to store metrics")
 	var restore bool
 	flag.BoolVar(&restore, "r", true, "bool, wether or not store metrics to file")
+	var databaseDSN string
+	flag.StringVar(&databaseDSN, "d", "",
+		"info to connect to database, host=host port=port user=myuser password=xxxx dbname=mydb sslmode=disable")
 
 	flag.Parse()
-	logger.Log.Debug("resotore var", restore)
-	log.Printf("Reotre %v", restore)
 
 	var builder ConfigBuilder
 	log.Printf("ENV ADDRESS %v", os.Getenv("ADDRESS"))
@@ -68,7 +74,8 @@ func NewConfigFromFlags() Config {
 		SetLogLevel(loglevel).
 		SetStoreInterval(storeInterval).
 		SetFileStoragePath(fileStoragePath).
-		SetRestore(restore)
+		SetRestore(restore).
+		SetDatabaseDSN(databaseDSN)
 
 	env.Parse(&builder.config)
 	// if envAddress := os.Getenv("ADDRESS"); envAddress != "" {
