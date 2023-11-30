@@ -14,7 +14,12 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"sync"
+	"sync/atomic"
 	"time"
+
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/mem"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
@@ -27,7 +32,8 @@ func main() {
 	logger.Initialize("debug")
 
 	gaugeMap := make(map[string]float64)
-	var PollCount int64 = 1
+	var PollCount atomic.Int64
+	PollCount.Store(1)
 
 	var pollInterval = time.Duration(config.PollInterval) * time.Second
 	var reportInterval = time.Duration(config.ReportInterval) * time.Second
@@ -51,17 +57,41 @@ func main() {
 		}).
 		SetBaseURL(baseURL)
 
+	sendTaskCh := make(chan struct{}, 1)
+	collectTaskCh := make(chan struct{}, 1)
+	collectMemsTaskCh := make(chan struct{}, 1)
+	var mu sync.RWMutex
+
+	for i := 0; i < config.RateLimit; i++ {
+		go func() {
+			for range sendTaskCh {
+				SendMetricsInOneRequest(gaugeMap, &PollCount, client, []byte(config.SignKey), &mu)
+			}
+		}()
+	}
+
+	go func() {
+		for range collectTaskCh {
+			CollectMetrics(gaugeMap, &mu)
+		}
+	}()
+
+	go func() {
+		for range collectMemsTaskCh {
+			CollectMemMetrics(gaugeMap, &mu)
+		}
+	}()
+
 	for {
 		select {
 		case <-pollTicker.C:
-			CollectMetrics(gaugeMap, &PollCount)
+			collectTaskCh <- struct{}{}
+			collectMemsTaskCh <- struct{}{}
 		case <-reportTicker.C:
-			// SendMetricsJSON(gaugeMap, &PollCount, req)
-			SendMetricsInOneRequest(gaugeMap, &PollCount, client, []byte(config.SignKey))
+			sendTaskCh <- struct{}{}
 		case <-c:
 			pollTicker.Stop()
 			reportTicker.Stop()
-
 			return
 		}
 	}
@@ -75,9 +105,10 @@ func SendTestGet(req *resty.Request) {
 	log.Println(resp.StatusCode())
 }
 
-func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, client *resty.Client, signKey []byte) {
+func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int64, client *resty.Client, signKey []byte, mu *sync.RWMutex) {
 	metrics := make([]models.Metrics, 0)
 
+	mu.RLock()
 	for name, value := range gaugeMap {
 		metrics = append(metrics, models.Metrics{
 			MType: "gauge",
@@ -85,10 +116,13 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, clie
 			Value: &value,
 		})
 	}
+	mu.RUnlock()
+
+	counter := PollCount.Load()
 	metrics = append(metrics, models.Metrics{
 		MType: "counter",
 		ID:    "PollCount",
-		Delta: PollCount,
+		Delta: &counter,
 	})
 
 	data, err := json.Marshal(&metrics)
@@ -132,6 +166,37 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *int64, clie
 	}
 	log.Println(resp.Header().Get("Content-Encoding"))
 	log.Println(string(resp.Body()))
+}
+
+func CollectMemMetrics(gauge map[string]float64, mu *sync.RWMutex) {
+	v, err := mem.VirtualMemory()
+	if err != nil {
+		logger.Log.Error(err)
+		return
+	}
+
+	cpu, err := cpu.Percent(0, false)
+	if err != nil {
+		logger.Log.Error(err)
+		return
+	}
+
+	var allCPUutil float64
+	for i, val := range cpu {
+		log.Println("cpu ", i, " ", val)
+		allCPUutil += val
+	}
+	log.Println("All CPUS ", allCPUutil)
+
+	mu.Lock()
+
+	gauge["TotalMemory"] = float64(v.Total)
+	gauge["FreeMemory"] = float64(v.Free)
+	gauge["CPUutilization1"] = cpu[0]
+
+	mu.Unlock()
+
+	log.Println("MEM METRICS COLLECTED")
 }
 
 func hash(data, key []byte) ([]byte, error) {
@@ -214,9 +279,11 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 
 }
 
-func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
+func CollectMetrics(gaugeMap map[string]float64, mu *sync.RWMutex) {
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
+
+	mu.Lock()
 
 	gaugeMap["Alloc"] = float64(rtm.Alloc)
 	gaugeMap["BuckHashSys"] = float64(rtm.BuckHashSys)
@@ -246,6 +313,8 @@ func CollectMetrics(gaugeMap map[string]float64, counter *int64) {
 	gaugeMap["Sys"] = float64(rtm.Sys)
 	gaugeMap["TotalAlloc"] = float64(rtm.TotalAlloc)
 	gaugeMap["RandomValue"] = rand.Float64()
+
+	mu.Unlock()
 	// *counter++
 
 	// b, _ := json.Marshal(gaugeMap)
