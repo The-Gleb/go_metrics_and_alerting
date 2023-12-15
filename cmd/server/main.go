@@ -37,6 +37,11 @@ func main() {
 	var repository repositories.Repositiries
 	var fileStorage app.FileStorage
 
+	if config.FileStoragePath != "" {
+		repository = memory.New()
+		fileStorage = filestorage.NewFileStorage(config.FileStoragePath, config.StoreInterval, config.Restore)
+	}
+
 	if config.DatabaseDSN != "" {
 		var db *database.DB
 		var err error
@@ -53,16 +58,13 @@ func main() {
 			return
 		}
 		repository = db
-	} else {
-		repository = memory.New()
-		fileStorage = filestorage.NewFileStorage(config.FileStoragePath, config.StoreInterval, config.Restore)
 	}
 
 	app := app.NewApp(repository, fileStorage)
 	handlers := handlers.New(app)
-	s := server.New(config.Addres, handlers)
+	s := server.New(config.Addres, handlers, []byte(config.SignKey))
 
-	if config.Restore && config.DatabaseDSN == "" {
+	if config.Restore {
 		app.LoadDataFromFile(context.Background())
 	}
 
@@ -94,7 +96,6 @@ func main() {
 		signal.Notify(ServerShutdownSignal, syscall.SIGINT)
 		<-ServerShutdownSignal
 		s.Shutdown(context.Background())
-		logger.Log.Debug("stop saving to file")
 		cancel()
 	}()
 

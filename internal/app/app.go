@@ -99,7 +99,7 @@ func (a *app) UpdateMetricSet(ctx context.Context, body io.Reader) ([]byte, erro
 	}
 
 	var n int64
-	err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {
+	err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
 		n, err = a.storage.UpdateMetricSet(ctx, metrics)
 		return err
 	})

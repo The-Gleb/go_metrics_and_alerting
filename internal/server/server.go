@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/authentication"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/compressor"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/go-chi/chi/v5"
@@ -21,12 +22,12 @@ type Handlers interface {
 	PingDB(rw http.ResponseWriter, r *http.Request)
 }
 
-func New(address string, handlers Handlers) *http.Server {
+func New(address string, handlers Handlers, signKey []byte) *http.Server {
 	r := chi.NewRouter()
 	SetupRoutes(r, handlers)
 	return &http.Server{
 		Addr:    address,
-		Handler: logger.LogRequest(compressor.GzipMiddleware(r)),
+		Handler: logger.LogRequest(compressor.GzipMiddleware(authentication.CheckSignature(signKey, r))),
 	}
 }
 
