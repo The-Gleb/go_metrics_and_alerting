@@ -91,11 +91,11 @@ func (a *app) UpdateMetricSet(ctx context.Context, body io.Reader) ([]byte, erro
 
 	err := json.NewDecoder(body).Decode(&metrics)
 	if err != nil {
-		return make([]byte, 0), fmt.Errorf("UpdateMetricSet: %w", err)
+		return []byte{}, fmt.Errorf("UpdateMetricSet: %w", err)
 	}
 
 	if len(metrics) == 0 {
-		return make([]byte, 0), fmt.Errorf("UpdateMetricSet: %w", fmt.Errorf("no metrics were sent"))
+		return []byte{}, fmt.Errorf("UpdateMetricSet: %w", fmt.Errorf("no metrics were sent"))
 	}
 
 	var n int64
@@ -106,22 +106,24 @@ func (a *app) UpdateMetricSet(ctx context.Context, body io.Reader) ([]byte, erro
 
 	// n, err := a.storage.UpdateMetricSet(ctx, metrics)
 	if err != nil {
-		return make([]byte, 0), fmt.Errorf("UpdateMetricSet: %w", err)
+		return []byte{}, fmt.Errorf("UpdateMetricSet: %w", err)
 	}
 
-	ret := fmt.Sprintf("%d metrics were successfuly updated", n)
+	b := bytes.Buffer{}
+	b.WriteString(fmt.Sprint(n))
+	b.WriteString(" metrics were successfuly updated")
+	// ret := fmt.Sprintf("%d metrics were successfuly updated", n)
 
-	return []byte(ret), nil
+	return b.Bytes(), nil
 }
 
 func (a *app) UpdateMetricFromJSON(ctx context.Context, body io.Reader) ([]byte, error) {
 
 	var metricObj models.Metrics
-	var ret []byte
 
 	err := json.NewDecoder(body).Decode(&metricObj)
 	if err != nil {
-		return ret, fmt.Errorf("UpdateMetricFromJSON: %w", err)
+		return []byte{}, fmt.Errorf("UpdateMetricFromJSON: %w", err)
 	}
 
 	switch metricObj.MType {
@@ -130,30 +132,31 @@ func (a *app) UpdateMetricFromJSON(ctx context.Context, body io.Reader) ([]byte,
 			err = a.storage.UpdateGauge(ctx, metricObj)
 			return err
 		})
-		// err := a.storage.UpdateGauge(ctx, metricObj)
+
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("UpdateMetricFromJSON: %w", err)
+			return []byte{}, fmt.Errorf("UpdateMetricFromJSON: %w", err)
 		}
 		metricObj, err = a.storage.GetGauge(ctx, metricObj)
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("UpdateMetricFromJSON: %w", err)
+			return []byte{}, fmt.Errorf("UpdateMetricFromJSON: %w", err)
 		}
+
 	case "counter":
 		err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {
 			err = a.storage.UpdateCounter(ctx, metricObj)
 			return err
 		})
-		// err := a.storage.UpdateCounter(ctx, metricObj)
+
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("UpdateMetricFromJSON: %w", err)
+			return []byte{}, fmt.Errorf("UpdateMetricFromJSON: %w", err)
 		}
 		metricObj, err = a.storage.GetCounter(ctx, metricObj)
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("UpdateMetricFromJSON: %w", err)
+			return []byte{}, fmt.Errorf("UpdateMetricFromJSON: %w", err)
 		}
-		// log.Printf("Updated key: %s, val: %d\n", metricObj.ID, *metricObj.Delta)
+
 	default:
-		return ret, ErrInvalidMetricType
+		return []byte{}, ErrInvalidMetricType
 	}
 	if a.fileStorage != nil && a.fileStorage.SyncWrite() {
 		a.StoreDataToFile(ctx)
@@ -165,7 +168,7 @@ func (a *app) UpdateMetricFromParams(ctx context.Context, mType, mName, mValue s
 	jsonObj, err := ParamsToJSON(mType, mName, mValue)
 
 	if err != nil {
-		return make([]byte, 0), fmt.Errorf("UpdateMetricFromParams: %w", err)
+		return []byte{}, fmt.Errorf("UpdateMetricFromParams: %w", err)
 	}
 	return a.UpdateMetricFromJSON(ctx, bytes.NewBuffer(jsonObj))
 }
@@ -173,10 +176,10 @@ func (a *app) UpdateMetricFromParams(ctx context.Context, mType, mName, mValue s
 func (a *app) GetMetricFromJSON(ctx context.Context, body io.Reader) ([]byte, error) {
 
 	var metricObj models.Metrics
-	var ret []byte
+
 	err := json.NewDecoder(body).Decode(&metricObj)
 	if err != nil {
-		return ret, fmt.Errorf("GetMetricFromJSON: %w", err)
+		return []byte{}, fmt.Errorf("GetMetricFromJSON: %w", err)
 	}
 	logger.Log.Debugw("metricObj is", "struct", metricObj)
 	switch metricObj.MType {
@@ -187,7 +190,7 @@ func (a *app) GetMetricFromJSON(ctx context.Context, body io.Reader) ([]byte, er
 		})
 		// metricObj, err = a.storage.GetGauge(ctx, metricObj)
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("GetMetricFromJSON: %w", err)
+			return []byte{}, fmt.Errorf("GetMetricFromJSON: %w", err)
 		}
 	case "counter":
 		err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {
@@ -196,11 +199,11 @@ func (a *app) GetMetricFromJSON(ctx context.Context, body io.Reader) ([]byte, er
 		})
 		// metricObj, err = a.storage.GetCounter(ctx, metricObj)
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("GetMetricFromJSON: %w", err)
+			return []byte{}, fmt.Errorf("GetMetricFromJSON: %w", err)
 		}
 
 	default:
-		return ret, ErrInvalidMetricType
+		return []byte{}, ErrInvalidMetricType
 	}
 	return json.Marshal(metricObj)
 }
@@ -209,29 +212,29 @@ func (a *app) GetMetricFromParams(ctx context.Context, mType, mName string) ([]b
 	jsonObj, err := ParamsToJSON(mType, mName, "")
 
 	if err != nil {
-		return make([]byte, 0), fmt.Errorf("GetMetricFromParams: %w", err)
+		return []byte{}, fmt.Errorf("GetMetricFromParams: %w", err)
 	}
 	data, err := a.GetMetricFromJSON(ctx, bytes.NewBuffer(jsonObj))
 	if err != nil {
-		return make([]byte, 0), fmt.Errorf("GetMetricFromParams: %w", err)
+		return []byte{}, fmt.Errorf("GetMetricFromParams: %w", err)
 	}
 	var metricObj models.Metrics
 	err = json.Unmarshal(data, &metricObj)
 	if err != nil {
-		return make([]byte, 0), fmt.Errorf("GetMetricFromParams: %w", err)
+		return []byte{}, fmt.Errorf("GetMetricFromParams: %w", err)
 	}
 	b := new(bytes.Buffer)
 	switch metricObj.MType {
 	case "gauge":
 		_, err = fmt.Fprintf(b, "%v", *metricObj.Value)
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("GetMetricFromParams: %w", err)
+			return []byte{}, fmt.Errorf("GetMetricFromParams: %w", err)
 		}
 		return b.Bytes(), err
 	case "counter":
 		_, err = fmt.Fprintf(b, "%v", *metricObj.Delta)
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("GetMetricFromParams: %w", err)
+			return []byte{}, fmt.Errorf("GetMetricFromParams: %w", err)
 		}
 		return b.Bytes(), err
 	default:
@@ -247,7 +250,7 @@ func (a *app) GetAllMetricsJSON(ctx context.Context) ([]byte, error) {
 		return err
 	})
 	if err != nil {
-		return make([]byte, 0), fmt.Errorf("GetAllMetricsJSON: %w", err)
+		return []byte{}, fmt.Errorf("GetAllMetricsJSON: %w", err)
 	}
 	maps := models.MetricsMaps{
 		Gauge:   gaugeMap,
@@ -258,7 +261,7 @@ func (a *app) GetAllMetricsJSON(ctx context.Context) ([]byte, error) {
 
 	jsonMaps, err := json.Marshal(&maps)
 	if err != nil {
-		return make([]byte, 0), fmt.Errorf("GetAllMetricsJSON: %w", err)
+		return []byte{}, fmt.Errorf("GetAllMetricsJSON: %w", err)
 	}
 
 	fmt.Fprint(b, string(jsonMaps))
@@ -273,7 +276,7 @@ func (a *app) GetAllMetricsHTML(ctx context.Context) ([]byte, error) {
 		return err
 	})
 	if err != nil {
-		return make([]byte, 0), fmt.Errorf("GetAllMetricsHTML: %w", err)
+		return []byte{}, fmt.Errorf("GetAllMetricsHTML: %w", err)
 	}
 	b := new(bytes.Buffer)
 	fmt.Fprintf(b, `
@@ -310,7 +313,7 @@ func ParamsToJSON(mType, mName, mValue string) ([]byte, error) {
 			"type": "%s"`, mName, mType)
 
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("ParamsToJSON: %w", err)
+			return []byte{}, fmt.Errorf("ParamsToJSON: %w", err)
 		}
 
 		if mValue != "" {
@@ -321,7 +324,7 @@ func ParamsToJSON(mType, mName, mValue string) ([]byte, error) {
 		}
 
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("ParamsToJSON: %w", err)
+			return []byte{}, fmt.Errorf("ParamsToJSON: %w", err)
 		}
 	case "counter":
 		_, err := fmt.Fprintf(b, `{
@@ -329,7 +332,7 @@ func ParamsToJSON(mType, mName, mValue string) ([]byte, error) {
 			"type": "%s"`, mName, mType)
 
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("ParamsToJSON: %w", err)
+			return []byte{}, fmt.Errorf("ParamsToJSON: %w", err)
 		}
 		if mValue != "" {
 			_, err = fmt.Fprintf(b, `,"delta": %s
@@ -339,7 +342,7 @@ func ParamsToJSON(mType, mName, mValue string) ([]byte, error) {
 		}
 
 		if err != nil {
-			return make([]byte, 0), fmt.Errorf("ParamsToJSON: %w", err)
+			return []byte{}, fmt.Errorf("ParamsToJSON: %w", err)
 		}
 	default:
 		return b.Bytes(), ErrInvalidMetricType

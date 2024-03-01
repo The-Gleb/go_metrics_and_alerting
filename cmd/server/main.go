@@ -3,6 +3,7 @@ package main
 import (
 	// "bufio"
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,6 +29,10 @@ import (
 
 // TODO: fix status in logger
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	config := NewConfigFromFlags()
 
 	if err := logger.Initialize(config.LogLevel); err != nil {
