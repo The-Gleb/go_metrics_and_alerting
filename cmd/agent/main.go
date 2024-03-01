@@ -44,8 +44,8 @@ func main() {
 	var PollCount atomic.Int64
 	PollCount.Store(1)
 
-	var pollInterval = time.Duration(config.PollInterval) * time.Second
-	var reportInterval = time.Duration(config.ReportInterval) * time.Second
+	var pollInterval = time.Duration(config.PollInterval * 1000000000)
+	var reportInterval = time.Duration(config.ReportInterval * 1000000000)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
