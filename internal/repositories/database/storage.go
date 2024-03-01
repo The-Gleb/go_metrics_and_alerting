@@ -15,6 +15,7 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
+	postgresql "github.com/The-Gleb/go_metrics_and_alerting/pkg/client"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -26,24 +27,27 @@ var (
 )
 
 type DB struct {
-	db *sql.DB
+	client postgresql.Client
 }
 
 func ConnectDB(dsn string) (*DB, error) {
 	// ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
 	// 	`localhost`, `videos`, `userpassword`, `videos`)
 
-	db, err := sql.Open("pgx", dsn)
+	client, err := postgresql.NewClient(context.Background(), dsn)
 	if err != nil {
 		return nil, checkForConectionErr("ConnectDB", err)
 	}
+
+	// migrate.
 	schemaQuery = strings.TrimSpace(schemaQuery)
-	logger.Log.Info(schemaQuery)
-	_, err = db.ExecContext(context.Background(), schemaQuery)
+
+	_, err = client.Exec(context.Background(), schemaQuery)
 	if err != nil {
 		return nil, err
 	}
-	return &DB{db}, nil
+
+	return &DB{client}, nil
 }
 
 type Repositiries interface {
@@ -58,7 +62,7 @@ type Repositiries interface {
 func (db *DB) PingDB() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := db.db.PingContext(ctx); err != nil {
+	if err := db.client.Ping(ctx); err != nil {
 		return err
 	}
 	return nil
@@ -66,18 +70,18 @@ func (db *DB) PingDB() error {
 
 func (db *DB) UpdateMetricSet(ctx context.Context, metrics []models.Metrics) (int64, error) {
 
-	tx, err := db.db.Begin()
+	tx, err := db.client.Begin(ctx)
 	if err != nil {
 		return 0, checkForConectionErr("UpdateMetricSet", err)
 	}
 
-	defer tx.Rollback()
+	defer tx.Rollback(ctx)
 	var updated int64
 	for _, metric := range metrics {
 
 		switch metric.MType {
 		case "gauge":
-			_, err := tx.ExecContext(ctx, `
+			_, err := tx.Exec(ctx, `
 				INSERT INTO gauge_metrics (m_name, m_value)
 				VALUES ($1, $2)
 				ON CONFLICT (m_name) DO UPDATE
@@ -86,9 +90,10 @@ func (db *DB) UpdateMetricSet(ctx context.Context, metrics []models.Metrics) (in
 			if err != nil {
 				return 0, checkForConectionErr("UpdateMetricSet", err)
 			}
+
 			updated++
 		case "counter":
-			_, err := tx.ExecContext(ctx, `
+			_, err := tx.Exec(ctx, `
 				INSERT INTO counter_metrics (m_name, m_value)
 				VALUES ($1, $2)
 				ON CONFLICT (m_name) DO UPDATE
@@ -102,18 +107,18 @@ func (db *DB) UpdateMetricSet(ctx context.Context, metrics []models.Metrics) (in
 			return 0, fmt.Errorf("invalid mertic type: %s", metric.MType)
 		}
 	}
-	tx.Commit()
+	tx.Commit(ctx)
 	return updated, nil
 }
 
 func (db *DB) GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Metrics, error) {
-	tx, err := db.db.Begin()
+	tx, err := db.client.Begin(ctx)
 	if err != nil {
 		return nil, nil, checkForConectionErr("GetAllMetrics", err)
 	}
-	defer tx.Rollback()
+	defer tx.Rollback(ctx)
 
-	rows, err := tx.QueryContext(ctx, `SELECT m_name, m_value FROM gauge_metrics`)
+	rows, err := tx.Query(ctx, `SELECT m_name, m_value FROM gauge_metrics`)
 	if err != nil {
 		return nil, nil, checkForConectionErr("GetAllMetrics", err)
 	}
@@ -135,7 +140,7 @@ func (db *DB) GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Met
 		gaugeMetrics = append(gaugeMetrics, metric)
 	}
 
-	rows, err = tx.QueryContext(ctx, `SELECT m_name, m_value FROM counter_metrics`)
+	rows, err = tx.Query(ctx, `SELECT m_name, m_value FROM counter_metrics`)
 	if err != nil {
 		return nil, nil, checkForConectionErr("GetAllMetrics", err)
 	}
@@ -157,13 +162,13 @@ func (db *DB) GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Met
 		counterMetrics = append(counterMetrics, metric)
 	}
 
-	tx.Commit()
+	tx.Commit(ctx)
 
 	return gaugeMetrics, counterMetrics, nil
 }
 
 func (db *DB) UpdateGauge(ctx context.Context, metricObj models.Metrics) error {
-	_, err := db.db.ExecContext(ctx, `
+	_, err := db.client.Exec(ctx, `
 		INSERT INTO gauge_metrics (m_name, m_value)
 		VALUES ($1, $2)
 		ON CONFLICT (m_name) DO UPDATE
@@ -175,7 +180,7 @@ func (db *DB) UpdateGauge(ctx context.Context, metricObj models.Metrics) error {
 	return nil
 }
 func (db *DB) UpdateCounter(ctx context.Context, metricObj models.Metrics) error {
-	_, err := db.db.ExecContext(ctx, `
+	_, err := db.client.Exec(ctx, `
 		INSERT INTO counter_metrics (m_name, m_value)
 		VALUES ($1, $2)
 		ON CONFLICT (m_name) DO UPDATE
@@ -187,10 +192,8 @@ func (db *DB) UpdateCounter(ctx context.Context, metricObj models.Metrics) error
 	return nil
 }
 func (db *DB) GetGauge(ctx context.Context, metricObj models.Metrics) (models.Metrics, error) {
-	row := db.db.QueryRowContext(ctx, "SELECT m_value FROM gauge_metrics WHERE m_name = $1", metricObj.ID)
-	if err := row.Err(); err != nil {
-		return metricObj, checkForConectionErr("GetGauge", err)
-	}
+	row := db.client.QueryRow(ctx, "SELECT m_value FROM gauge_metrics WHERE m_name = $1", metricObj.ID)
+
 	var value float64
 	err := row.Scan(&value)
 	if err != nil {
@@ -200,10 +203,8 @@ func (db *DB) GetGauge(ctx context.Context, metricObj models.Metrics) (models.Me
 	return metricObj, nil
 }
 func (db *DB) GetCounter(ctx context.Context, metricObj models.Metrics) (models.Metrics, error) {
-	row := db.db.QueryRowContext(ctx, "SELECT m_value FROM counter_metrics WHERE m_name = $1", metricObj.ID)
-	if err := row.Err(); err != nil {
-		return metricObj, checkForConectionErr("GetCounter", err)
-	}
+	row := db.client.QueryRow(ctx, "SELECT m_value FROM counter_metrics WHERE m_name = $1", metricObj.ID)
+
 	var value int64
 	err := row.Scan(&value)
 	if err != nil {
