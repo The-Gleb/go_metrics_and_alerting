@@ -12,7 +12,7 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/retry"
+	"github.com/The-Gleb/go_metrics_and_alerting/pkg/utils/retry"
 )
 
 var (

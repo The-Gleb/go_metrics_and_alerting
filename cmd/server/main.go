@@ -20,11 +20,11 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories/database"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories/memory"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/retry"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/server"
+	"github.com/The-Gleb/go_metrics_and_alerting/pkg/utils/retry"
 )
 
-// postgres://metrics:metrics@localhost/metrics?sslmode=disable
+// postgres://metric_db:metric_db@localhost:5434/metric_db?sslmode=disable
 
 // TODO: fix status in logger
 func main() {
