@@ -9,6 +9,8 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/compressor"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	_ "net/http/pprof"
 )
 
 type Handlers interface {
@@ -25,6 +27,18 @@ type Handlers interface {
 func New(address string, handlers Handlers, signKey []byte) *http.Server {
 	r := chi.NewRouter()
 	SetupRoutes(r, handlers)
+	return &http.Server{
+		Addr:    address,
+		Handler: logger.LogRequest(compressor.GzipMiddleware(authentication.CheckSignature(signKey, r))),
+	}
+}
+
+func NewWithProfiler(address string, handlers Handlers, signKey []byte) *http.Server {
+	r := chi.NewRouter()
+
+	r.Mount("/debug", middleware.Profiler())
+	SetupRoutes(r, handlers)
+
 	return &http.Server{
 		Addr:    address,
 		Handler: logger.LogRequest(compressor.GzipMiddleware(authentication.CheckSignature(signKey, r))),

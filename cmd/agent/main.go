@@ -21,15 +21,24 @@ import (
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/mem"
 
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 	"github.com/go-resty/resty/v2"
 )
 
 func main() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	config := NewConfigFromFlags()
 
 	logger.Initialize("debug")
+
+	logger.Log.Info(config)
 
 	gaugeMap := make(map[string]float64)
 	var PollCount atomic.Int64

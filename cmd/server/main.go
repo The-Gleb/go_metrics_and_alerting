@@ -11,6 +11,8 @@ import (
 
 	"time"
 
+	_ "net/http/pprof"
+
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/app"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/filestorage"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/handlers"
@@ -62,7 +64,7 @@ func main() {
 
 	app := app.NewApp(repository, fileStorage)
 	handlers := handlers.New(app)
-	s := server.New(config.Addres, handlers, []byte(config.SignKey))
+	s := server.NewWithProfiler(config.Addres, handlers, []byte(config.SignKey))
 
 	if config.Restore {
 		app.LoadDataFromFile(context.Background())
