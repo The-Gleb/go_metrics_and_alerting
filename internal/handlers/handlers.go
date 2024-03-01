@@ -64,7 +64,6 @@ func (handlers *handlers) UpdateMetricSet(rw http.ResponseWriter, r *http.Reques
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
 	rw.Write(body)
-	rw.WriteHeader(http.StatusOK)
 
 }
 
@@ -82,7 +81,6 @@ func (handlers *handlers) UpdateMetric(rw http.ResponseWriter, r *http.Request) 
 		rw.WriteHeader(http.StatusBadRequest)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 	}
-	rw.WriteHeader(http.StatusOK)
 	rw.Write(body)
 }
 
@@ -98,7 +96,6 @@ func (handlers *handlers) UpdateMetricJSON(rw http.ResponseWriter, r *http.Reque
 	}
 
 	rw.Write(body)
-	rw.WriteHeader(http.StatusOK)
 }
 
 func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
@@ -147,7 +144,6 @@ func (handlers *handlers) GetMetricJSON(rw http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	// rw.WriteHeader(http.StatusOK)
 	rw.Write(resp)
 }
 
@@ -174,7 +170,6 @@ func (handlers *handlers) GetAllMetricsHTML(rw http.ResponseWriter, r *http.Requ
 	}
 	// log.Println(body)
 
-	// rw.WriteHeader(http.StatusOK)
 	rw.Write(body)
 
 }
