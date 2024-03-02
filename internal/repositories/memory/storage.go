@@ -38,14 +38,14 @@ func (s *storage) UpdateMetric(mType, mName, mValue string) error {
 		if err != nil {
 			return ErrInvalidMetricValueFloat64
 		}
-		s.gauge.Store(mName, mValue)
+		s.gauge.Store(mName, &mValue)
 	case "counter":
 		mValue, err := strconv.ParseInt(mValue, 10, 64)
 		if err != nil {
 			return ErrInvalidMetricValueInt64
 		}
 
-		val, _ := s.counter.LoadOrStore(mName, new(*atomic.Int64))
+		val, _ := s.counter.LoadOrStore(mName, new(atomic.Int64))
 		// atomic.AddInt64(val.(*int64), mValue)
 		val.(*atomic.Int64).Add(mValue)
 
