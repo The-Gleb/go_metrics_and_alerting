@@ -1,10 +1,11 @@
 package logger
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 var Log *zap.SugaredLogger = zap.NewNop().Sugar()

@@ -6,10 +6,11 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/The-Gleb/go_metrics_and_alerting/pkg/utils/retry"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/The-Gleb/go_metrics_and_alerting/pkg/utils/retry"
 )
 
 type Client interface {

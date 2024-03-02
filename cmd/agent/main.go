@@ -24,9 +24,10 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 
+	"github.com/go-resty/resty/v2"
+
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
-	"github.com/go-resty/resty/v2"
 )
 
 func main() {

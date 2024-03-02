@@ -2,8 +2,9 @@ package main
 
 import (
 	"flag"
-	"github.com/caarlos0/env"
 	"os"
+
+	"github.com/caarlos0/env"
 	// "strconv"
 )
 

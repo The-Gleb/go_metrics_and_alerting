@@ -4,8 +4,9 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
 )
 
 func Test_storage_GetMetric(t *testing.T) {

@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-
 	"time"
 
 	_ "net/http/pprof"

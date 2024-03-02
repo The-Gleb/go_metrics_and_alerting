@@ -8,18 +8,11 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
+
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
-	"github.com/go-chi/chi/v5"
 )
-
-// type Repositiries interface {
-// 	UpdateMetric(mType, mName, mValue string) error
-// 	GetMetric(mType, mName string) (string, error)
-// 	GetAllMetrics() (*sync.Map, *sync.Map)
-// 	UpdateGauge(name string, value float64)
-// 	UpdateCounter(name string, value int64)
-// }
 
 type App interface {
 	UpdateMetricFromJSON(ctx context.Context, body io.Reader) ([]byte, error)

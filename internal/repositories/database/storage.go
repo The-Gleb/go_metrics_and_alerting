@@ -12,13 +12,14 @@ import (
 	// "github.com/jackc/pgerrcode"
 	// "github.com/jackc/pgx/v5/pgconn"
 
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
+	_ "github.com/jackc/pgx/v5/stdlib"
+
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
 	postgresql "github.com/The-Gleb/go_metrics_and_alerting/pkg/client"
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
-	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 var (

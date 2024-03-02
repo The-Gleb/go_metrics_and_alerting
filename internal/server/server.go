@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"os"
 
+	_ "net/http/pprof"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/authentication"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/compressor"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	_ "net/http/pprof"
 )
 
 type Handlers interface {
