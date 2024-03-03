@@ -12,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
 )
 
 // App interface with all buisness logic.
@@ -117,7 +117,7 @@ func (handlers *handlers) GetMetric(rw http.ResponseWriter, r *http.Request) {
 		err = fmt.Errorf("handlers.GetMetric: %w", err)
 		logger.Log.Error(err)
 
-		if errors.Is(err, repositories.ErrNotFound) {
+		if errors.Is(err, repository.ErrNotFound) {
 			logger.Log.Debug("Yes it is NOT FOUND ERROR")
 			rw.WriteHeader(http.StatusNotFound)
 			http.Error(rw, err.Error(), http.StatusNotFound)
@@ -142,7 +142,7 @@ func (handlers *handlers) GetMetricJSON(rw http.ResponseWriter, r *http.Request)
 		err = fmt.Errorf("handlers.GetMetricJSON: %w", err)
 		logger.Log.Error(err)
 
-		if !errors.Is(err, repositories.ErrNotFound) {
+		if !errors.Is(err, repository.ErrNotFound) {
 			rw.WriteHeader(http.StatusBadRequest)
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 		} else {

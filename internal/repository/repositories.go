@@ -1,4 +1,4 @@
-package repositories
+package repository
 
 import (
 	"context"
@@ -17,6 +17,7 @@ type Repositiries interface {
 	UpdateGauge(ctx context.Context, metricObj models.Metrics) error
 	UpdateCounter(ctx context.Context, metricObj models.Metrics) error
 	UpdateMetricSet(ctx context.Context, metrics []models.Metrics) (int64, error)
+
 	GetGauge(ctx context.Context, metricObj models.Metrics) (models.Metrics, error)
 	GetCounter(ctx context.Context, metricObj models.Metrics) (models.Metrics, error)
 	PingDB() error

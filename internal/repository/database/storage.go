@@ -16,9 +16,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
 	postgresql "github.com/The-Gleb/go_metrics_and_alerting/pkg/client"
 )
 
@@ -52,11 +52,11 @@ func ConnectDB(dsn string) (*DB, error) {
 }
 
 type Repositiries interface {
-	GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Metrics)
-	UpdateGauge(ctx context.Context, metricObj models.Metrics) error
-	UpdateCounter(ctx context.Context, metricObj models.Metrics) error
-	GetGauge(ctx context.Context, metricObj models.Metrics) (models.Metrics, error)
-	GetCounter(ctx context.Context, metricObj models.Metrics) (models.Metrics, error)
+	GetAllMetrics(ctx context.Context) ([]entity.Metric, []entity.Metric)
+	UpdateGauge(ctx context.Context, metric entity.Metric) error
+	UpdateCounter(ctx context.Context, metric entity.Metric) error
+	GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error)
+	GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error)
 	PingDB() error
 }
 
@@ -69,7 +69,7 @@ func (db *DB) PingDB() error {
 	return nil
 }
 
-func (db *DB) UpdateMetricSet(ctx context.Context, metrics []models.Metrics) (int64, error) {
+func (db *DB) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error) {
 
 	tx, err := db.client.Begin(ctx)
 	if err != nil {
@@ -112,29 +112,29 @@ func (db *DB) UpdateMetricSet(ctx context.Context, metrics []models.Metrics) (in
 	return updated, nil
 }
 
-func (db *DB) GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Metrics, error) {
+func (db *DB) GetAllMetrics(ctx context.Context) (entity.MetricsMaps, error) {
 	tx, err := db.client.Begin(ctx)
 	if err != nil {
-		return nil, nil, checkForConectionErr("GetAllMetrics", err)
+		return entity.MetricsMaps{}, checkForConectionErr("GetAllMetrics", err)
 	}
 	defer tx.Rollback(ctx)
 
 	rows, err := tx.Query(ctx, `SELECT m_name, m_value FROM gauge_metrics`)
 	if err != nil {
-		return nil, nil, checkForConectionErr("GetAllMetrics", err)
+		return entity.MetricsMaps{}, checkForConectionErr("GetAllMetrics", err)
 	}
 	if rows.Err() != nil {
-		return nil, nil, checkForConectionErr("GetAllMetrics", err)
+		return entity.MetricsMaps{}, checkForConectionErr("GetAllMetrics", err)
 	}
 	defer rows.Close()
 
-	gaugeMetrics := make([]models.Metrics, 0)
+	gaugeMetrics := make([]entity.Metric, 0)
 	for rows.Next() {
-		var metric models.Metrics
+		var metric entity.Metric
 		var value float64
 		err := rows.Scan(&metric.ID, &value)
 		if err != nil {
-			return nil, nil, checkForConectionErr("GetAllMetrics", err)
+			return entity.MetricsMaps{}, checkForConectionErr("GetAllMetrics", err)
 		}
 		metric.Value = &value
 		metric.MType = "gauge"
@@ -143,20 +143,20 @@ func (db *DB) GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Met
 
 	rows, err = tx.Query(ctx, `SELECT m_name, m_value FROM counter_metrics`)
 	if err != nil {
-		return nil, nil, checkForConectionErr("GetAllMetrics", err)
+		return entity.MetricsMaps{}, checkForConectionErr("GetAllMetrics", err)
 	}
 	if rows.Err() != nil {
-		return nil, nil, checkForConectionErr("GetAllMetrics", err)
+		return entity.MetricsMaps{}, checkForConectionErr("GetAllMetrics", err)
 	}
 	defer rows.Close()
 
-	counterMetrics := make([]models.Metrics, 0)
+	counterMetrics := make([]entity.Metric, 0)
 	for rows.Next() {
-		var metric models.Metrics
+		var metric entity.Metric
 		var value int64
 		err := rows.Scan(&metric.ID, &value)
 		if err != nil {
-			return nil, nil, checkForConectionErr("GetAllMetrics", err)
+			return entity.MetricsMaps{}, checkForConectionErr("GetAllMetrics", err)
 		}
 		metric.Delta = &value
 		metric.MType = "counter"
@@ -165,54 +165,69 @@ func (db *DB) GetAllMetrics(ctx context.Context) ([]models.Metrics, []models.Met
 
 	tx.Commit(ctx)
 
-	return gaugeMetrics, counterMetrics, nil
+	return entity.MetricsMaps{
+		Gauge:   gaugeMetrics,
+		Counter: counterMetrics,
+	}, nil
 }
 
-func (db *DB) UpdateGauge(ctx context.Context, metricObj models.Metrics) error {
-	_, err := db.client.Exec(ctx, `
-		INSERT INTO gauge_metrics (m_name, m_value)
+func (db *DB) UpdateGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
+	row := db.client.QueryRow(
+		ctx,
+		`INSERT INTO gauge_metrics (m_name, m_value)
 		VALUES ($1, $2)
 		ON CONFLICT (m_name) DO UPDATE
-		SET m_value = $2;
-		`, metricObj.ID, metricObj.Value)
+		SET m_value = $2
+		RETURNING *;`,
+		metric.ID, metric.Value,
+	)
+
+	err := row.Scan(&metric.ID, &metric.Value)
 	if err != nil {
-		return checkForConectionErr("GetAllMetrics", err)
+		return entity.Metric{}, checkForConectionErr("UpdateGauge", err)
 	}
-	return nil
+	return metric, nil
 }
-func (db *DB) UpdateCounter(ctx context.Context, metricObj models.Metrics) error {
-	_, err := db.client.Exec(ctx, `
-		INSERT INTO counter_metrics (m_name, m_value)
+
+func (db *DB) UpdateCounter(ctx context.Context, mertic entity.Metric) (entity.Metric, error) {
+	row := db.client.QueryRow(
+		ctx,
+		`INSERT INTO counter_metrics (m_name, m_value)
 		VALUES ($1, $2)
 		ON CONFLICT (m_name) DO UPDATE
-		SET m_value = counter_metrics.m_value + EXCLUDED.m_value;
-		`, metricObj.ID, metricObj.Delta)
+		SET m_value = counter_metrics.m_value + EXCLUDED.m_value
+		RETURNING *;`,
+		mertic.ID, mertic.Delta,
+	)
+
+	err := row.Scan(&mertic.ID, &mertic.Delta)
 	if err != nil {
-		return checkForConectionErr("UpdateCounter", err)
+		return entity.Metric{}, checkForConectionErr("UpdateCounter", err)
 	}
-	return nil
+
+	return entity.Metric{}, nil
 }
-func (db *DB) GetGauge(ctx context.Context, metricObj models.Metrics) (models.Metrics, error) {
-	row := db.client.QueryRow(ctx, "SELECT m_value FROM gauge_metrics WHERE m_name = $1", metricObj.ID)
+func (db *DB) GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
+	row := db.client.QueryRow(ctx, "SELECT m_value FROM gauge_metrics WHERE m_name = $1", metric.ID)
 
 	var value float64
 	err := row.Scan(&value)
 	if err != nil {
-		return metricObj, checkForConectionErr("GetGauge", err)
+		return metric, checkForConectionErr("GetGauge", err)
 	}
-	metricObj.Value = &value
-	return metricObj, nil
+	metric.Value = &value
+	return metric, nil
 }
-func (db *DB) GetCounter(ctx context.Context, metricObj models.Metrics) (models.Metrics, error) {
-	row := db.client.QueryRow(ctx, "SELECT m_value FROM counter_metrics WHERE m_name = $1", metricObj.ID)
+func (db *DB) GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
+	row := db.client.QueryRow(ctx, "SELECT m_value FROM counter_metrics WHERE m_name = $1", metric.ID)
 
 	var value int64
 	err := row.Scan(&value)
 	if err != nil {
-		return metricObj, checkForConectionErr("GetCounter", err)
+		return metric, checkForConectionErr("GetCounter", err)
 	}
-	metricObj.Delta = &value
-	return metricObj, nil
+	metric.Delta = &value
+	return metric, nil
 }
 
 func checkForConectionErr(funcName string, err error) error {
@@ -220,9 +235,9 @@ func checkForConectionErr(funcName string, err error) error {
 
 	switch {
 	case errors.As(err, &pgErr) && pgerrcode.IsConnectionException(pgErr.Code):
-		err = fmt.Errorf("%s: %w: %w", funcName, repositories.ErrConnection, err)
+		err = fmt.Errorf("%s: %w: %w", funcName, repository.ErrConnection, err)
 	case errors.Is(err, sql.ErrNoRows):
-		err = fmt.Errorf("%s: %w: %w", funcName, repositories.ErrNotFound, err)
+		err = fmt.Errorf("%s: %w: %w", funcName, repository.ErrNotFound, err)
 	default:
 		logger.Log.Debug(err)
 		err = fmt.Errorf("%s: %w: ", funcName, err)

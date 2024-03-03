@@ -11,7 +11,7 @@ import (
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
 	"github.com/The-Gleb/go_metrics_and_alerting/pkg/utils/retry"
 )
 
@@ -26,12 +26,12 @@ type FileStorage interface {
 }
 
 type app struct {
-	storage     repositories.Repositiries
+	storage     repository.Repositiries
 	fileStorage FileStorage
 }
 
 // TODO: add FileWriter
-func NewApp(s repositories.Repositiries, fs FileStorage) *app {
+func NewApp(s repository.Repositiries, fs FileStorage) *app {
 	return &app{
 		storage:     s,
 		fileStorage: fs,

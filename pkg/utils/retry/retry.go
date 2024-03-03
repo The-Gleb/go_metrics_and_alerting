@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
 )
 
 var RetryConfig retryConfig
@@ -16,7 +16,7 @@ func init() {
 		waitTime:     time.Duration(1),
 		waitTimeDiff: time.Duration(2),
 		retryCount:   3,
-		retryErrors:  []error{repositories.ErrConnection},
+		retryErrors:  []error{repository.ErrConnection},
 	}
 }
 

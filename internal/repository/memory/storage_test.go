@@ -1,12 +1,14 @@
 package memory
 
 import (
+	"context"
+	"reflect"
 	"sync/atomic"
 	"testing"
 
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/repositories"
 )
 
 func Test_storage_GetMetric(t *testing.T) {
@@ -45,7 +47,7 @@ func Test_storage_GetMetric(t *testing.T) {
 			s:    &s,
 			args: args{"gauge", "Malloc"},
 			want: "",
-			err:  repositories.ErrNotFound,
+			err:  repository.ErrNotFound,
 		},
 		{
 			name: "neg bad request test #4",
@@ -131,6 +133,33 @@ func Test_storage_UpdateMetric(t *testing.T) {
 
 			val, _ := tt.s.GetMetric(tt.args.mType, tt.args.mName)
 			assert.Equal(t, tt.val, val, "wrong value")
+		})
+	}
+}
+
+func Test_storage_GetAllMetrics(t *testing.T) {
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name    string
+		s       *storage
+		args    args
+		want    entity.MetricsMaps
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.s.GetAllMetrics(tt.args.ctx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("storage.GetAllMetrics() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("storage.GetAllMetrics() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

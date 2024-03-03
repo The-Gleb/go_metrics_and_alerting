@@ -1,0 +1,187 @@
+package memory
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strconv"
+	"sync"
+	"sync/atomic"
+
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
+)
+
+var (
+	ErrInvalidMetricValueFloat64 error = errors.New("incorrect metric value\ncannot parse to float64")
+	ErrInvalidMetricValueInt64   error = errors.New("incorrect metric value\ncannot parse to int64")
+	ErrInvalidMetricType         error = errors.New("invalid mertic type")
+	// ErrMetricNotFound            error = errors.New(("metric was not found"))
+)
+
+type storage struct {
+	gauge   sync.Map
+	counter sync.Map
+}
+
+func New() *storage {
+	return &storage{
+		gauge:   sync.Map{},
+		counter: sync.Map{},
+	}
+}
+
+func (s *storage) UpdateGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
+	s.gauge.Store(metric.ID, metric.Value)
+
+	return metric, nil
+}
+
+func (s *storage) UpdateCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
+	val, _ := s.counter.LoadOrStore(metric.ID, new(atomic.Int64))
+	val.(*atomic.Int64).Add(*metric.Delta)
+
+	valPtr := val.(*atomic.Int64).Load()
+	metric.Delta = &valPtr
+	return metric, nil
+}
+
+// TODO: check
+func (s *storage) GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
+	val, ok := s.gauge.Load(metric.ID)
+	if ok {
+		metric.Value = val.(*float64)
+		return metric, nil
+	}
+	return metric, repository.ErrNotFound
+}
+
+func (s *storage) GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
+	val, ok := s.counter.Load(metric.ID)
+	if ok {
+		v := val.(*atomic.Int64).Load()
+		metric.Delta = &v
+		return metric, nil
+	}
+	return metric, repository.ErrNotFound
+}
+
+func (s *storage) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error) {
+	var updated int64
+	newGauge := *CopySyncMap(&s.gauge)
+	newCounter := *CopySyncMap(&s.counter)
+	// var newCounter sync.Map
+	for _, metric := range metrics {
+		switch metric.MType {
+		case "gauge":
+			newGauge.Store(metric.ID, metric.Value)
+
+			updated++
+		case "counter":
+			val, _ := newCounter.LoadOrStore(metric.ID, new(atomic.Int64))
+			val.(*atomic.Int64).Add(*metric.Delta)
+			updated++
+		default:
+			return 0, fmt.Errorf("invalid mertic type: %s", metric.MType)
+		}
+	}
+	s.gauge = *CopySyncMap(&newGauge)
+	s.counter = *CopySyncMap(&newCounter)
+	return updated, nil
+}
+
+func (s *storage) GetAllMetrics(ctx context.Context) (entity.MetricsMaps, error) {
+	newGauge := make([]entity.Metric, 0)
+	s.gauge.Range(func(key any, value any) bool {
+
+		metric := entity.Metric{
+			MType: "gauge",
+			ID:    key.(string),
+			Value: value.(*float64),
+		}
+
+		newGauge = append(newGauge, metric)
+
+		return true
+
+	})
+
+	newCounter := make([]entity.Metric, 0)
+	s.counter.Range(func(key any, value any) bool {
+
+		v := value.(*atomic.Int64).Load()
+		metric := entity.Metric{
+			MType: "counter",
+			ID:    key.(string),
+			Delta: &v,
+		}
+
+		newCounter = append(newCounter, metric)
+
+		return true
+	})
+
+	return entity.MetricsMaps{
+		Gauge:   newGauge,
+		Counter: newCounter,
+	}, nil
+}
+
+func (s *storage) GetMetric(mType, mName string) (string, error) {
+	switch mType {
+	case "gauge":
+		val, ok := s.gauge.Load(mName)
+		if ok {
+			return fmt.Sprintf("%v", val), nil
+		}
+	case "counter":
+		val, ok := s.counter.Load(mName)
+		if ok {
+			v := val.(*atomic.Int64).Load()
+			return fmt.Sprintf("%d", v), nil
+		}
+	default:
+		return "", ErrInvalidMetricType
+	}
+	return "", repository.ErrNotFound
+}
+
+func (s *storage) PingDB() error {
+	return nil
+}
+
+func CopySyncMap(m *sync.Map) *sync.Map {
+	var cp sync.Map
+
+	m.Range(func(k, v any) bool {
+		cp.Store(k, v)
+
+		return true
+	})
+
+	return &cp
+}
+
+func (s *storage) UpdateMetric(mType, mName, mValue string) error {
+	switch mType {
+	case "gauge":
+		mValue, err := strconv.ParseFloat(mValue, 64)
+		if err != nil {
+			return ErrInvalidMetricValueFloat64
+		}
+		s.gauge.Store(mName, &mValue)
+	case "counter":
+		mValue, err := strconv.ParseInt(mValue, 10, 64)
+		if err != nil {
+			return ErrInvalidMetricValueInt64
+		}
+
+		val, _ := s.counter.LoadOrStore(mName, new(atomic.Int64))
+		// atomic.AddInt64(val.(*int64), mValue)
+		val.(*atomic.Int64).Add(mValue)
+
+	default:
+		return ErrInvalidMetricType
+	}
+	return nil
+}
