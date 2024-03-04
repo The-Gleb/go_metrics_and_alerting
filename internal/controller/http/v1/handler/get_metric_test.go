@@ -100,7 +100,12 @@ func Example_getMetricHandler_ServeHTTP() {
 
 	req, _ := http.NewRequest("GET", ts.URL+"/value/gauge/Alloc", nil)
 
-	resp, _ := ts.Client().Do(req)
+	resp, err := ts.Client().Do(req)
+	if err != nil {
+		fmt.Println("error!: %w", err)
+		return
+	}
+	defer resp.Body.Close()
 
 	fmt.Println(resp.StatusCode)
 	b, _ := io.ReadAll(resp.Body)

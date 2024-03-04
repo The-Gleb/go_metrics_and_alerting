@@ -33,7 +33,12 @@ func Example_updateMetricJSONHandler_ServeHTTP() {
 
 	req, _ := http.NewRequest("POST", ts.URL+"/update", bytes.NewReader([]byte(validBody)))
 
-	resp, _ := ts.Client().Do(req)
+	resp, err := ts.Client().Do(req)
+	if err != nil {
+		fmt.Println("error!: %w", err)
+		return
+	}
+	defer resp.Body.Close()
 
 	fmt.Println(resp.StatusCode)
 	b, _ := io.ReadAll(resp.Body)

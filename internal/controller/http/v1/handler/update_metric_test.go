@@ -129,7 +129,12 @@ func Example_updateMetricHandler_ServeHTTP() {
 
 	req, _ := http.NewRequest("POST", ts.URL+"/update/gauge/Alloc/12.12", nil)
 
-	resp, _ := ts.Client().Do(req)
+	resp, err := ts.Client().Do(req)
+	if err != nil {
+		fmt.Println("error!: %w", err)
+		return
+	}
+	defer resp.Body.Close()
 
 	fmt.Println(resp.StatusCode)
 	b, _ := io.ReadAll(resp.Body)

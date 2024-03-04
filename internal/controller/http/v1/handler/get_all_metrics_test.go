@@ -70,8 +70,6 @@ func Test_getAllMetricHandler_ServeHTTP(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	// validJsonBody := `[{"id": "HeapAlloc","type": "gauge","value": 3782369280},{"id": "PollCount","type": "counter","delta": 123}]`
-
 	type want struct {
 		code int
 	}
@@ -119,7 +117,12 @@ func Example_getAllMetricHandler_ServeHTTP() {
 
 	req, _ := http.NewRequest("GET", ts.URL+"/", nil)
 
-	resp, _ := ts.Client().Do(req)
+	resp, err := ts.Client().Do(req)
+	if err != nil {
+		fmt.Println("error!: %w", err)
+		return
+	}
+	defer resp.Body.Close()
 
 	fmt.Println(resp.StatusCode)
 	b, _ := io.ReadAll(resp.Body)

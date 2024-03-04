@@ -23,7 +23,7 @@ func Test_updateMetricSetHandler_ServeHTTP(t *testing.T) {
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
-	validJsonBody := `[
+	validJSONBody := `[
 		{
 			"id": "HeapAlloc",
 			"type": "gauge",
@@ -45,7 +45,7 @@ func Test_updateMetricSetHandler_ServeHTTP(t *testing.T) {
 	}{
 		{
 			name: "normal",
-			body: json.RawMessage(validJsonBody),
+			body: json.RawMessage(validJSONBody),
 			want: want{200},
 		},
 		{

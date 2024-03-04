@@ -145,7 +145,7 @@ func Run() error {
 	var fileStorage service.FileStorage
 
 	if config.FileStoragePath != "" {
-		fileStorage = file_storage.NewFileStorage(config.FileStoragePath)
+		fileStorage = filestorage.NewFileStorage(config.FileStoragePath)
 	}
 
 	if config.DatabaseDSN != "" {

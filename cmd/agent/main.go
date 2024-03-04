@@ -26,8 +26,8 @@ import (
 
 	"github.com/go-resty/resty/v2"
 
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/models"
 )
 
 func main() {
@@ -116,11 +116,11 @@ func SendTestGet(req *resty.Request) {
 }
 
 func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int64, client *resty.Client, signKey []byte, mu *sync.RWMutex) {
-	metrics := make([]models.Metrics, 0)
+	metrics := make([]entity.Metric, 0)
 
 	mu.RLock()
 	for name, value := range gaugeMap {
-		metrics = append(metrics, models.Metrics{
+		metrics = append(metrics, entity.Metric{
 			MType: "gauge",
 			ID:    name,
 			Value: &value,
@@ -129,7 +129,7 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int6
 	mu.RUnlock()
 
 	counter := PollCount.Load()
-	metrics = append(metrics, models.Metrics{
+	metrics = append(metrics, entity.Metric{
 		MType: "counter",
 		ID:    "PollCount",
 		Delta: &counter,
@@ -223,9 +223,9 @@ func hash(data, key []byte) ([]byte, error) {
 
 func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.Request) {
 	for name, val := range gaugeMap {
-		var result models.Metrics
+		var result entity.Metric
 		_, err := req.
-			SetBody(&models.Metrics{
+			SetBody(&entity.Metric{
 				ID:    name,
 				MType: "gauge",
 				Value: &val,
@@ -238,9 +238,9 @@ func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.R
 		}
 
 	}
-	var result models.Metrics
+	var result entity.Metric
 	_, err := req.
-		SetBody(&models.Metrics{
+		SetBody(&entity.Metric{
 			ID:    "PollCount",
 			MType: "counter",
 			Delta: PollCount,
@@ -335,12 +335,12 @@ func CollectMetrics(gaugeMap map[string]float64, mu *sync.RWMutex) {
 
 func SendTestGetJSON(req *resty.Request) {
 
-	var result models.Metrics
+	var result entity.Metric
 	_, err := req.
 		// SetHeader("Content-Encoding", "gzip").
 		SetHeader("Accept-Encoding", "gzip").
 		// SetHeader("Content-Encoding", "gzip").
-		SetBody(&models.Metrics{
+		SetBody(&entity.Metric{
 			ID:    "PollCount",
 			MType: "counter",
 		}).
