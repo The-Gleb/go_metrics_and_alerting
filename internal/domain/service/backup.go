@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
+	"github.com/The-Gleb/go_metrics_and_alerting/pkg/utils/retry"
 )
 
 type FileStorage interface {
@@ -29,6 +32,39 @@ func NewBackupService(ms MetricStorage, bs FileStorage, interval int, restore bo
 	}
 }
 
+func (service *backupService) Run(ctx context.Context) {
+
+	if service.restore {
+		err := service.LoadDataFromFile(ctx)
+		if err != nil {
+			logger.Log.Errorf("error in backupservice, stopping", "error", err)
+			return
+		}
+	}
+
+	if service.backupInterval <= 0 || service.backupStorage == nil {
+		return
+	}
+
+	saveTicker := time.NewTicker(time.Duration(service.backupInterval) * time.Second)
+	for {
+		for {
+			select {
+			case <-saveTicker.C:
+				err := service.StoreDataToFile(ctx)
+				if err != nil {
+					logger.Log.Errorf("error in backupservice, stopping", "error", err)
+					return
+				}
+			case <-ctx.Done():
+				logger.Log.Debug("stop saving to file")
+				return
+			}
+		}
+	}
+
+}
+
 func (service *backupService) LoadDataFromFile(ctx context.Context) error {
 
 	data, err := service.backupStorage.ReadData()
@@ -43,9 +79,17 @@ func (service *backupService) LoadDataFromFile(ctx context.Context) error {
 		return fmt.Errorf("LoadDataFromFile: failed unmarshalling: %w", err)
 	}
 
+	err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
+		_, err = service.metricStorage.UpdateMetricSet(ctx, maps.Gauge)
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("LoadDataFromFile:: %w", err)
+	}
+
 	_, err = service.metricStorage.UpdateMetricSet(ctx, maps.Gauge)
 	if err != nil {
-		return fmt.Errorf("LoadDataFromFile: failded updating gauge: %w", err)
+		return fmt.Errorf("LoadDataFromFile:: %w", err)
 	}
 
 	_, err = service.metricStorage.UpdateMetricSet(ctx, maps.Counter)
@@ -57,7 +101,13 @@ func (service *backupService) LoadDataFromFile(ctx context.Context) error {
 }
 
 func (service *backupService) StoreDataToFile(ctx context.Context) error {
-	metricMaps, err := service.metricStorage.GetAllMetrics(ctx)
+
+	var metricMaps entity.MetricsMaps
+	var err error
+	err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {
+		metricMaps, err = service.metricStorage.GetAllMetrics(ctx)
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("StoreDataToFile: %w", err)
 	}

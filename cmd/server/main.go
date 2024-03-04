@@ -34,7 +34,7 @@ import (
 
 // postgres://metric_db:metric_db@localhost:5434/metric_db?sslmode=disable
 
-// TODO: fix status in logger
+// TODO: retries
 func main() {
 
 	if err := Run(); err != nil {
@@ -91,19 +91,19 @@ func main() {
 	// ctx, cancel := context.WithCancel(context.Background())
 
 	// if config.StoreInterval > 0 && config.DatabaseDSN == "" {
-	// 	saveTicker := time.NewTicker(time.Duration(config.StoreInterval) * time.Second)
+	// saveTicker := time.NewTicker(time.Duration(config.StoreInterval) * time.Second)
 	// 	wg.Add(1)
 	// 	go func() {
 	// 		defer wg.Done()
-	// 		for {
-	// 			select {
-	// 			case <-saveTicker.C:
-	// 				app.StoreDataToFile(context.Background())
-	// 			case <-ctx.Done():
-	// 				logger.Log.Debug("stop saving to file")
-	// 				return
-	// 			}
-	// 		}
+	// for {
+	// 	select {
+	// 	case <-saveTicker.C:
+	// 		app.StoreDataToFile(context.Background())
+	// 	case <-ctx.Done():
+	// 		logger.Log.Debug("stop saving to file")
+	// 		return
+	// 	}
+	// }
 
 	// 	}()
 	// }
@@ -152,7 +152,6 @@ func Run() error {
 
 		db, err := database.ConnectDB(config.DatabaseDSN)
 		if err != nil {
-			logger.Log.Fatal(err)
 			return err
 		}
 		repository = db
@@ -196,12 +195,23 @@ func Run() error {
 
 	var wg sync.WaitGroup
 
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		backupService.Run(ctx)
+	}()
+
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		ServerShutdownSignal := make(chan os.Signal, 1)
 		signal.Notify(ServerShutdownSignal, syscall.SIGINT)
+
 		<-ServerShutdownSignal
+
+		cancelCtx()
 		err := s.Shutdown(context.Background())
 		if err != nil {
 			panic(err)

@@ -5,9 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
-	"github.com/The-Gleb/go_metrics_and_alerting/pkg/utils/retry"
 )
 
 type getAllMetricsUsecase struct {
@@ -22,12 +19,7 @@ func NewGetAllMetricsUsecase(ms MetricService) *getAllMetricsUsecase {
 
 func (uc *getAllMetricsUsecase) GetAllMetricsJSON(ctx context.Context) ([]byte, error) {
 
-	var metricMaps entity.MetricsMaps
-	var err error
-	err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {
-		metricMaps, err = uc.metricService.GetAllMetrics(ctx)
-		return err
-	})
+	metricMaps, err := uc.metricService.GetAllMetrics(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GetAllMetricsJSON: %w", err)
 	}
@@ -50,12 +42,7 @@ func (uc *getAllMetricsUsecase) GetAllMetricsJSON(ctx context.Context) ([]byte, 
 
 func (uc *getAllMetricsUsecase) GetAllMetricsHTML(ctx context.Context) ([]byte, error) {
 
-	var metricMaps entity.MetricsMaps
-	var err error
-	err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
-		metricMaps, err = uc.metricService.GetAllMetrics(ctx)
-		return err
-	})
+	metricMaps, err := uc.metricService.GetAllMetrics(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GetAllMetricsHTML: %w", err)
 	}
