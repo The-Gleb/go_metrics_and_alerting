@@ -79,7 +79,7 @@ func Test_metricService_UpdateMetric(t *testing.T) {
 }
 
 func Test_metricService_UpdateMetricSet(t *testing.T) {
-	var validFloat64 float64 = 123.123
+	var validFloat64 float64 = 12345
 	var validFloat64two float64 = 321321
 	var validInt64 int64 = 5
 	var validInt64two int64 = 10
