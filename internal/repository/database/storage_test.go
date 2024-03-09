@@ -37,7 +37,7 @@ func cleanTables(t *testing.T, client postgresql.Client, tableNames ...string) {
 }
 
 func TestDB_UpdateMetricSet(t *testing.T) {
-	var validFloat64 float64 = 123.123
+	var validFloat64 float64 = 12345
 	var validFloat64two float64 = 321321
 	var validInt64 int64 = 5
 	var validInt64two int64 = 10
@@ -116,7 +116,7 @@ func TestDB_UpdateMetricSet(t *testing.T) {
 }
 
 func TestDB_GetAllMetrics(t *testing.T) {
-	var validFloat64 float64 = 123.123
+	var validFloat64 float64 = 12345
 	var validInt64 int64 = 5
 
 	client := getTestClient(t)
@@ -130,7 +130,7 @@ func TestDB_GetAllMetrics(t *testing.T) {
 	_, err = client.Exec(
 		context.Background(),
 		`INSERT INTO gauge_metrics (m_name, m_value)
-		VALUES ('Alloc', 123.123);
+		VALUES ('Alloc', 12345);
 		INSERT INTO counter_metrics (m_name, m_value)
 		VALUES ('PollCount', 5);`,
 	)
@@ -166,7 +166,7 @@ func TestDB_GetAllMetrics(t *testing.T) {
 }
 
 func TestDB_UpdateGauge(t *testing.T) {
-	var validFloat64 float64 = 123.123
+	var validFloat64 float64 = 12345
 	var validFloat64two float64 = 321321
 
 	client := getTestClient(t)
@@ -267,7 +267,7 @@ func TestDB_UpdateCounter(t *testing.T) {
 }
 
 func TestDB_GetGauge(t *testing.T) {
-	var validFloat64 float64 = 123.123
+	var validFloat64 float64 = 12345
 
 	client := getTestClient(t)
 	cleanTables(
@@ -280,7 +280,7 @@ func TestDB_GetGauge(t *testing.T) {
 	_, err = client.Exec(
 		context.Background(),
 		`INSERT INTO gauge_metrics (m_name, m_value)
-		VALUES ('Alloc', 123.123);`,
+		VALUES ('Alloc', 12345);`,
 	)
 	require.NoError(t, err)
 	tests := []struct {

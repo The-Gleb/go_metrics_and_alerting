@@ -13,7 +13,7 @@ import (
 
 func Test_getAllMetricsUsecase_GetAllMetricsJSON(t *testing.T) {
 
-	var gaugeVal float64 = 123.4
+	var gaugeVal float64 = 12345
 	var counterVal int64 = 123
 	gaugeMetric := entity.Metric{MType: "gauge", ID: "Alloc", Value: &gaugeVal}
 	counterMetric := entity.Metric{MType: "counter", ID: "PollCount", Delta: &counterVal}

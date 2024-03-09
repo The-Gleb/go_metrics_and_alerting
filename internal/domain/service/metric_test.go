@@ -11,7 +11,7 @@ import (
 )
 
 func Test_metricService_UpdateMetric(t *testing.T) {
-	var gaugeVal float64 = 123.4
+	var gaugeVal float64 = 12345
 	var gaugeVal2 float64 = 321
 	var counterVal int64 = 123
 	var counterVal2 int64 = 246
@@ -153,7 +153,7 @@ func Test_metricService_UpdateMetricSet(t *testing.T) {
 }
 
 func Test_metricService_GetMetric(t *testing.T) {
-	var gaugeVal float64 = 123.4
+	var gaugeVal float64 = 12345
 	var counterVal int64 = 123
 
 	memory := memory.New()
