@@ -69,6 +69,14 @@ func Test_getMetricHandler_ServeHTTP(t *testing.T) {
 				code:  400,
 			},
 		},
+		{
+			name:    "empty params",
+			address: "/value//pollCount",
+			want: want{
+				value: "",
+				code:  400,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

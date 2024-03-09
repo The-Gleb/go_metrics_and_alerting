@@ -51,12 +51,12 @@ func Test_getAllMetricHandler_ServeHTTP(t *testing.T) {
 		},
 	}
 
-	metricMaps := entity.MetricsMaps{
+	MetricSlices := entity.MetricSlices{
 		Gauge:   metrics[:1],
 		Counter: metrics[1:],
 	}
 
-	jsonMetrics, err := json.Marshal(metricMaps)
+	jsonMetrics, err := json.Marshal(MetricSlices)
 	require.NoError(t, err)
 
 	s := memory.New()

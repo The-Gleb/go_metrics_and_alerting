@@ -2,8 +2,10 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
 	"github.com/The-Gleb/go_metrics_and_alerting/pkg/utils/retry"
 )
 
@@ -15,7 +17,7 @@ type MetricStorage interface {
 
 	GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error)
 	GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error)
-	GetAllMetrics(ctx context.Context) (entity.MetricsMaps, error)
+	GetAllMetrics(ctx context.Context) (entity.MetricSlices, error)
 
 	PingDB() error
 }
@@ -33,17 +35,24 @@ func (service *metricService) UpdateMetric(ctx context.Context, metric entity.Me
 	var err error
 	switch metric.MType {
 	case "gauge":
+		if metric.Value == nil {
+			return entity.Metric{}, fmt.Errorf("%s: %w: ", "metricService.UpdateMetric", repository.ErrInvalidMetricStruct)
+		}
 		err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
 			metric, err = service.storage.UpdateGauge(ctx, metric)
 			return err
 		})
 
 	case "counter":
+		if metric.Delta == nil {
+			return entity.Metric{}, fmt.Errorf("%s: %w: ", "metricService.UpdateMetric", repository.ErrInvalidMetricStruct)
+		}
 		err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
 			metric, err = service.storage.UpdateCounter(ctx, metric)
 			return err
 		})
-
+	default:
+		return entity.Metric{}, repository.ErrInvalidMetricStruct
 	}
 
 	if err != nil {
@@ -84,7 +93,8 @@ func (service *metricService) GetMetric(ctx context.Context, metric entity.Metri
 			metric, err = service.storage.GetCounter(ctx, metric)
 			return err
 		})
-
+	default:
+		return entity.Metric{}, repository.ErrInvalidMetricStruct
 	}
 
 	if err != nil {
@@ -95,19 +105,19 @@ func (service *metricService) GetMetric(ctx context.Context, metric entity.Metri
 
 }
 
-func (service *metricService) GetAllMetrics(ctx context.Context) (entity.MetricsMaps, error) {
+func (service *metricService) GetAllMetrics(ctx context.Context) (entity.MetricSlices, error) {
 
-	var metricMaps entity.MetricsMaps
+	var MetricSlices entity.MetricSlices
 	var err error
 	err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {
-		metricMaps, err = service.storage.GetAllMetrics(ctx)
+		MetricSlices, err = service.storage.GetAllMetrics(ctx)
 		return err
 	})
 	if err != nil {
-		return entity.MetricsMaps{}, err
+		return entity.MetricSlices{}, err
 	}
 
-	return metricMaps, nil
+	return MetricSlices, nil
 
 }
 

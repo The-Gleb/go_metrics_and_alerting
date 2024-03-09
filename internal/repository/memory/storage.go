@@ -74,10 +74,18 @@ func (s *storage) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) 
 	for _, metric := range metrics {
 		switch metric.MType {
 		case "gauge":
+			if metric.Value == nil {
+				return 0, repository.ErrInvalidMetricStruct
+			}
+
 			newGauge.Store(metric.ID, metric.Value)
 
 			updated++
 		case "counter":
+			if metric.Delta == nil {
+				return 0, repository.ErrInvalidMetricStruct
+			}
+
 			val, _ := newCounter.LoadOrStore(metric.ID, new(atomic.Int64))
 			val.(*atomic.Int64).Add(*metric.Delta)
 			updated++
@@ -90,7 +98,7 @@ func (s *storage) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) 
 	return updated, nil
 }
 
-func (s *storage) GetAllMetrics(ctx context.Context) (entity.MetricsMaps, error) {
+func (s *storage) GetAllMetrics(ctx context.Context) (entity.MetricSlices, error) {
 	newGauge := make([]entity.Metric, 0)
 	s.gauge.Range(func(key any, value any) bool {
 
@@ -121,7 +129,7 @@ func (s *storage) GetAllMetrics(ctx context.Context) (entity.MetricsMaps, error)
 		return true
 	})
 
-	return entity.MetricsMaps{
+	return entity.MetricSlices{
 		Gauge:   newGauge,
 		Counter: newCounter,
 	}, nil
@@ -130,9 +138,10 @@ func (s *storage) GetAllMetrics(ctx context.Context) (entity.MetricsMaps, error)
 func (s *storage) GetMetric(mType, mName string) (string, error) {
 	switch mType {
 	case "gauge":
-		val, ok := s.gauge.Load(mName)
-		if ok {
-			return fmt.Sprintf("%v", val), nil
+		if val, ok := s.gauge.Load(mName); ok {
+			if fval, ok := val.(*float64); ok {
+				return fmt.Sprintf("%v", *fval), nil
+			}
 		}
 	case "counter":
 		val, ok := s.counter.Load(mName)

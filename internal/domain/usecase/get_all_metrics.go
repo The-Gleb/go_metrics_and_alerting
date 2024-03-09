@@ -19,14 +19,14 @@ func NewGetAllMetricsUsecase(ms MetricService) *getAllMetricsUsecase {
 
 func (uc *getAllMetricsUsecase) GetAllMetricsJSON(ctx context.Context) ([]byte, error) {
 
-	metricMaps, err := uc.metricService.GetAllMetrics(ctx)
+	MetricSlices, err := uc.metricService.GetAllMetrics(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GetAllMetricsJSON: %w", err)
 	}
 
 	b := new(bytes.Buffer)
 
-	jsonMaps, err := json.Marshal(&metricMaps)
+	jsonMaps, err := json.Marshal(&MetricSlices)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GetAllMetricsJSON: %w", err)
 	}
@@ -42,7 +42,7 @@ func (uc *getAllMetricsUsecase) GetAllMetricsJSON(ctx context.Context) ([]byte, 
 
 func (uc *getAllMetricsUsecase) GetAllMetricsHTML(ctx context.Context) ([]byte, error) {
 
-	metricMaps, err := uc.metricService.GetAllMetrics(ctx)
+	MetricSlices, err := uc.metricService.GetAllMetrics(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GetAllMetricsHTML: %w", err)
 	}
@@ -62,10 +62,10 @@ func (uc *getAllMetricsUsecase) GetAllMetricsHTML(ctx context.Context) ([]byte, 
 			<body>
 			<ul>`)
 
-	for _, metric := range metricMaps.Gauge {
+	for _, metric := range MetricSlices.Gauge {
 		fmt.Fprintf(b, "<li>%s = %f</li>", metric.ID, *metric.Value)
 	}
-	for _, metric := range metricMaps.Counter {
+	for _, metric := range MetricSlices.Counter {
 		fmt.Fprintf(b, "<li>%s = %d</li>", metric.ID, *metric.Delta)
 	}
 

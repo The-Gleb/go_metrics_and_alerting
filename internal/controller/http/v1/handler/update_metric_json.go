@@ -13,6 +13,8 @@ const (
 	updateMetricJSONURL = "/update"
 )
 
+// updateMetricJSONHandler receives metric type, name and value in json from request body.
+// It updates value of one metric or creates it if doesn't exist.
 type updateMetricJSONHandler struct {
 	usecase     UpdateMetricUsecase
 	middlewares []func(http.Handler) http.Handler
@@ -43,6 +45,12 @@ func (h *updateMetricJSONHandler) ServeHTTP(rw http.ResponseWriter, r *http.Requ
 	err := json.NewDecoder(r.Body).Decode(&metric)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if metric.MType == "" || metric.ID == "" ||
+		(metric.Delta == nil && metric.Value == nil) {
+		http.Error(rw, "invalid request body,some fields are empty, but they shouldn`t", http.StatusBadRequest)
 		return
 	}
 

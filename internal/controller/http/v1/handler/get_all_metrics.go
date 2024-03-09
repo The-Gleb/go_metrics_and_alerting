@@ -17,6 +17,7 @@ type GetAllMetricsUsecase interface {
 	GetAllMetricsHTML(ctx context.Context) ([]byte, error)
 }
 
+// Returns all metrics stored on repository in JSON or HTML format.
 type getAllMetricsHandler struct {
 	usecase     GetAllMetricsUsecase
 	middlewares []func(http.Handler) http.Handler

@@ -19,6 +19,8 @@ type GetMetricUsecase interface {
 	GetMetric(ctx context.Context, metrics entity.Metric) (entity.Metric, error)
 }
 
+// getMetricHandler receives metric type, name in url params.
+// Returns metric value.
 type getMetricHandler struct {
 	usecase     GetMetricUsecase
 	middlewares []func(http.Handler) http.Handler
@@ -52,8 +54,14 @@ func (h *getMetricHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		ID:    mName,
 	}
 
+	if mType == "" || mName == "" {
+		http.Error(rw, "invalid request, metric type or metric name is empty", http.StatusBadRequest)
+		return
+	}
+
 	metric, err := h.usecase.GetMetric(r.Context(), metric)
 	if err != nil {
+
 		if errors.Is(err, repository.ErrNotFound) {
 			rw.WriteHeader(http.StatusNotFound)
 			http.Error(rw, err.Error(), http.StatusNotFound)
@@ -78,7 +86,7 @@ func (h *getMetricHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	default:
 
-		http.Error(rw, "invalid metric type", http.StatusBadRequest)
+		http.Error(rw, "invalid metric type", http.StatusInternalServerError)
 		return
 
 	}

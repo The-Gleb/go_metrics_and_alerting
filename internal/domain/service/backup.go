@@ -72,7 +72,7 @@ func (service *backupService) LoadDataFromFile(ctx context.Context) error {
 		return fmt.Errorf("LoadDataFromFile: failed reading data: %w", err)
 	}
 
-	var maps entity.MetricsMaps
+	var maps entity.MetricSlices
 
 	err = json.Unmarshal(data, &maps)
 	if err != nil {
@@ -102,17 +102,17 @@ func (service *backupService) LoadDataFromFile(ctx context.Context) error {
 
 func (service *backupService) StoreDataToFile(ctx context.Context) error {
 
-	var metricMaps entity.MetricsMaps
+	var MetricSlices entity.MetricSlices
 	var err error
 	err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {
-		metricMaps, err = service.metricStorage.GetAllMetrics(ctx)
+		MetricSlices, err = service.metricStorage.GetAllMetrics(ctx)
 		return err
 	})
 	if err != nil {
 		return fmt.Errorf("StoreDataToFile: %w", err)
 	}
 
-	data, err := json.Marshal(metricMaps)
+	data, err := json.Marshal(MetricSlices)
 	if err != nil {
 		return fmt.Errorf("StoreDataToFile: %w", err)
 	}

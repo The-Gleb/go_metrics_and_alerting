@@ -10,7 +10,7 @@ type MetricService interface {
 	UpdateMetric(ctx context.Context, metric entity.Metric) (entity.Metric, error)
 	UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error)
 	GetMetric(ctx context.Context, metric entity.Metric) (entity.Metric, error)
-	GetAllMetrics(ctx context.Context) (entity.MetricsMaps, error)
+	GetAllMetrics(ctx context.Context) (entity.MetricSlices, error)
 
 	PingDB() error
 }

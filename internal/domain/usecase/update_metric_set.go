@@ -21,7 +21,7 @@ func (uc *updateMetricSetUsecase) UpdateMetricSet(ctx context.Context, metrics [
 
 	n, err := uc.metricService.UpdateMetricSet(ctx, metrics)
 	if err != nil {
-		return n, err // TODO: check what n when err != nil
+		return n, err
 	}
 
 	if uc.backupService != nil && uc.backupService.SyncWrite() {

@@ -19,6 +19,8 @@ type UpdateMetricSetUsecase interface {
 	UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error)
 }
 
+// updateMetricSetHandler updates metrics' values or creates it if doesn't exist.
+// Receives json metric set from request body.
 type updateMetricSetHandler struct {
 	usecase     UpdateMetricSetUsecase
 	middlewares []func(http.Handler) http.Handler

@@ -16,6 +16,8 @@ const (
 	getMetricJSONURL = "/value"
 )
 
+// getMetricJSONHandler receives metric type, name in json from request body.
+// Returns metric value.
 type getMetricJSONHandler struct {
 	usecase     GetMetricUsecase
 	middlewares []func(http.Handler) http.Handler
@@ -46,6 +48,11 @@ func (h *getMetricJSONHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request
 	err := json.NewDecoder(r.Body).Decode(&metric)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if metric.ID == "" || metric.MType == "" {
+		http.Error(rw, "invalid request body,some fields are empty, but they shouldn`t", http.StatusBadRequest)
 		return
 	}
 

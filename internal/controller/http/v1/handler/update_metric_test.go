@@ -94,6 +94,13 @@ func Test_updateMetricHandler_ServeHTTP(t *testing.T) {
 				code: 400,
 			},
 		},
+		{
+			name:    "empty metric name - test #7",
+			address: "/update/gauge//123",
+			want: want{
+				code: 400,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -20,6 +20,8 @@ type UpdateMetricUsecase interface {
 	UpdateMetric(ctx context.Context, metrics entity.Metric) (entity.Metric, error)
 }
 
+// updateMetricHandler receives metric type, name and value from url params.
+// It updates value of one metric or creates it if doesn't exist.
 type updateMetricHandler struct {
 	usecase     UpdateMetricUsecase
 	middlewares []func(http.Handler) http.Handler
@@ -51,6 +53,11 @@ func (h *updateMetricHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 	metric := entity.Metric{
 		MType: mType,
 		ID:    mName,
+	}
+
+	if mType == "" || mName == "" {
+		http.Error(rw, "invalid request body,some fields are empty, but they shouldn`t", http.StatusBadRequest)
+		return
 	}
 
 	switch mType {
