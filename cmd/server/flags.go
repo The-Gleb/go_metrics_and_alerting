@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -55,6 +56,12 @@ func (b ConfigBuilder) SetSignKey(key string) ConfigBuilder {
 }
 
 func NewConfigFromFlags() Config {
+
+	fmt.Printf(
+		"Build version: %s\nBuild date: %s\nBuild commit: %s\n",
+		BuildVersion, BuildDate, BuildCommit,
+	)
+
 	flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
 	var address string

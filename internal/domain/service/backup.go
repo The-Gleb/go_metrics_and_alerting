@@ -37,7 +37,7 @@ func (service *backupService) Run(ctx context.Context) {
 	if service.restore {
 		err := service.LoadDataFromFile(ctx)
 		if err != nil {
-			logger.Log.Errorf("error in backupservice, stopping", "error", err)
+			logger.Log.Errorf("error in backupservice, stopping")
 			return
 		}
 	}
@@ -53,7 +53,6 @@ func (service *backupService) Run(ctx context.Context) {
 			case <-saveTicker.C:
 				err := service.StoreDataToFile(ctx)
 				if err != nil {
-					logger.Log.Errorf("error in backupservice, stopping", "error", err)
 					return
 				}
 			case <-ctx.Done():
@@ -71,11 +70,16 @@ func (service *backupService) LoadDataFromFile(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("LoadDataFromFile: failed reading data: %w", err)
 	}
+	if len(data) == 0 {
+		logger.Log.Debug("backup file is empty, nothing to restore")
+		return nil
+	}
 
 	var maps entity.MetricSlices
 
 	err = json.Unmarshal(data, &maps)
 	if err != nil {
+		logger.Log.Errorf("error in backupservice, stopping", "error", err)
 		return fmt.Errorf("LoadDataFromFile: failed unmarshalling: %w", err)
 	}
 
@@ -84,18 +88,26 @@ func (service *backupService) LoadDataFromFile(ctx context.Context) error {
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("LoadDataFromFile:: %w", err)
+		return fmt.Errorf("LoadDataFromFile: %w", err)
 	}
 
-	_, err = service.metricStorage.UpdateMetricSet(ctx, maps.Gauge)
+	err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
+		_, err = service.metricStorage.UpdateMetricSet(ctx, maps.Counter)
+		return err
+	})
 	if err != nil {
-		return fmt.Errorf("LoadDataFromFile:: %w", err)
+		return fmt.Errorf("LoadDataFromFile: %w", err)
 	}
 
-	_, err = service.metricStorage.UpdateMetricSet(ctx, maps.Counter)
-	if err != nil {
-		return fmt.Errorf("LoadDataFromFile: failded updating counter: %w", err)
-	}
+	// _, err = service.metricStorage.UpdateMetricSet(ctx, maps.Gauge)
+	// if err != nil {
+	// 	return fmt.Errorf("LoadDataFromFile:: %w", err)
+	// }
+
+	// _, err = service.metricStorage.UpdateMetricSet(ctx, maps.Counter)
+	// if err != nil {
+	// 	return fmt.Errorf("LoadDataFromFile: failded updating counter: %w", err)
+	// }
 
 	return nil
 }

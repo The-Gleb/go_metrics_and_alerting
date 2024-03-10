@@ -30,7 +30,19 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 )
 
+var (
+	BuildVersion string = "N/A"
+	BuildDate    string = "N/A"
+	BuildCommit  string = "N/A"
+)
+
 func main() {
+
+	fmt.Printf(
+		"Build version: %s\nBuild date: %s\nBuild commit: %s\n",
+		BuildVersion, BuildDate, BuildCommit,
+	)
+
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
