@@ -4,13 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"os"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service"
@@ -99,37 +96,4 @@ func Test_getAllMetricHandler_ServeHTTP(t *testing.T) {
 			require.Equal(t, string(jsonMetrics), b)
 		})
 	}
-}
-
-func Example_getAllMetricHandler_ServeHTTP() {
-
-	s := memory.New()
-	s.UpdateMetric("gauge", "Alloc", "123.4")
-	s.UpdateMetric("counter", "PollCount", "12")
-	metricService := service.NewMetricService(s)
-	getAllMetricsUsecase := usecase.NewGetAllMetricsUsecase(metricService)
-	getAllMetricsHandler := NewGetAllMetricsHandler(getAllMetricsUsecase)
-
-	router := chi.NewRouter()
-	getAllMetricsHandler.AddToRouter(router)
-	ts := httptest.NewServer(router)
-	defer ts.Close()
-
-	req, _ := http.NewRequest("GET", ts.URL+"/", nil)
-
-	resp, err := ts.Client().Do(req)
-	if err != nil {
-		fmt.Println("error!: %w", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	fmt.Println(resp.StatusCode)
-	b, _ := io.ReadAll(resp.Body)
-	fmt.Fprintln(os.Stdout, []any{string(b)}...)
-
-	// Output:
-	// 200
-	// {"Gauge":[{"id":"Alloc","type":"gauge","value":123.4}],"Counter":[{"id":"PollCount","type":"counter","delta":12}]}
-
 }

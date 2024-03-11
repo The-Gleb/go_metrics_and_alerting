@@ -63,11 +63,9 @@ func (h *getMetricHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if err != nil {
 
 		if errors.Is(err, repository.ErrNotFound) {
-			rw.WriteHeader(http.StatusNotFound)
 			http.Error(rw, err.Error(), http.StatusNotFound)
 			return
 		} else {
-			rw.WriteHeader(http.StatusBadRequest)
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 			return
 		}

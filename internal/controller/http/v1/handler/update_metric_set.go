@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	updateMetricSetURL = "/updates/"
+	updateMetricSetURL = "/updates"
 )
 
 type UpdateMetricSetUsecase interface {

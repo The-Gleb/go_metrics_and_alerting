@@ -33,7 +33,8 @@ func Test_updateMetricSetHandler_ServeHTTP(t *testing.T) {
 			"id": "PollCount",
 			"type": "counter",
 			"delta": 123
-		}]`
+		}
+	]`
 
 	type want struct {
 		code int

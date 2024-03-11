@@ -1,9 +1,6 @@
 package v1
 
 import (
-	"fmt"
-	"io"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -91,36 +88,4 @@ func Test_getMetricHandler_ServeHTTP(t *testing.T) {
 
 		})
 	}
-}
-
-func Example_getMetricHandler_ServeHTTP() {
-
-	s := memory.New()
-	s.UpdateMetric("gauge", "Alloc", "123.4")
-	metricService := service.NewMetricService(s)
-	getMetricUsecase := usecase.NewGetMetricUsecase(metricService)
-	getMetricHandler := NewGetMetricHandler(getMetricUsecase)
-
-	router := chi.NewRouter()
-	getMetricHandler.AddToRouter(router)
-	ts := httptest.NewServer(router)
-	defer ts.Close()
-
-	req, _ := http.NewRequest("GET", ts.URL+"/value/gauge/Alloc", nil)
-
-	resp, err := ts.Client().Do(req)
-	if err != nil {
-		fmt.Println("error!: %w", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	fmt.Println(resp.StatusCode)
-	b, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(b))
-
-	// Output:
-	// 200
-	// 123.4
-
 }

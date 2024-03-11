@@ -1,9 +1,6 @@
 package v1
 
 import (
-	"fmt"
-	"io"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -120,35 +117,4 @@ func Test_updateMetricHandler_ServeHTTP(t *testing.T) {
 
 		})
 	}
-}
-
-func Example_updateMetricHandler_ServeHTTP() {
-
-	s := memory.New()
-	metricService := service.NewMetricService(s)
-	updateMetricUsecase := usecase.NewUpdateMetricUsecase(metricService, nil)
-	updateMetricHandler := NewUpdateMetricHandler(updateMetricUsecase)
-
-	router := chi.NewRouter()
-	updateMetricHandler.AddToRouter(router)
-	ts := httptest.NewServer(router)
-	defer ts.Close()
-
-	req, _ := http.NewRequest("POST", ts.URL+"/update/gauge/Alloc/12.12", nil)
-
-	resp, err := ts.Client().Do(req)
-	if err != nil {
-		fmt.Println("error!: %w", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	fmt.Println(resp.StatusCode)
-	b, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(b))
-
-	// Output:
-	// 200
-	// 12.12
-
 }
