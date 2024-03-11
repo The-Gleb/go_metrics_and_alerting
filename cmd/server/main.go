@@ -18,9 +18,8 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/usecase"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository/database"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository/file_storage"
+	filestorage "github.com/The-Gleb/go_metrics_and_alerting/internal/repository/file_storage"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository/memory"
-	postgresql "github.com/The-Gleb/go_metrics_and_alerting/pkg/client"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -67,11 +66,7 @@ func Run() error {
 	}
 
 	if config.DatabaseDSN != "" {
-		client, err := postgresql.NewClient(context.Background(), config.DatabaseDSN)
-		if err != nil {
-			return err
-		}
-		db, err := database.NewMetricDB(client)
+		db, err := database.NewMetricDB(context.Background(), config.DatabaseDSN)
 		if err != nil {
 			return err
 		}

@@ -13,18 +13,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func getTestClient(t *testing.T) postgresql.Client {
-	ctx := context.Background()
-	client, err := postgresql.NewClient(
-		ctx,
-		"postgres://metric_db:metric_db@localhost:5434/metric_db?sslmode=disable",
-	)
+// func getTestClient(t *testing.T) postgresql.Client {
+// 	ctx := context.Background()
+// 	client, err := postgresql.NewClient(
+// 		ctx,
+// 		"postgres://metric_db:metric_db@localhost:5434/metric_db?sslmode=disable",
+// 	)
+// 	require.NoError(t, err)
+// 	return client
+
+// }
+
+var dsn string = "postgres://metric_db:metric_db@localhost:5434/metric_db?sslmode=disable"
+
+func cleanTables(t *testing.T, dsn string, tableNames ...string) {
+	client, err := postgresql.NewClient(context.Background(), dsn)
 	require.NoError(t, err)
-	return client
-
-}
-
-func cleanTables(t *testing.T, client postgresql.Client, tableNames ...string) {
 	for _, name := range tableNames {
 		query := fmt.Sprintf("TRUNCATE TABLE \"%s\" CASCADE", name)
 		_, err := client.Exec(
@@ -42,12 +46,11 @@ func TestDB_UpdateMetricSet(t *testing.T) {
 	var validInt64 int64 = 5
 	var validInt64two int64 = 10
 
-	client := getTestClient(t)
 	cleanTables(
-		t, client,
+		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(client)
+	storage, err := NewMetricDB(context.Background(), dsn)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -119,14 +122,15 @@ func TestDB_GetAllMetrics(t *testing.T) {
 	var validFloat64 float64 = 12345
 	var validInt64 int64 = 5
 
-	client := getTestClient(t)
 	cleanTables(
-		t, client,
+		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(client)
+	storage, err := NewMetricDB(context.Background(), dsn)
 	require.NoError(t, err)
 
+	client, err := postgresql.NewClient(context.Background(), dsn)
+	require.NoError(t, err)
 	_, err = client.Exec(
 		context.Background(),
 		`INSERT INTO gauge_metrics (m_name, m_value)
@@ -169,12 +173,11 @@ func TestDB_UpdateGauge(t *testing.T) {
 	var validFloat64 float64 = 12345
 	var validFloat64two float64 = 321321
 
-	client := getTestClient(t)
 	cleanTables(
-		t, client,
+		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(client)
+	storage, err := NewMetricDB(context.Background(), dsn)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -217,12 +220,11 @@ func TestDB_UpdateCounter(t *testing.T) {
 	var validInt64 int64 = 5
 	var validInt64two int64 = 10
 
-	client := getTestClient(t)
 	cleanTables(
-		t, client,
+		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(client)
+	storage, err := NewMetricDB(context.Background(), dsn)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -269,12 +271,14 @@ func TestDB_UpdateCounter(t *testing.T) {
 func TestDB_GetGauge(t *testing.T) {
 	var validFloat64 float64 = 12345
 
-	client := getTestClient(t)
 	cleanTables(
-		t, client,
+		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(client)
+	storage, err := NewMetricDB(context.Background(), dsn)
+	require.NoError(t, err)
+
+	client, err := postgresql.NewClient(context.Background(), dsn)
 	require.NoError(t, err)
 
 	_, err = client.Exec(
@@ -320,12 +324,14 @@ func TestDB_GetGauge(t *testing.T) {
 func TestDB_GetCounter(t *testing.T) {
 	var validInt64 int64 = 123
 
-	client := getTestClient(t)
 	cleanTables(
-		t, client,
+		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(client)
+	storage, err := NewMetricDB(context.Background(), dsn)
+	require.NoError(t, err)
+
+	client, err := postgresql.NewClient(context.Background(), dsn)
 	require.NoError(t, err)
 
 	_, err = client.Exec(

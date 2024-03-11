@@ -2,19 +2,21 @@ package database
 
 import (
 	"context"
-	_ "embed"
+	"embed"
 	"errors"
 	"fmt"
-	"strings"
+	"log/slog"
 	"time"
 
-	// "github.com/jackc/pgerrcode"
-	// "github.com/jackc/pgx/v5/pgconn"
-
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	_ "github.com/jackc/pgx/v5/stdlib"
+
+	// "github.com/jackc/pgx/v5/stdlib"
+	// _ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
@@ -22,23 +24,17 @@ import (
 	postgresql "github.com/The-Gleb/go_metrics_and_alerting/pkg/client"
 )
 
-var (
-	//go:embed sqls/schema.sql
-	schemaQuery string
-)
-
 type DB struct {
 	client postgresql.Client
 }
 
-func NewMetricDB(client postgresql.Client) (*DB, error) {
-	// ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
-	// 	`localhost`, `videos`, `userpassword`, `videos`)
+func NewMetricDB(ctx context.Context, dsn string) (*DB, error) {
+	client, err := postgresql.NewClient(ctx, dsn)
+	if err != nil {
+		return nil, err
+	}
 
-	// migrate.
-	schemaQuery = strings.TrimSpace(schemaQuery)
-
-	_, err := client.Exec(context.Background(), schemaQuery)
+	err = runMigrations(dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -46,13 +42,28 @@ func NewMetricDB(client postgresql.Client) (*DB, error) {
 	return &DB{client}, nil
 }
 
-type Repositiries interface {
-	GetAllMetrics(ctx context.Context) ([]entity.Metric, []entity.Metric)
-	UpdateGauge(ctx context.Context, metric entity.Metric) error
-	UpdateCounter(ctx context.Context, metric entity.Metric) error
-	GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error)
-	GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error)
-	PingDB() error
+//go:embed migration/*.sql
+var migrationsDir embed.FS
+
+func runMigrations(dsn string) error {
+	d, err := iofs.New(migrationsDir, "migration")
+	if err != nil {
+		slog.Error(err.Error())
+		return fmt.Errorf("failed to return an iofs driver: %w", err)
+	}
+
+	m, err := migrate.NewWithSourceInstance("iofs", d, dsn)
+	if err != nil {
+		slog.Error(err.Error())
+		return fmt.Errorf("failed to get a new migrate instance: %w", err)
+	}
+	if err := m.Up(); err != nil {
+		slog.Error(err.Error())
+		if !errors.Is(err, migrate.ErrNoChange) {
+			return fmt.Errorf("failed to apply migrations to the DB: %w", err)
+		}
+	}
+	return nil
 }
 
 func (db *DB) PingDB() error {
