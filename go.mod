@@ -1,6 +1,6 @@
 module github.com/The-Gleb/go_metrics_and_alerting
 
-go 1.20
+go 1.22
 
 require (
 	github.com/caarlos0/env v3.5.0+incompatible
