@@ -4,27 +4,35 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"log"
+	"log/slog"
+	"os"
 	"testing"
+	"time"
+
+	// "time"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
 	postgresql "github.com/The-Gleb/go_metrics_and_alerting/pkg/client"
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jackc/pgx/v4"
+
+	// "github.com/jackc/pgx/v4"
+	"github.com/ory/dockertest"
+	"github.com/ory/dockertest/docker"
 	"github.com/stretchr/testify/require"
 )
 
-// func getTestClient(t *testing.T) postgresql.Client {
-// 	ctx := context.Background()
-// 	client, err := postgresql.NewClient(
-// 		ctx,
-// 		"postgres://metric_db:metric_db@localhost:5434/metric_db?sslmode=disable",
-// 	)
-// 	require.NoError(t, err)
-// 	return client
+func TestMain(m *testing.M) {
+	code, err := createTestDBContainer(m)
+	if err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(code)
 
-// }
+}
 
-var dsn string = "postgres://metric_db:metric_db@localhost:5434/metric_db?sslmode=disable"
+var dsn string = "postgres://test_db:test_db@:5434/tcp/test_db?sslmode=disable"
 
 func cleanTables(t *testing.T, dsn string, tableNames ...string) {
 	client, err := postgresql.NewClient(context.Background(), dsn)
@@ -37,21 +45,82 @@ func cleanTables(t *testing.T, dsn string, tableNames ...string) {
 		)
 		require.NoError(t, err)
 	}
+}
 
+func createTestDBContainer(m *testing.M) (int, error) {
+	pool, err := dockertest.NewPool("")
+	if err != nil {
+		return 0, err
+	}
+
+	pg, err := pool.RunWithOptions(
+
+		&dockertest.RunOptions{
+			Repository: "postgres",
+			Tag:        "alpine",
+			Name:       "migrations-integration-tests",
+			Env: []string{
+				"POSTGRES_USER=postgres",
+				"POSTGRES_PASSWORD=postgres",
+			},
+			ExposedPorts: []string{"5432"},
+		},
+		func(config *docker.HostConfig) {
+			config.AutoRemove = true
+			config.RestartPolicy = docker.RestartPolicy{Name: "no"}
+		},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	defer func() {
+		if err := pool.Purge(pg); err != nil {
+			log.Printf("failed to purge the postgres container: %v", err)
+		}
+	}()
+
+	dsn = fmt.Sprintf("postgres://postgres:postgres@%s/postgres?sslmode=disable", pg.GetHostPort("5432/tcp"))
+	slog.Info(dsn)
+
+	pool.MaxWait = 2 * time.Second
+	var conn *pgx.Conn
+	err = pool.Retry(func() error {
+		conn, err = pgx.Connect(context.Background(), dsn)
+		if err != nil {
+			return fmt.Errorf("failed to connect to the DB: %w", err)
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err := conn.Close(context.Background()); err != nil {
+			log.Printf("failed to correctly close the connection: %v", err)
+		}
+	}()
+
+	code := m.Run()
+
+	return code, nil
 }
 
 func TestDB_UpdateMetricSet(t *testing.T) {
+
 	var validFloat64 float64 = 12345
 	var validFloat64two float64 = 321321
 	var validInt64 int64 = 5
 	var validInt64two int64 = 10
 
+	slog.Info(dsn)
+	storage, err := NewMetricDB(context.Background(), dsn)
+	require.NoError(t, err)
+
 	cleanTables(
 		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(context.Background(), dsn)
-	require.NoError(t, err)
 
 	tests := []struct {
 		name    string
@@ -122,12 +191,13 @@ func TestDB_GetAllMetrics(t *testing.T) {
 	var validFloat64 float64 = 12345
 	var validInt64 int64 = 5
 
+	storage, err := NewMetricDB(context.Background(), dsn)
+	require.NoError(t, err)
+
 	cleanTables(
 		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(context.Background(), dsn)
-	require.NoError(t, err)
 
 	client, err := postgresql.NewClient(context.Background(), dsn)
 	require.NoError(t, err)
@@ -173,12 +243,13 @@ func TestDB_UpdateGauge(t *testing.T) {
 	var validFloat64 float64 = 12345
 	var validFloat64two float64 = 321321
 
+	storage, err := NewMetricDB(context.Background(), dsn)
+	require.NoError(t, err)
+
 	cleanTables(
 		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(context.Background(), dsn)
-	require.NoError(t, err)
 
 	tests := []struct {
 		name    string
@@ -220,12 +291,13 @@ func TestDB_UpdateCounter(t *testing.T) {
 	var validInt64 int64 = 5
 	var validInt64two int64 = 10
 
+	storage, err := NewMetricDB(context.Background(), dsn)
+	require.NoError(t, err)
+
 	cleanTables(
 		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(context.Background(), dsn)
-	require.NoError(t, err)
 
 	tests := []struct {
 		name    string
@@ -271,12 +343,13 @@ func TestDB_UpdateCounter(t *testing.T) {
 func TestDB_GetGauge(t *testing.T) {
 	var validFloat64 float64 = 12345
 
+	storage, err := NewMetricDB(context.Background(), dsn)
+	require.NoError(t, err)
+
 	cleanTables(
 		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(context.Background(), dsn)
-	require.NoError(t, err)
 
 	client, err := postgresql.NewClient(context.Background(), dsn)
 	require.NoError(t, err)
@@ -324,12 +397,13 @@ func TestDB_GetGauge(t *testing.T) {
 func TestDB_GetCounter(t *testing.T) {
 	var validInt64 int64 = 123
 
+	storage, err := NewMetricDB(context.Background(), dsn)
+	require.NoError(t, err)
+
 	cleanTables(
 		t, dsn,
 		"gauge_metrics", "counter_metrics",
 	)
-	storage, err := NewMetricDB(context.Background(), dsn)
-	require.NoError(t, err)
 
 	client, err := postgresql.NewClient(context.Background(), dsn)
 	require.NoError(t, err)
