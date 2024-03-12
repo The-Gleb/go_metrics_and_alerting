@@ -28,8 +28,8 @@ func (m Metric) Valid() map[string]string {
 }
 
 type GetMetricDTO struct {
-	MType string
-	ID    string
+	MType string `json:"type"`
+	ID    string `json:"id"`
 }
 
 func (dto GetMetricDTO) Valid() map[string]string {

@@ -81,7 +81,7 @@ func (service *metricService) UpdateMetricSet(ctx context.Context, metrics []ent
 func (service *metricService) GetMetric(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
 	var metric entity.Metric
 	var err error
-	switch metric.MType {
+	switch dto.MType {
 	case "gauge":
 		err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
 			metric, err = service.storage.GetGauge(ctx, dto)

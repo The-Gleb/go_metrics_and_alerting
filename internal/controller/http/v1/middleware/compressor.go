@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 
-	// "log"
 	"net/http"
 	"strings"
 
@@ -87,7 +86,6 @@ func (md *gzipMiddleware) Do(h http.Handler) http.Handler {
 
 		acceptEncoding := r.Header.Get("Accept-Encoding")
 		supportsGzip := strings.Contains(acceptEncoding, "gzip")
-		// logger.Log.Debugw("Request Accept-Encoding", "gzip", supportsGzip)
 		if supportsGzip {
 			cw := newCompressWriter(rw)
 			ow = cw
@@ -96,7 +94,6 @@ func (md *gzipMiddleware) Do(h http.Handler) http.Handler {
 
 		contentEncoding := r.Header.Get("Content-Encoding")
 		sendsGzip := strings.Contains(contentEncoding, "gzip")
-		// logger.Log.Debugw("Request Content-Encoding", "gzip", sendsGzip)
 		if sendsGzip {
 			cr, err := newCompressReader(r.Body)
 			if err != nil {

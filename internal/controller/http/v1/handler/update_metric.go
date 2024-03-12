@@ -92,10 +92,10 @@ func (h *updateMetricHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 
 	switch metric.MType {
 	case "gauge":
-		rw.Write([]byte(fmt.Sprint(metric.Value)))
+		rw.Write([]byte(fmt.Sprint(*metric.Value)))
 		return
 	case "counter":
-		rw.Write([]byte(fmt.Sprint(metric.Delta)))
+		rw.Write([]byte(fmt.Sprint(*metric.Delta)))
 		return
 	default:
 		http.Error(rw, "metric with invalid type returned", http.StatusInternalServerError)

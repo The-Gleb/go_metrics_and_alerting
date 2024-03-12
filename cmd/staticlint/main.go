@@ -232,23 +232,39 @@ func run(pass *analysis.Pass) (interface{}, error) {
 
 	for _, file := range pass.Files {
 
+		if file.Name.Name != "main" {
+			continue
+		}
+
 		ast.Inspect(file, func(node ast.Node) bool {
 
-			if d, ok := node.(*ast.FuncDecl); ok &&
-				d.Name.Name == "main" {
-				ast.Inspect(node, func(n ast.Node) bool {
-					if f, ok := n.(*ast.CallExpr); ok {
-						if s, ok := f.Fun.(*ast.SelectorExpr); ok {
-							if ident, ok := s.X.(*ast.Ident); ok {
-								if ident.Name == "os" && s.Sel.Name == "Exit" {
-									pass.Reportf(s.Sel.Pos(), "Direct call from the main package")
-								}
-							}
-						}
-					}
-					return true
-				})
+			if d, ok := node.(*ast.FuncDecl); !ok || d.Name.Name != "main" {
+				return true
 			}
+
+			ast.Inspect(node, func(n ast.Node) bool {
+				f, ok := n.(*ast.CallExpr)
+				if !ok {
+					return true
+				}
+
+				s, ok := f.Fun.(*ast.SelectorExpr)
+				if !ok {
+					return true
+				}
+
+				ident, ok := s.X.(*ast.Ident)
+				if !ok {
+					return true
+				}
+
+				if ident.Name == "os" && s.Sel.Name == "Exit" {
+					pass.Reportf(s.Sel.Pos(), "Direct call from the main package")
+				}
+
+				return true
+			})
+
 			return true
 		},
 		)

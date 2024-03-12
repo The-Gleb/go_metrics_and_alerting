@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/caarlos0/env"
-	// "strconv"
 )
 
 type Config struct {
@@ -74,19 +73,6 @@ func NewConfigFromFlags() Config {
 		SetRateLimit(rateLimit)
 
 	env.Parse(&builder.config)
-
-	// if envAddress := os.Getenv("ADDRESS"); envAddress != "" {
-	// 	builder = builder.SetAddres(envAddress)
-	// }
-	// if envPollInterval := os.Getenv("POLL_INTERVAL"); envPollInterval != "" {
-	// 	builder = builder.SetPollInterval(pollInterval)
-	// }
-	// if envReportInterval := os.Getenv("REPORT_INTERVAL"); envReportInterval != "" {
-	// 	builder = builder.SetReportInterval(reportInterval)
-	// }
-	// if envSignKey := os.Getenv("KEY"); envSignKey != "" {
-	// 	builder = builder.SetSignKey(envSignKey)
-	// }
 
 	return builder.config
 }

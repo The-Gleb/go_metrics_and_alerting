@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "compress/gzip"
 	"bytes"
 	"compress/gzip"
 	"crypto/hmac"
@@ -71,7 +70,6 @@ func main() {
 	client.
 		SetRetryCount(3).
 		SetRetryMaxWaitTime(5 * time.Second).
-		// SetRetryWaitTime(1 * time.Second).
 		SetRetryAfter(func(c *resty.Client, r *resty.Response) (time.Duration, error) {
 			log.Printf("attempt: %d", r.Request.Attempt)
 			dur := time.Duration(r.Request.Attempt*2-1) * time.Second
@@ -160,7 +158,6 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int6
 		if err != nil {
 			log.Fatal(err)
 		}
-		// sign, err = []byte(hex.EncodeToString())
 
 		logger.Log.Debug("signKey is ", string(signKey))
 		logger.Log.Debug("hex encoded signature is ", hex.EncodeToString(sign))
@@ -337,10 +334,6 @@ func CollectMetrics(gaugeMap map[string]float64, mu *sync.RWMutex) {
 	gaugeMap["RandomValue"] = rand.Float64()
 
 	mu.Unlock()
-	// *counter++
-
-	// b, _ := json.Marshal(gaugeMap)
-	// fmt.Println(string(b))
 	log.Printf("METRICS COLLECTED \n\n")
 
 }
@@ -349,9 +342,7 @@ func SendTestGetJSON(req *resty.Request) {
 
 	var result entity.Metric
 	_, err := req.
-		// SetHeader("Content-Encoding", "gzip").
 		SetHeader("Accept-Encoding", "gzip").
-		// SetHeader("Content-Encoding", "gzip").
 		SetBody(&entity.Metric{
 			ID:    "PollCount",
 			MType: "counter",

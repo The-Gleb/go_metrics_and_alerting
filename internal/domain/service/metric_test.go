@@ -15,8 +15,6 @@ func Test_metricService_UpdateMetric(t *testing.T) {
 	var gaugeVal2 float64 = 321
 	var counterVal int64 = 123
 	var counterVal2 int64 = 246
-	// gaugeMetric := entity.Metric{MType: "gauge", ID: "Alloc", Value: &gaugeVal}
-	// counterMetric := entity.Metric{MType: "counter", ID: "PollCount", Delta: &counterVal}
 
 	m := memory.New()
 	metricService := NewMetricService(m)

@@ -125,8 +125,6 @@ func Run(ctx context.Context) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		// ServerShutdownSignal := make(chan os.Signal, 1)
-		// signal.Notify(ServerShutdownSignal, syscall.SIGINT)
 
 		<-ctx.Done()
 

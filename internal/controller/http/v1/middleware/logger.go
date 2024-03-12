@@ -62,7 +62,6 @@ func (md *loggerMiddleware) Do(next http.Handler) http.Handler {
 			"Got request ",
 			"method", r.Method,
 			"uri", r.RequestURI,
-			// "request body", string(buf),
 			"status", responseData.status,
 			"duration", duration,
 			"size", responseData.size,

@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/caarlos0/env"
-	// "github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
+	// ".com/The-Gleb/go_metrics_and_alerting/internal/logger"
 )
 
 type Config struct {
@@ -101,18 +101,6 @@ func NewConfigFromFlags() Config {
 		SetSignKey(key)
 
 	env.Parse(&builder.config)
-	// if envAddress := os.Getenv("ADDRESS"); envAddress != "" {
-	// 	builder = builder.SetAddres(envAddress)
-	// }
-	// if envStoreInterval := os.Getenv("STORE_INTERVAL"); envStoreInterval != "" {
-	// 	builder = builder.SetStoreInterval(envStoreInterval)
-	// }
-	// if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
-	// 	builder = builder.SetFileStoragePath(envFileStoragePath)
-	// }
-	// if envRestore := os.Getenv("RESTORE"); envRestore != "" {
-	// 	builder = builder.SetRestore(envRestore)
-	// }
 
 	return builder.config
 }

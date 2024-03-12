@@ -15,9 +15,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 
-	// "github.com/jackc/pgx/v5/stdlib"
-	// _ "github.com/jackc/pgx/v5/stdlib"
-
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"

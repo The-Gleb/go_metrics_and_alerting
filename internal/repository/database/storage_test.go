@@ -10,14 +10,11 @@ import (
 	"testing"
 	"time"
 
-	// "time"
-
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
 	postgresql "github.com/The-Gleb/go_metrics_and_alerting/pkg/client"
 	"github.com/jackc/pgx/v4"
 
-	// "github.com/jackc/pgx/v4"
 	"github.com/ory/dockertest"
 	"github.com/ory/dockertest/docker"
 	"github.com/stretchr/testify/require"
@@ -328,11 +325,6 @@ func TestDB_UpdateCounter(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-
-			// metrics, err := storage.GetAllMetrics(context.Background())
-			// require.NoError(t, err)
-
-			// require.Contains(t, metrics.Gauge, tt.result)
 
 			require.Equal(t, tt.result, m)
 

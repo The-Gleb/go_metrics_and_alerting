@@ -99,16 +99,6 @@ func (service *backupService) LoadDataFromFile(ctx context.Context) error {
 		return fmt.Errorf("LoadDataFromFile: %w", err)
 	}
 
-	// _, err = service.metricStorage.UpdateMetricSet(ctx, maps.Gauge)
-	// if err != nil {
-	// 	return fmt.Errorf("LoadDataFromFile:: %w", err)
-	// }
-
-	// _, err = service.metricStorage.UpdateMetricSet(ctx, maps.Counter)
-	// if err != nil {
-	// 	return fmt.Errorf("LoadDataFromFile: failded updating counter: %w", err)
-	// }
-
 	return nil
 }
 

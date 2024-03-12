@@ -61,8 +61,8 @@ func Example_getMetricJSONHandler_ServeHTTP() {
 	defer ts.Close()
 
 	validBody := `{
-		"id": "Alloc",
-		"type": "gauge"
+		"type": "gauge",
+		"id": "Alloc"
 	}`
 
 	req, _ := http.NewRequest("POST", ts.URL+"/value", bytes.NewReader([]byte(validBody)))

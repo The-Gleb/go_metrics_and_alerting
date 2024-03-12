@@ -16,7 +16,6 @@ var (
 	ErrInvalidMetricValueFloat64 error = errors.New("incorrect metric value\ncannot parse to float64")
 	ErrInvalidMetricValueInt64   error = errors.New("incorrect metric value\ncannot parse to int64")
 	ErrInvalidMetricType         error = errors.New("invalid mertic type")
-	// ErrMetricNotFound            error = errors.New(("metric was not found"))
 )
 
 type storage struct {
@@ -46,7 +45,6 @@ func (s *storage) UpdateCounter(ctx context.Context, metric entity.Metric) (enti
 	return metric, nil
 }
 
-// TODO: check
 func (s *storage) GetGauge(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
 	val, ok := s.gauge.Load(dto.ID)
 	if !ok {
@@ -82,7 +80,7 @@ func (s *storage) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) 
 	var updated int64
 	newGauge := *CopySyncMap(&s.gauge)
 	newCounter := *CopySyncMap(&s.counter)
-	// var newCounter sync.Map
+
 	for _, metric := range metrics {
 		switch metric.MType {
 		case "gauge":
@@ -198,7 +196,7 @@ func (s *storage) UpdateMetric(mType, mName, mValue string) error {
 		}
 
 		val, _ := s.counter.LoadOrStore(mName, new(atomic.Int64))
-		// atomic.AddInt64(val.(*int64), mValue)
+
 		val.(*atomic.Int64).Add(mValue)
 
 	default:
