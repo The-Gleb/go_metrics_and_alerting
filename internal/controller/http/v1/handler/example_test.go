@@ -8,7 +8,6 @@ import (
 	"net/http/httptest"
 	"os"
 
-	v1 "github.com/The-Gleb/go_metrics_and_alerting/internal/controller/http/v1/handler"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/usecase"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository/memory"
@@ -22,7 +21,7 @@ func Example_getAllMetricHandler_ServeHTTP() {
 	s.UpdateMetric("counter", "PollCount", "12")
 	metricService := service.NewMetricService(s)
 	getAllMetricsUsecase := usecase.NewGetAllMetricsUsecase(metricService)
-	getAllMetricsHandler := v1.NewGetAllMetricsHandler(getAllMetricsUsecase)
+	getAllMetricsHandler := NewGetAllMetricsHandler(getAllMetricsUsecase)
 
 	router := chi.NewRouter()
 	getAllMetricsHandler.AddToRouter(router)
@@ -54,7 +53,7 @@ func Example_getMetricJSONHandler_ServeHTTP() {
 	s.UpdateMetric("gauge", "Alloc", "3782369280")
 	metricService := service.NewMetricService(s)
 	getMetricUsecase := usecase.NewGetMetricUsecase(metricService)
-	getMetricJSONHandler := v1.NewGetMetricJSONHandler(getMetricUsecase)
+	getMetricJSONHandler := NewGetMetricJSONHandler(getMetricUsecase)
 
 	router := chi.NewRouter()
 	getMetricJSONHandler.AddToRouter(router)
@@ -91,7 +90,7 @@ func Example_getMetricHandler_ServeHTTP() {
 	s.UpdateMetric("gauge", "Alloc", "123.4")
 	metricService := service.NewMetricService(s)
 	getMetricUsecase := usecase.NewGetMetricUsecase(metricService)
-	getMetricHandler := v1.NewGetMetricHandler(getMetricUsecase)
+	getMetricHandler := NewGetMetricHandler(getMetricUsecase)
 
 	router := chi.NewRouter()
 	getMetricHandler.AddToRouter(router)
@@ -122,7 +121,7 @@ func Example_updateMetricJSONHandler_ServeHTTP() {
 	s := memory.New()
 	metricService := service.NewMetricService(s)
 	updateMetricUsecase := usecase.NewUpdateMetricUsecase(metricService, nil)
-	updateMetricJSONHandler := v1.NewUpdateMetricJSONHandler(updateMetricUsecase)
+	updateMetricJSONHandler := NewUpdateMetricJSONHandler(updateMetricUsecase)
 
 	router := chi.NewRouter()
 	updateMetricJSONHandler.AddToRouter(router)
@@ -158,7 +157,7 @@ func Example_updateMetricSetHandler_ServeHTTP() {
 	s := memory.New()
 	metricServie := service.NewMetricService(s)
 	updateMetricSetUsecase := usecase.NewUpdateMetricSetUsecase(metricServie, nil)
-	updateMetricSetHandler := v1.NewUpdateMetricSetHandler(updateMetricSetUsecase)
+	updateMetricSetHandler := NewUpdateMetricSetHandler(updateMetricSetUsecase)
 
 	router := chi.NewRouter()
 	updateMetricSetHandler.AddToRouter(router)
@@ -202,7 +201,7 @@ func Example_updateMetricHandler_ServeHTTP() {
 	s := memory.New()
 	metricService := service.NewMetricService(s)
 	updateMetricUsecase := usecase.NewUpdateMetricUsecase(metricService, nil)
-	updateMetricHandler := v1.NewUpdateMetricHandler(updateMetricUsecase)
+	updateMetricHandler := NewUpdateMetricHandler(updateMetricUsecase)
 
 	router := chi.NewRouter()
 	updateMetricHandler.AddToRouter(router)
