@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	_ "net/http/pprof"
 
@@ -38,13 +38,15 @@ func main() {
 		BuildVersion, BuildDate, BuildCommit,
 	)
 
-	if err := Run(); err != nil {
+	if err := Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 
 }
 
-func Run() error {
+func Run(ctx context.Context) error {
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT)
+	defer cancel()
 
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
@@ -66,7 +68,7 @@ func Run() error {
 	}
 
 	if config.DatabaseDSN != "" {
-		db, err := database.NewMetricDB(context.Background(), config.DatabaseDSN)
+		db, err := database.NewMetricDB(ctx, config.DatabaseDSN)
 		if err != nil {
 			return err
 		}
@@ -111,24 +113,26 @@ func Run() error {
 
 	var wg sync.WaitGroup
 
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		backupService.Run(ctx)
+		err := backupService.Run(ctx)
+		if err != nil {
+			cancel()
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		ServerShutdownSignal := make(chan os.Signal, 1)
-		signal.Notify(ServerShutdownSignal, syscall.SIGINT)
+		// ServerShutdownSignal := make(chan os.Signal, 1)
+		// signal.Notify(ServerShutdownSignal, syscall.SIGINT)
 
-		<-ServerShutdownSignal
+		<-ctx.Done()
 
-		cancelCtx()
-		err := s.Shutdown(context.Background())
+		ctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err := s.Shutdown(ctxShutdown)
 		if err != nil {
 			panic(err)
 		}

@@ -15,9 +15,9 @@ func NewGetMetricUsecase(ms MetricService) *getMetricUsecase {
 	}
 }
 
-func (uc *getMetricUsecase) GetMetric(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
+func (uc *getMetricUsecase) GetMetric(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
 
-	metric, err := uc.metricService.GetMetric(ctx, metric)
+	metric, err := uc.metricService.GetMetric(ctx, dto)
 	if err != nil {
 		return entity.Metric{}, err
 	}

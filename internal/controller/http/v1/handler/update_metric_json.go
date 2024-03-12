@@ -1,10 +1,10 @@
 package v1
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
+	v1 "github.com/The-Gleb/go_metrics_and_alerting/internal/controller/http/v1"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/go-chi/chi/v5"
 )
@@ -41,32 +41,23 @@ func (h *updateMetricJSONHandler) Middlewares(md ...func(http.Handler) http.Hand
 
 func (h *updateMetricJSONHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
-	var metric entity.Metric
-	err := json.NewDecoder(r.Body).Decode(&metric)
+	dto, _, err := v1.DecodeValid[entity.Metric](r)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if metric.MType == "" || metric.ID == "" ||
-		(metric.Delta == nil && metric.Value == nil) {
-		http.Error(rw, "invalid request body,some fields are empty, but they shouldn`t", http.StatusBadRequest)
-		return
-	}
-
-	metric, err = h.usecase.UpdateMetric(r.Context(), metric)
+	metric, err := h.usecase.UpdateMetric(r.Context(), dto)
 	if err != nil {
 		err = fmt.Errorf("updateMetricJSONHandler: %w", err)
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	b, err := json.Marshal(metric)
+	err = v1.Encode(rw, r, 200, metric)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	rw.Write(b)
 
 }

@@ -289,20 +289,20 @@ func TestDB_GetGauge(t *testing.T) {
 	require.NoError(t, err)
 	tests := []struct {
 		name    string
-		metric  entity.Metric
+		metric  entity.GetMetricDTO
 		result  entity.Metric
 		wantErr bool
 		err     error
 	}{
 		{
 			name:    "positive",
-			metric:  entity.Metric{MType: "gauge", ID: "Alloc"},
+			metric:  entity.GetMetricDTO{MType: "gauge", ID: "Alloc"},
 			result:  entity.Metric{MType: "gauge", ID: "Alloc", Value: &validFloat64},
 			wantErr: false,
 		},
 		{
 			name:    "metric doesn`t exists",
-			metric:  entity.Metric{MType: "gauge", ID: "notfound"},
+			metric:  entity.GetMetricDTO{MType: "gauge", ID: "notfound"},
 			wantErr: true,
 			err:     repository.ErrNotFound,
 		},
@@ -342,20 +342,20 @@ func TestDB_GetCounter(t *testing.T) {
 	require.NoError(t, err)
 	tests := []struct {
 		name    string
-		metric  entity.Metric
+		metric  entity.GetMetricDTO
 		result  entity.Metric
 		wantErr bool
 		err     error
 	}{
 		{
 			name:    "positive",
-			metric:  entity.Metric{MType: "counter", ID: "PollCount"},
+			metric:  entity.GetMetricDTO{MType: "counter", ID: "PollCount"},
 			result:  entity.Metric{MType: "counter", ID: "PollCount", Delta: &validInt64},
 			wantErr: false,
 		},
 		{
 			name:    "metric doesn`t exists",
-			metric:  entity.Metric{MType: "counter", ID: "notfound"},
+			metric:  entity.GetMetricDTO{MType: "counter", ID: "notfound"},
 			wantErr: true,
 			err:     repository.ErrNotFound,
 		},

@@ -163,31 +163,31 @@ func Test_metricService_GetMetric(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		metric  entity.Metric
+		metric  entity.GetMetricDTO
 		want    entity.Metric
 		wantErr bool
 		err     error
 	}{
 		{
 			name:   "pos gauge test #1",
-			metric: entity.Metric{MType: "gauge", ID: "Alloc"},
+			metric: entity.GetMetricDTO{MType: "gauge", ID: "Alloc"},
 			want:   entity.Metric{MType: "gauge", ID: "Alloc", Value: &gaugeVal},
 			err:    nil,
 		},
 		{
 			name:   "pos counter test #2",
-			metric: entity.Metric{MType: "counter", ID: "PollCount"},
+			metric: entity.GetMetricDTO{MType: "counter", ID: "PollCount"},
 			want:   entity.Metric{MType: "counter", ID: "PollCount", Delta: &counterVal},
 			err:    nil,
 		}, {
 			name:    "neg, metric not found",
-			metric:  entity.Metric{MType: "counter", ID: "asdfas"},
+			metric:  entity.GetMetricDTO{MType: "counter", ID: "asdfas"},
 			wantErr: true,
 			err:     repository.ErrNotFound,
 		},
 		{
 			name:    "invalid type",
-			metric:  entity.Metric{MType: "asdf", ID: "PollCount"},
+			metric:  entity.GetMetricDTO{MType: "asdf", ID: "PollCount"},
 			wantErr: true,
 			err:     repository.ErrInvalidMetricStruct,
 		},

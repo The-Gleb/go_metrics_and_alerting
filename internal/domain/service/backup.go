@@ -32,18 +32,18 @@ func NewBackupService(ms MetricStorage, bs FileStorage, interval int, restore bo
 	}
 }
 
-func (service *backupService) Run(ctx context.Context) {
+func (service *backupService) Run(ctx context.Context) error {
 
 	if service.restore {
 		err := service.LoadDataFromFile(ctx)
 		if err != nil {
 			logger.Log.Errorf("error in backupservice, stopping")
-			return
+			return err
 		}
 	}
 
 	if service.backupInterval <= 0 || service.backupStorage == nil {
-		return
+		return nil
 	}
 
 	saveTicker := time.NewTicker(time.Duration(service.backupInterval) * time.Second)
@@ -53,11 +53,11 @@ func (service *backupService) Run(ctx context.Context) {
 			case <-saveTicker.C:
 				err := service.StoreDataToFile(ctx)
 				if err != nil {
-					return
+					return err
 				}
 			case <-ctx.Done():
 				logger.Log.Debug("stop saving to file")
-				return
+				return nil
 			}
 		}
 	}

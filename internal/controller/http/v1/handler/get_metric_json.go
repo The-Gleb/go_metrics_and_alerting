@@ -1,11 +1,11 @@
 package v1
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 
+	v1 "github.com/The-Gleb/go_metrics_and_alerting/internal/controller/http/v1"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
@@ -44,19 +44,13 @@ func (h *getMetricJSONHandler) Middlewares(md ...func(http.Handler) http.Handler
 
 func (h *getMetricJSONHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
-	var metric entity.Metric
-	err := json.NewDecoder(r.Body).Decode(&metric)
+	dto, _, err := v1.DecodeValid[entity.GetMetricDTO](r)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if metric.ID == "" || metric.MType == "" {
-		http.Error(rw, "invalid request body,some fields are empty, but they shouldn`t", http.StatusBadRequest)
-		return
-	}
-
-	metric, err = h.usecase.GetMetric(r.Context(), metric)
+	metric, err := h.usecase.GetMetric(r.Context(), dto)
 	if err != nil {
 		err = fmt.Errorf("handlers.GetMetricJSON: %w", err)
 		logger.Log.Error(err)
@@ -72,12 +66,10 @@ func (h *getMetricJSONHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request
 		}
 	}
 
-	b, err := json.Marshal(metric)
+	err = v1.Encode(rw, r, 200, metric)
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusInternalServerError)
+		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	rw.Write(b)
 
 }

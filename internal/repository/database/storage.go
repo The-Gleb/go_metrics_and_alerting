@@ -226,28 +226,36 @@ func (db *DB) UpdateCounter(ctx context.Context, mertic entity.Metric) (entity.M
 	return mertic, nil
 }
 
-func (db *DB) GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-	row := db.client.QueryRow(ctx, "SELECT m_value FROM gauge_metrics WHERE m_name = $1", metric.ID)
+func (db *DB) GetGauge(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
+	row := db.client.QueryRow(ctx, "SELECT m_value FROM gauge_metrics WHERE m_name = $1", dto.ID)
 
 	var value float64
 	err := row.Scan(&value)
 	if err != nil {
-		return metric, checkForConectionErr("GetGauge", err)
+		return entity.Metric{}, checkForConectionErr("GetGauge", err)
 	}
-	metric.Value = &value
-	return metric, nil
+
+	return entity.Metric{
+		MType: dto.MType,
+		ID:    dto.ID,
+		Value: &value,
+	}, nil
 }
 
-func (db *DB) GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-	row := db.client.QueryRow(ctx, "SELECT m_value FROM counter_metrics WHERE m_name = $1", metric.ID)
+func (db *DB) GetCounter(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
+	row := db.client.QueryRow(ctx, "SELECT m_value FROM counter_metrics WHERE m_name = $1", dto.ID)
 
 	var value int64
 	err := row.Scan(&value)
 	if err != nil {
-		return metric, checkForConectionErr("GetCounter", err)
+		return entity.Metric{}, checkForConectionErr("GetCounter", err)
 	}
-	metric.Delta = &value
-	return metric, nil
+
+	return entity.Metric{
+		MType: dto.MType,
+		ID:    dto.ID,
+		Delta: &value,
+	}, nil
 }
 
 func checkForConectionErr(funcName string, err error) error {

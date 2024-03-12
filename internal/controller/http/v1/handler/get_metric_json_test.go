@@ -6,6 +6,7 @@ import (
 )
 
 func Test_getMetricJSONHandler_ServeHTTP(t *testing.T) {
+
 	type args struct {
 		rw http.ResponseWriter
 		r  *http.Request

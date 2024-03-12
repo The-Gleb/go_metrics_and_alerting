@@ -47,23 +47,35 @@ func (s *storage) UpdateCounter(ctx context.Context, metric entity.Metric) (enti
 }
 
 // TODO: check
-func (s *storage) GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-	val, ok := s.gauge.Load(metric.ID)
-	if ok {
-		metric.Value = val.(*float64)
-		return metric, nil
+func (s *storage) GetGauge(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
+	val, ok := s.gauge.Load(dto.ID)
+	if !ok {
+		return entity.Metric{}, repository.ErrNotFound
 	}
-	return metric, repository.ErrNotFound
+	floatVal, ok := val.(*float64)
+	if !ok {
+		return entity.Metric{}, fmt.Errorf("error to covert value from map to *float64")
+	}
+
+	return entity.Metric{
+		MType: "gauge",
+		ID:    dto.ID,
+		Value: floatVal,
+	}, nil
 }
 
-func (s *storage) GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-	val, ok := s.counter.Load(metric.ID)
-	if ok {
-		v := val.(*atomic.Int64).Load()
-		metric.Delta = &v
-		return metric, nil
+func (s *storage) GetCounter(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
+	val, ok := s.counter.Load(dto.ID)
+	if !ok {
+		return entity.Metric{}, repository.ErrNotFound
 	}
-	return metric, repository.ErrNotFound
+	v := val.(*atomic.Int64).Load()
+
+	return entity.Metric{
+		MType: dto.MType,
+		ID:    dto.ID,
+		Delta: &v,
+	}, nil
 }
 
 func (s *storage) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error) {

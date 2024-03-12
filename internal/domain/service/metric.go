@@ -15,8 +15,8 @@ type MetricStorage interface {
 
 	UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error)
 
-	GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error)
-	GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error)
+	GetGauge(ctx context.Context, metric entity.GetMetricDTO) (entity.Metric, error)
+	GetCounter(ctx context.Context, metric entity.GetMetricDTO) (entity.Metric, error)
 	GetAllMetrics(ctx context.Context) (entity.MetricSlices, error)
 
 	PingDB() error
@@ -78,19 +78,19 @@ func (service *metricService) UpdateMetricSet(ctx context.Context, metrics []ent
 
 }
 
-func (service *metricService) GetMetric(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-
+func (service *metricService) GetMetric(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
+	var metric entity.Metric
 	var err error
 	switch metric.MType {
 	case "gauge":
 		err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
-			metric, err = service.storage.GetGauge(ctx, metric)
+			metric, err = service.storage.GetGauge(ctx, dto)
 			return err
 		})
 
 	case "counter":
 		err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
-			metric, err = service.storage.GetCounter(ctx, metric)
+			metric, err = service.storage.GetCounter(ctx, dto)
 			return err
 		})
 	default:
