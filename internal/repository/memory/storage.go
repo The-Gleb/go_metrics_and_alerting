@@ -111,7 +111,6 @@ func (s *storage) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) 
 func (s *storage) GetAllMetrics(ctx context.Context) (entity.MetricSlices, error) {
 	newGauge := make([]entity.Metric, 0)
 	s.gauge.Range(func(key any, value any) bool {
-
 		metric := entity.Metric{
 			MType: "gauge",
 			ID:    key.(string),
@@ -121,12 +120,10 @@ func (s *storage) GetAllMetrics(ctx context.Context) (entity.MetricSlices, error
 		newGauge = append(newGauge, metric)
 
 		return true
-
 	})
 
 	newCounter := make([]entity.Metric, 0)
 	s.counter.Range(func(key any, value any) bool {
-
 		v := value.(*atomic.Int64).Load()
 		metric := entity.Metric{
 			MType: "counter",

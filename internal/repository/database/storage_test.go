@@ -26,7 +26,6 @@ func TestMain(m *testing.M) {
 		log.Fatal(err)
 	}
 	os.Exit(code)
-
 }
 
 var dsn string = "postgres://test_db:test_db@:5434/tcp/test_db?sslmode=disable"
@@ -104,7 +103,6 @@ func createTestDBContainer(m *testing.M) (int, error) {
 }
 
 func TestDB_UpdateMetricSet(t *testing.T) {
-
 	var validFloat64 float64 = 12345
 	var validFloat64two float64 = 321321
 	var validInt64 int64 = 5
@@ -120,11 +118,11 @@ func TestDB_UpdateMetricSet(t *testing.T) {
 	)
 
 	tests := []struct {
+		err     error
 		name    string
 		metrics []entity.Metric
 		result  []entity.Metric
 		wantErr bool
-		err     error
 	}{
 		{
 			name: "first insert",
@@ -166,7 +164,6 @@ func TestDB_UpdateMetricSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			n, err := storage.UpdateMetricSet(context.Background(), tt.metrics)
 			if tt.wantErr {
 				require.ErrorIs(t, err, tt.err)
@@ -179,7 +176,6 @@ func TestDB_UpdateMetricSet(t *testing.T) {
 
 			require.Equal(t, int64(len(tt.metrics)), n)
 			require.ElementsMatch(t, tt.result, append(metrics.Counter, metrics.Gauge...))
-
 		})
 	}
 }
@@ -207,10 +203,10 @@ func TestDB_GetAllMetrics(t *testing.T) {
 	)
 	require.NoError(t, err)
 	tests := []struct {
+		err     error
 		name    string
 		result  entity.MetricSlices
 		wantErr bool
-		err     error
 	}{
 		{
 			name: "positive",
@@ -249,11 +245,11 @@ func TestDB_UpdateGauge(t *testing.T) {
 	)
 
 	tests := []struct {
-		name    string
 		metric  entity.Metric
 		result  entity.Metric
-		wantErr bool
 		err     error
+		name    string
+		wantErr bool
 	}{
 		{
 			name:    "first insert",
@@ -270,7 +266,6 @@ func TestDB_UpdateGauge(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			m, err := storage.UpdateGauge(context.Background(), tt.metric)
 			if tt.wantErr {
 				require.ErrorIs(t, err, tt.err)
@@ -279,7 +274,6 @@ func TestDB_UpdateGauge(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tt.result, m)
-
 		})
 	}
 }
@@ -297,11 +291,11 @@ func TestDB_UpdateCounter(t *testing.T) {
 	)
 
 	tests := []struct {
-		name    string
 		metric  entity.Metric
 		result  entity.Metric
-		wantErr bool
 		err     error
+		name    string
+		wantErr bool
 	}{
 		{
 			name:    "first insert",
@@ -318,7 +312,6 @@ func TestDB_UpdateCounter(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			m, err := storage.UpdateCounter(context.Background(), tt.metric)
 			if tt.wantErr {
 				require.ErrorIs(t, err, tt.err)
@@ -327,7 +320,6 @@ func TestDB_UpdateCounter(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, tt.result, m)
-
 		})
 	}
 }
@@ -353,11 +345,11 @@ func TestDB_GetGauge(t *testing.T) {
 	)
 	require.NoError(t, err)
 	tests := []struct {
-		name    string
 		metric  entity.GetMetricDTO
 		result  entity.Metric
-		wantErr bool
 		err     error
+		name    string
+		wantErr bool
 	}{
 		{
 			name:    "positive",
@@ -407,11 +399,11 @@ func TestDB_GetCounter(t *testing.T) {
 	)
 	require.NoError(t, err)
 	tests := []struct {
-		name    string
 		metric  entity.GetMetricDTO
 		result  entity.Metric
-		wantErr bool
 		err     error
+		name    string
+		wantErr bool
 	}{
 		{
 			name:    "positive",

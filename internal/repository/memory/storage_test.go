@@ -19,10 +19,10 @@ func Test_storage_GetMetric(t *testing.T) {
 		mName string
 	}
 	tests := []struct {
-		name string
 		args args
-		want string
 		err  error
+		name string
+		want string
 	}{
 		{
 			name: "pos gauge test #1",
@@ -69,10 +69,10 @@ func Test_storage_UpdateMetric(t *testing.T) {
 		mValue string
 	}
 	tests := []struct {
-		name string
 		args args
-		val  string
 		err  error
+		name string
+		val  string
 	}{
 		{
 			name: "pos new counter test #1",
@@ -133,17 +133,17 @@ func Test_storage_UpdateMetric(t *testing.T) {
 
 func Test_storage_GetAllMetrics(t *testing.T) {
 	var int64Val int64 = 123
-	var float64Val float64 = 123.4
+	var float64Val float64 = 123.4 // lint:ignore
 
 	memory := New()
 	memory.UpdateMetric("gauge", "Alloc", "123.4")
 	memory.UpdateMetric("counter", "Counter", "123")
 
 	tests := []struct {
+		err     error
 		name    string
 		want    entity.MetricSlices
 		wantErr bool
-		err     error
 	}{
 		{
 			name: "positive",

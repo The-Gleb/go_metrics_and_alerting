@@ -73,7 +73,6 @@ func (db *DB) PingDB() error {
 }
 
 func (db *DB) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error) {
-
 	tx, err := db.client.Begin(ctx)
 	if err != nil {
 		return 0, checkForConectionErr("UpdateMetricSet", err)

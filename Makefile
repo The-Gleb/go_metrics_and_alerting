@@ -11,4 +11,15 @@ migrateup:
 
 migratedown:
 	migrate -path internal/adapter/db/postgres/migration -database "postgres://metric_db:metric_db@localhost:5434/metric_db?sslmode=disable" -verbose down
-.PHONY: postgres postgresrm migrateup migratedown server_ldflags cur_commit
+
+golangci-lint-run:
+	docker run --rm -v $(shell pwd):/app \
+	-v ~/.cache/golangci-lint/v1.56.1:/root/.cache \
+	-w /app golangci/golangci-lint:v1.56.2 \
+	golangci-lint run --fix -v \
+	> ./golangci-lint/report-unformatted.json
+
+format-lint-output:
+	cat ./golangci-lint/report-unformatted.json | jq > ./golangci-lint/report.json \
+
+.PHONY: postgres postgresrm migrateup migratedown server_ldflags

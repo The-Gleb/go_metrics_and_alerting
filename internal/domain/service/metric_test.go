@@ -20,11 +20,11 @@ func Test_metricService_UpdateMetric(t *testing.T) {
 	metricService := NewMetricService(m)
 
 	tests := []struct {
-		name    string
 		metric  entity.Metric
 		want    entity.Metric
-		wantErr bool
 		err     error
+		name    string
+		wantErr bool
 	}{
 		{
 			name:    "positive add gauge",
@@ -86,11 +86,11 @@ func Test_metricService_UpdateMetricSet(t *testing.T) {
 	metricService := NewMetricService(m)
 
 	tests := []struct {
+		err     error
 		name    string
 		metrics []entity.Metric
 		result  []entity.Metric
 		wantErr bool
-		err     error
 	}{
 		{
 			name: "first insert",
@@ -132,7 +132,6 @@ func Test_metricService_UpdateMetricSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			n, err := metricService.UpdateMetricSet(context.Background(), tt.metrics)
 			if tt.wantErr {
 				require.ErrorIs(t, err, tt.err)
@@ -145,7 +144,6 @@ func Test_metricService_UpdateMetricSet(t *testing.T) {
 
 			require.Equal(t, int64(len(tt.metrics)), n)
 			require.ElementsMatch(t, tt.result, append(metrics.Counter, metrics.Gauge...))
-
 		})
 	}
 }
@@ -160,11 +158,11 @@ func Test_metricService_GetMetric(t *testing.T) {
 	metricService := NewMetricService(memory)
 
 	tests := []struct {
-		name    string
 		metric  entity.GetMetricDTO
 		want    entity.Metric
-		wantErr bool
 		err     error
+		name    string
+		wantErr bool
 	}{
 		{
 			name:   "pos gauge test #1",

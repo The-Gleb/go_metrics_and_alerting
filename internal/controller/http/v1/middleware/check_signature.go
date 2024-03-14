@@ -86,7 +86,6 @@ func (md *checkSignatureMiddleware) Do(next http.Handler) http.Handler {
 			key:            md.signKey,
 		}
 		next.ServeHTTP(&srw, r)
-
 	}
 	return http.HandlerFunc(fn)
 }

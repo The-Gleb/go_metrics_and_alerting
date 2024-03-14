@@ -47,7 +47,6 @@ func (h *getMetricHandler) Middlewares(md ...func(http.Handler) http.Handler) *g
 }
 
 func (h *getMetricHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-
 	dto := entity.GetMetricDTO{
 		MType: chi.URLParam(r, "type"),
 		ID:    chi.URLParam(r, "name"),
@@ -61,7 +60,6 @@ func (h *getMetricHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	metric, err := h.usecase.GetMetric(r.Context(), dto)
 	if err != nil {
-
 		if errors.Is(err, repository.ErrNotFound) {
 			http.Error(rw, err.Error(), http.StatusNotFound)
 			return
@@ -86,7 +84,5 @@ func (h *getMetricHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 		http.Error(rw, "invalid metric type", http.StatusInternalServerError)
 		return
-
 	}
-
 }

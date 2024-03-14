@@ -1,0 +1,25 @@
+name: static test
+
+on:
+    pull_request:
+    push:
+        branches:
+            - main
+
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+        container: golang:1.22.1
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v2
+
+            # - uses: actions/setup-go@v4
+            #   with:
+            #     go-version: '1.21.3'
+           
+            - name: Run golangci-lint
+              uses: golangci/golangci-lint-action@v4.0.0
+              with:
+                working-directory: ./
+                args: --out-format=json

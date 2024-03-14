@@ -40,7 +40,6 @@ func (h *updateMetricJSONHandler) Middlewares(md ...func(http.Handler) http.Hand
 }
 
 func (h *updateMetricJSONHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-
 	dto, _, err := v1.DecodeValid[entity.Metric](r)
 	if err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
@@ -59,5 +58,4 @@ func (h *updateMetricJSONHandler) ServeHTTP(rw http.ResponseWriter, r *http.Requ
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-
 }

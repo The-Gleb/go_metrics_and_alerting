@@ -31,7 +31,6 @@ func NewMetricService(s MetricStorage) *metricService {
 }
 
 func (service *metricService) UpdateMetric(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-
 	var err error
 	switch metric.MType {
 	case "gauge":
@@ -60,7 +59,6 @@ func (service *metricService) UpdateMetric(ctx context.Context, metric entity.Me
 	}
 
 	return metric, nil
-
 }
 
 func (service *metricService) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error) {
@@ -75,7 +73,6 @@ func (service *metricService) UpdateMetricSet(ctx context.Context, metrics []ent
 	}
 
 	return n, nil
-
 }
 
 func (service *metricService) GetMetric(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
@@ -102,11 +99,9 @@ func (service *metricService) GetMetric(ctx context.Context, dto entity.GetMetri
 	}
 
 	return metric, nil
-
 }
 
 func (service *metricService) GetAllMetrics(ctx context.Context) (entity.MetricSlices, error) {
-
 	var MetricSlices entity.MetricSlices
 	var err error
 	err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {
@@ -118,12 +113,9 @@ func (service *metricService) GetAllMetrics(ctx context.Context) (entity.MetricS
 	}
 
 	return MetricSlices, nil
-
 }
 
 // why does metric service ping database???
 func (service *metricService) PingDB() error {
-
 	return service.storage.PingDB()
-
 }

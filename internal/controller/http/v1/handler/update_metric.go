@@ -47,7 +47,6 @@ func (h *updateMetricHandler) Middlewares(md ...func(http.Handler) http.Handler)
 }
 
 func (h *updateMetricHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-
 	dto := entity.Metric{
 		MType: chi.URLParam(r, "type"),
 		ID:    chi.URLParam(r, "name"),
@@ -101,5 +100,4 @@ func (h *updateMetricHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request)
 		http.Error(rw, "metric with invalid type returned", http.StatusInternalServerError)
 		return
 	}
-
 }

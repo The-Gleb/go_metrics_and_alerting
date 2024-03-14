@@ -36,7 +36,6 @@ var (
 )
 
 func main() {
-
 	fmt.Printf(
 		"Build version: %s\nBuild date: %s\nBuild commit: %s\n",
 		BuildVersion, BuildDate, BuildCommit,
@@ -118,7 +117,6 @@ func main() {
 }
 
 func SendTestGet(req *resty.Request) {
-
 	resp, _ := req.
 		Get("/value/counter/PollCount")
 	log.Println(string(resp.Body()))
@@ -245,7 +243,6 @@ func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.R
 		if err != nil {
 			return
 		}
-
 	}
 	var result entity.Metric
 	_, err := req.
@@ -277,7 +274,6 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 			return
 		}
 		log.Println(string(resp.Body()))
-
 	}
 
 	requestURL := fmt.Sprintf("%s/update/counter/PollCount/%d", client.BaseURL, *PollCount)
@@ -295,7 +291,6 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 	)
 	log.Printf("client: status code: %d\n", resp.StatusCode())
 	log.Println(string(resp.Body()))
-
 }
 
 func CollectMetrics(gaugeMap map[string]float64, mu *sync.RWMutex) {
@@ -335,11 +330,9 @@ func CollectMetrics(gaugeMap map[string]float64, mu *sync.RWMutex) {
 
 	mu.Unlock()
 	log.Printf("METRICS COLLECTED \n\n")
-
 }
 
 func SendTestGetJSON(req *resty.Request) {
-
 	var result entity.Metric
 	_, err := req.
 		SetHeader("Accept-Encoding", "gzip").
@@ -354,5 +347,4 @@ func SendTestGetJSON(req *resty.Request) {
 		return
 	}
 	log.Printf("PollCount is %d", *result.Delta)
-
 }

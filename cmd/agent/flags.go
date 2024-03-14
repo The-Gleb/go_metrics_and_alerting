@@ -9,10 +9,10 @@ import (
 
 type Config struct {
 	Addres         string  `env:"ADDRESS"`
-	PollInterval   float64 `env:"POLL_INTERVAL"`
-	ReportInterval float64 `env:"REPORT_INTERVAL"`
 	SignKey        string  `env:"KEY"`
 	RateLimit      int     `env:"RATE_LIMIT"`
+	PollInterval   float64 `env:"POLL_INTERVAL"`
+	ReportInterval float64 `env:"REPORT_INTERVAL"`
 }
 
 type ConfigBuilder struct {

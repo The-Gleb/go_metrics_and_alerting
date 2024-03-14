@@ -1,0 +1,2482 @@
+{
+  "Issues": [
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 2, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tflag.Float64Var(&pollInterval, \"p\", 2, \"interval between sending metric on server\")"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/flags.go",
+        "Offset": 1144,
+        "Line": 54,
+        "Column": 38
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 10, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tflag.Float64Var(&reportInterval, \"r\", 10, \"interval between collecting metric from runtime\")"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/flags.go",
+        "Offset": 1260,
+        "Line": 57,
+        "Column": 40
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 1000000000, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tvar pollInterval = time.Duration(config.PollInterval * 1000000000)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/main.go",
+        "Offset": 1014,
+        "Line": 58,
+        "Column": 57
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 1000000000, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tvar reportInterval = time.Duration(config.ReportInterval * 1000000000)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/main.go",
+        "Offset": 1086,
+        "Line": 59,
+        "Column": 61
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 3, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tSetRetryCount(3)."
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/main.go",
+        "Offset": 1355,
+        "Line": 70,
+        "Column": 17
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 5, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tSetRetryMaxWaitTime(5 * time.Second)."
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/main.go",
+        "Offset": 1381,
+        "Line": 71,
+        "Column": 23
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gocritic",
+      "Text": "captLocal: `PollCount' should not be capitalized",
+      "Severity": "error",
+      "SourceLines": [
+        "func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int64, client *resty.Client, signKey []byte, mu *sync.RWMutex) {"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/main.go",
+        "Offset": 2595,
+        "Line": 126,
+        "Column": 59
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "revive",
+      "Text": "range-val-address: suspicious assignment of 'value'. range-loop variables always have the same address",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\tValue: &value,"
+      ],
+      "Replacement": null,
+      "LineRange": {
+        "From": 134,
+        "To": 134
+      },
+      "Pos": {
+        "Filename": "cmd/agent/main.go",
+        "Offset": 2853,
+        "Line": 134,
+        "Column": 11
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `gzip` has 5 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tSetHeader(\"Accept-Encoding\", \"gzip\")."
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/main.go",
+        "Offset": 3689,
+        "Line": 177,
+        "Column": 32
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gocritic",
+      "Text": "captLocal: `PollCount' should not be capitalized",
+      "Severity": "error",
+      "SourceLines": [
+        "func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.Request) {"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/main.go",
+        "Offset": 4726,
+        "Line": 231,
+        "Column": 51
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gocritic",
+      "Text": "captLocal: `PollCount' should not be capitalized",
+      "Severity": "error",
+      "SourceLines": [
+        "func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Client) {"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/main.go",
+        "Offset": 5312,
+        "Line": 263,
+        "Column": 47
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "unconvert",
+      "Text": "unnecessary conversion",
+      "Severity": "error",
+      "SourceLines": [
+        "\tgaugeMap[\"GCCPUFraction\"] = float64(rtm.GCCPUFraction)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/agent/main.go",
+        "Offset": 6575,
+        "Line": 305,
+        "Column": 37
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "govet",
+      "Text": "fieldalignment: struct with 88 pointer bytes could be 72",
+      "Severity": "error",
+      "SourceLines": [
+        "type Config struct {"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/server/flags.go",
+        "Offset": 155,
+        "Line": 13,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 300, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tflag.IntVar(&storeInterval, \"i\", 300, \"seconds between storing metrics to file\")"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/server/flags.go",
+        "Offset": 1695,
+        "Line": 73,
+        "Column": 35
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func github.com/The-Gleb/go_metrics_and_alerting/internal/logger.Initialize(level string) error",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/server/main.go",
+        "Offset": 1464,
+        "Line": 57,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func github.com/The-Gleb/go_metrics_and_alerting/internal/repository/database.NewMetricDB(ctx context.Context, dsn string) (*github.com/The-Gleb/go_metrics_and_alerting/internal/repository/database.DB, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/server/main.go",
+        "Offset": 1797,
+        "Line": 71,
+        "Column": 11
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 10, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "cmd/server/main.go",
+        "Offset": 3623,
+        "Line": 129,
+        "Column": 68
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "usestdlibvars",
+      "Text": "\"GET\" can be replaced by http.MethodGet",
+      "Severity": "error",
+      "SourceLines": [
+        "\treq, _ := http.NewRequest(\"GET\", ts.URL+\"/\", nil)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/example_test.go",
+        "Offset": 824,
+        "Line": 30,
+        "Column": 28
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "usestdlibvars",
+      "Text": "\"POST\" can be replaced by http.MethodPost",
+      "Severity": "error",
+      "SourceLines": [
+        "\treq, _ := http.NewRequest(\"POST\", ts.URL+\"/value\", bytes.NewReader([]byte(validBody)))"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/example_test.go",
+        "Offset": 1720,
+        "Line": 65,
+        "Column": 28
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "usestdlibvars",
+      "Text": "\"GET\" can be replaced by http.MethodGet",
+      "Severity": "error",
+      "SourceLines": [
+        "\treq, _ := http.NewRequest(\"GET\", ts.URL+\"/value/gauge/Alloc\", nil)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/example_test.go",
+        "Offset": 2487,
+        "Line": 95,
+        "Column": 28
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "dupl",
+      "Text": "113-146 lines are duplicate of `internal/controller/http/v1/handler/example_test.go:148-188`",
+      "Severity": "error",
+      "SourceLines": [
+        "func Example_updateMetricJSONHandler_ServeHTTP() {",
+        "\ts := memory.New()",
+        "\tmetricService := service.NewMetricService(s)",
+        "\tupdateMetricUsecase := usecase.NewUpdateMetricUsecase(metricService, nil)",
+        "\tupdateMetricJSONHandler := NewUpdateMetricJSONHandler(updateMetricUsecase)",
+        "",
+        "\trouter := chi.NewRouter()",
+        "\tupdateMetricJSONHandler.AddToRouter(router)",
+        "\tts := httptest.NewServer(router)",
+        "\tdefer ts.Close()",
+        "",
+        "\tvalidBody := `{",
+        "\t\t\"id\": \"Alloc\",",
+        "\t\t\"type\": \"gauge\",",
+        "\t\t\"value\": 123.123",
+        "\t}`",
+        "",
+        "\treq, _ := http.NewRequest(\"POST\", ts.URL+\"/update\", bytes.NewReader([]byte(validBody)))",
+        "",
+        "\tresp, err := ts.Client().Do(req)",
+        "\tif err != nil {",
+        "\t\tfmt.Println(\"error!: %w\", err)",
+        "\t\treturn",
+        "\t}",
+        "\tdefer resp.Body.Close()",
+        "",
+        "\tfmt.Println(resp.StatusCode)",
+        "\tb, _ := io.ReadAll(resp.Body)",
+        "\tfmt.Println(string(b))",
+        "",
+        "\t// Output:",
+        "\t// 200",
+        "\t// {\"id\":\"Alloc\",\"type\":\"gauge\",\"value\":123.123}",
+        "}"
+      ],
+      "Replacement": null,
+      "LineRange": {
+        "From": 113,
+        "To": 146
+      },
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/example_test.go",
+        "Offset": 0,
+        "Line": 113,
+        "Column": 0
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "usestdlibvars",
+      "Text": "\"POST\" can be replaced by http.MethodPost",
+      "Severity": "error",
+      "SourceLines": [
+        "\treq, _ := http.NewRequest(\"POST\", ts.URL+\"/update\", bytes.NewReader([]byte(validBody)))"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/example_test.go",
+        "Offset": 3267,
+        "Line": 130,
+        "Column": 28
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "dupl",
+      "Text": "148-188 lines are duplicate of `internal/controller/http/v1/handler/example_test.go:113-146`",
+      "Severity": "error",
+      "SourceLines": [
+        "func Example_updateMetricSetHandler_ServeHTTP() {",
+        "\ts := memory.New()",
+        "\tmetricServie := service.NewMetricService(s)",
+        "\tupdateMetricSetUsecase := usecase.NewUpdateMetricSetUsecase(metricServie, nil)",
+        "\tupdateMetricSetHandler := NewUpdateMetricSetHandler(updateMetricSetUsecase)",
+        "",
+        "\trouter := chi.NewRouter()",
+        "\tupdateMetricSetHandler.AddToRouter(router)",
+        "\tts := httptest.NewServer(router)",
+        "\tdefer ts.Close()",
+        "",
+        "\tvalidJSONBody := `[",
+        "\t\t{",
+        "\t\t\t\"id\": \"HeapAlloc\",",
+        "\t\t\t\"type\": \"gauge\",",
+        "\t\t\t\"value\": 3782369280",
+        "\t\t},",
+        "\t\t{",
+        "\t\t\t\"id\": \"PollCount\",",
+        "\t\t\t\"type\": \"counter\",",
+        "\t\t\t\"delta\": 123",
+        "\t\t}",
+        "\t]`",
+        "",
+        "\treq, _ := http.NewRequest(\"POST\", ts.URL+\"/updates\", bytes.NewReader([]byte(validJSONBody)))",
+        "",
+        "\tresp, err := ts.Client().Do(req)",
+        "\tif err != nil {",
+        "\t\tfmt.Println(\"error!: %w\", err)",
+        "\t\treturn",
+        "\t}",
+        "\tdefer resp.Body.Close()",
+        "",
+        "\tfmt.Println(resp.StatusCode)",
+        "\tb, _ := io.ReadAll(resp.Body)",
+        "\tfmt.Println(string(b))",
+        "",
+        "\t// Output:",
+        "\t// 200",
+        "\t// 2 metrics updated",
+        "}"
+      ],
+      "Replacement": null,
+      "LineRange": {
+        "From": 148,
+        "To": 188
+      },
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/example_test.go",
+        "Offset": 0,
+        "Line": 148,
+        "Column": 0
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "usestdlibvars",
+      "Text": "\"POST\" can be replaced by http.MethodPost",
+      "Severity": "error",
+      "SourceLines": [
+        "\treq, _ := http.NewRequest(\"POST\", ts.URL+\"/updates\", bytes.NewReader([]byte(validJSONBody)))"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/example_test.go",
+        "Offset": 4202,
+        "Line": 172,
+        "Column": 28
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "usestdlibvars",
+      "Text": "\"POST\" can be replaced by http.MethodPost",
+      "Severity": "error",
+      "SourceLines": [
+        "\treq, _ := http.NewRequest(\"POST\", ts.URL+\"/update/gauge/Alloc/12.12\", nil)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/example_test.go",
+        "Offset": 4927,
+        "Line": 201,
+        "Column": 28
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "thelper",
+      "Text": "test helper function should start from t.Helper()",
+      "Severity": "error",
+      "SourceLines": [
+        "func testRequest(t *testing.T, ts *httptest.Server, method,"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/get_all_metrics_test.go",
+        "Offset": 470,
+        "Line": 20,
+        "Column": 6
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 200, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\terr = v1.Encode(rw, r, 200, metric)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/get_metric_json.go",
+        "Offset": 1814,
+        "Line": 68,
+        "Column": 25
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "unconvert",
+      "Text": "unnecessary conversion",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\tassert.Equal(t, tt.want.value, string(val))"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/get_metric_test.go",
+        "Offset": 1904,
+        "Line": 87,
+        "Column": 41
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 200, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\terr = v1.Encode(rw, r, 200, metric)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/update_metric_json.go",
+        "Offset": 1533,
+        "Line": 56,
+        "Column": 25
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "unconvert",
+      "Text": "unnecessary conversion",
+      "Severity": "error",
+      "SourceLines": [
+        "\tupdatedMetricsCount := strconv.FormatInt(int64(n), 10)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/handler/update_metric_set.go",
+        "Offset": 1637,
+        "Line": 63,
+        "Column": 48
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (net/http.ResponseWriter).Write([]byte) (int, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\treturn n, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/check_signature.go",
+        "Offset": 815,
+        "Line": 37,
+        "Column": 12
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "unconvert",
+      "Text": "unnecessary conversion",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tif !hmac.Equal(sign, []byte(gotSign)) {"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/check_signature.go",
+        "Offset": 1936,
+        "Line": 76,
+        "Column": 30
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `gzip` has 4 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tc.rw.Header().Set(\"Content-Encoding\", \"gzip\")"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/compressor.go",
+        "Offset": 742,
+        "Line": 39,
+        "Column": 41
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (*compress/gzip.Writer).Write(p []byte) (int, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn c.zw.Write(p)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/compressor.go",
+        "Offset": 759,
+        "Line": 40,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (net/http.ResponseWriter).Write([]byte) (int, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\treturn c.rw.Write(p)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/compressor.go",
+        "Offset": 784,
+        "Line": 42,
+        "Column": 9
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 300, in <condition> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tif statusCode < 300 {"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/compressor.go",
+        "Offset": 872,
+        "Line": 45,
+        "Column": 18
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (*compress/gzip.Writer).Close() error",
+      "Severity": "error",
+      "SourceLines": [
+        "\treturn c.zw.Close()"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/compressor.go",
+        "Offset": 1011,
+        "Line": 52,
+        "Column": 9
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (*compress/gzip.Reader).Read(p []byte) (n int, err error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\treturn c.zr.Read(p)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/compressor.go",
+        "Offset": 1387,
+        "Line": 73,
+        "Column": 9
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (io.Closer).Close() error",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/compressor.go",
+        "Offset": 1490,
+        "Line": 78,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (*compress/gzip.Reader).Close() error",
+      "Severity": "error",
+      "SourceLines": [
+        "\treturn c.zr.Close()"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/compressor.go",
+        "Offset": 1505,
+        "Line": 80,
+        "Column": 9
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (net/http.ResponseWriter).Write([]byte) (int, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\treturn size, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/controller/http/v1/middleware/logger.go",
+        "Offset": 553,
+        "Line": 34,
+        "Column": 15
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "govet",
+      "Text": "fieldalignment: struct with 48 pointer bytes could be 40",
+      "Severity": "error",
+      "SourceLines": [
+        "type Metric struct {"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/entity/metric.go",
+        "Offset": 28,
+        "Line": 3,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `should not be empty` has 6 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\tproblems[\"value\"] = \"should not be empty\""
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/entity/metric.go",
+        "Offset": 620,
+        "Line": 15,
+        "Column": 24
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).UpdateMetricSet(ctx context.Context, metrics []github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric) (int64, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/backup.go",
+        "Offset": 2017,
+        "Line": 85,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).UpdateMetricSet(ctx context.Context, metrics []github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric) (int64, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/backup.go",
+        "Offset": 2237,
+        "Line": 93,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).GetAllMetrics(ctx context.Context) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.MetricSlices, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/backup.go",
+        "Offset": 2606,
+        "Line": 107,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).UpdateGauge(ctx context.Context, metric github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 1353,
+        "Line": 42,
+        "Column": 11
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).UpdateCounter(ctx context.Context, metric github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 1662,
+        "Line": 51,
+        "Column": 11
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).UpdateCounter(ctx context.Context, metric github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn entity.Metric{}, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 1788,
+        "Line": 58,
+        "Column": 27
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).UpdateMetricSet(ctx context.Context, metrics []github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric) (int64, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 2098,
+        "Line": 69,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).UpdateMetricSet(ctx context.Context, metrics []github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric) (int64, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn n, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 2135,
+        "Line": 72,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).GetGauge(ctx context.Context, metric github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.GetMetricDTO) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 2476,
+        "Line": 85,
+        "Column": 11
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).GetCounter(ctx context.Context, metric github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.GetMetricDTO) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 2633,
+        "Line": 91,
+        "Column": 11
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).GetCounter(ctx context.Context, metric github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.GetMetricDTO) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn entity.Metric{}, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 2759,
+        "Line": 98,
+        "Column": 27
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).GetAllMetrics(ctx context.Context) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.MetricSlices, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 3081,
+        "Line": 109,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).GetAllMetrics(ctx context.Context) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.MetricSlices, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn entity.MetricSlices{}, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 3138,
+        "Line": 112,
+        "Column": 33
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service.MetricStorage).PingDB() error",
+      "Severity": "error",
+      "SourceLines": [
+        "\treturn service.storage.PingDB()"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/service/metric.go",
+        "Offset": 3274,
+        "Line": 120,
+        "Column": 9
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/usecase.MetricService).GetMetric(ctx context.Context, metric github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.GetMetricDTO) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn entity.Metric{}, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/usecase/get_metric.go",
+        "Offset": 496,
+        "Line": 22,
+        "Column": 27
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/usecase.MetricService).UpdateMetric(ctx context.Context, metric github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric) (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn entity.Metric{}, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/usecase/update_metric.go",
+        "Offset": 585,
+        "Line": 24,
+        "Column": 27
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/usecase.BackupService).StoreDataToFile(ctx context.Context) error",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\treturn entity.Metric{}, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/usecase/update_metric.go",
+        "Offset": 747,
+        "Line": 30,
+        "Column": 28
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/usecase.MetricService).UpdateMetricSet(ctx context.Context, metrics []github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity.Metric) (int64, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn n, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/usecase/update_metric_set.go",
+        "Offset": 583,
+        "Line": 24,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/internal/domain/usecase.BackupService).StoreDataToFile(ctx context.Context) error",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\treturn n, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/domain/usecase/update_metric_set.go",
+        "Offset": 731,
+        "Line": 30,
+        "Column": 14
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func go.uber.org/zap.ParseAtomicLevel(text string) (go.uber.org/zap.AtomicLevel, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/logger/logger.go",
+        "Offset": 230,
+        "Line": 13,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (go.uber.org/zap.Config).Build(opts ...go.uber.org/zap.Option) (*go.uber.org/zap.Logger, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/logger/logger.go",
+        "Offset": 405,
+        "Line": 20,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func github.com/The-Gleb/go_metrics_and_alerting/pkg/client.NewClient(ctx context.Context, dsn string) (pool *github.com/jackc/pgx/v5/pgxpool.Pool, err error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn nil, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/database/storage.go",
+        "Offset": 790,
+        "Line": 31,
+        "Column": 15
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 10, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/database/storage.go",
+        "Offset": 1599,
+        "Line": 67,
+        "Column": 59
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from interface method should be wrapped: sig: func (github.com/The-Gleb/go_metrics_and_alerting/pkg/client.Client).Ping(ctx context.Context) error",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/database/storage.go",
+        "Offset": 1685,
+        "Line": 70,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `UpdateMetricSet` has 6 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn 0, checkForConectionErr(\"UpdateMetricSet\", err)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/database/storage.go",
+        "Offset": 1883,
+        "Line": 78,
+        "Column": 34
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `%s: %w: ` has 4 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\treturn 0, fmt.Errorf(\"%s: %w: \", \"UpdateMetricSet\", repository.ErrInvalidMetricStruct)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/database/storage.go",
+        "Offset": 2108,
+        "Line": 86,
+        "Column": 25
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `GetAllMetrics` has 7 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn entity.MetricSlices{}, checkForConectionErr(\"GetAllMetrics\", err)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/database/storage.go",
+        "Offset": 3396,
+        "Line": 132,
+        "Column": 54
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "thelper",
+      "Text": "test helper function should start from t.Helper()",
+      "Severity": "error",
+      "SourceLines": [
+        "func cleanTables(t *testing.T, dsn string, tableNames ...string) {"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/database/storage_test.go",
+        "Offset": 652,
+        "Line": 33,
+        "Column": 6
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func github.com/ory/dockertest.NewPool(endpoint string) (*github.com/ory/dockertest.Pool, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn 0, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/database/storage_test.go",
+        "Offset": 1118,
+        "Line": 49,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (*github.com/ory/dockertest.Pool).RunWithOptions(opts *github.com/ory/dockertest.RunOptions, hcOpts ...func(*github.com/ory/dockertest/docker.HostConfig)) (*github.com/ory/dockertest.Resource, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn 0, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/database/storage_test.go",
+        "Offset": 1573,
+        "Line": 70,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func github.com/jackc/pgx/v4.Connect(ctx context.Context, connString string) (*github.com/jackc/pgx/v4.Conn, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn 0, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/database/storage_test.go",
+        "Offset": 2104,
+        "Line": 92,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "dupl",
+      "Text": "235-279 lines are duplicate of `internal/repository/database/storage_test.go:281-325`",
+      "Severity": "error",
+      "SourceLines": [
+        "func TestDB_UpdateGauge(t *testing.T) {",
+        "\tvar validFloat64 float64 = 12345",
+        "\tvar validFloat64two float64 = 321321",
+        "",
+        "\tstorage, err := NewMetricDB(context.Background(), dsn)",
+        "\trequire.NoError(t, err)",
+        "",
+        "\tcleanTables(",
+        "\t\tt, dsn,",
+        "\t\t\"gauge_metrics\", \"counter_metrics\",",
+        "\t)",
+        "",
+        "\ttests := []struct {",
+        "\t\tname    string",
+        "\t\tmetric  entity.Metric",
+        "\t\tresult  entity.Metric",
+        "\t\twantErr bool",
+        "\t\terr     error",
+        "\t}{",
+        "\t\t{",
+        "\t\t\tname:    \"first insert\",",
+        "\t\t\tmetric:  entity.Metric{MType: \"gauge\", ID: \"Alloc\", Value: &validFloat64},",
+        "\t\t\tresult:  entity.Metric{MType: \"gauge\", ID: \"Alloc\", Value: &validFloat64},",
+        "\t\t\twantErr: false,",
+        "\t\t},",
+        "\t\t{",
+        "\t\t\tname:    \"update metrics\",",
+        "\t\t\tmetric:  entity.Metric{MType: \"gauge\", ID: \"Alloc\", Value: &validFloat64two},",
+        "\t\t\tresult:  entity.Metric{MType: \"gauge\", ID: \"Alloc\", Value: &validFloat64two},",
+        "\t\t\twantErr: false,",
+        "\t\t},",
+        "\t}",
+        "\tfor _, tt := range tests {",
+        "\t\tt.Run(tt.name, func(t *testing.T) {",
+        "\t\t\tm, err := storage.UpdateGauge(context.Background(), tt.metric)",
+        "\t\t\tif tt.wantErr {",
+        "\t\t\t\trequire.ErrorIs(t, err, tt.err)",
+        "\t\t\t\treturn",
+        "\t\t\t}",
+        "\t\t\trequire.NoError(t, err)",
+        "",
+        "\t\t\trequire.Equal(t, tt.result, m)",
+        "\t\t})",
+        "\t}",
+        "}"
+      ],
+      "Replacement": null,
+      "LineRange": {
+        "From": 235,
+        "To": 279
+      },
+      "Pos": {
+        "Filename": "internal/repository/database/storage_test.go",
+        "Offset": 0,
+        "Line": 235,
+        "Column": 0
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "dupl",
+      "Text": "281-325 lines are duplicate of `internal/repository/database/storage_test.go:235-279`",
+      "Severity": "error",
+      "SourceLines": [
+        "func TestDB_UpdateCounter(t *testing.T) {",
+        "\tvar validInt64 int64 = 5",
+        "\tvar validInt64two int64 = 10",
+        "",
+        "\tstorage, err := NewMetricDB(context.Background(), dsn)",
+        "\trequire.NoError(t, err)",
+        "",
+        "\tcleanTables(",
+        "\t\tt, dsn,",
+        "\t\t\"gauge_metrics\", \"counter_metrics\",",
+        "\t)",
+        "",
+        "\ttests := []struct {",
+        "\t\tname    string",
+        "\t\tmetric  entity.Metric",
+        "\t\tresult  entity.Metric",
+        "\t\twantErr bool",
+        "\t\terr     error",
+        "\t}{",
+        "\t\t{",
+        "\t\t\tname:    \"first insert\",",
+        "\t\t\tmetric:  entity.Metric{MType: \"counter\", ID: \"PollCount\", Delta: &validInt64},",
+        "\t\t\tresult:  entity.Metric{MType: \"counter\", ID: \"PollCount\", Delta: &validInt64},",
+        "\t\t\twantErr: false,",
+        "\t\t},",
+        "\t\t{",
+        "\t\t\tname:    \"update metrics\",",
+        "\t\t\tmetric:  entity.Metric{MType: \"counter\", ID: \"PollCount\", Delta: &validInt64},",
+        "\t\t\tresult:  entity.Metric{MType: \"counter\", ID: \"PollCount\", Delta: &validInt64two},",
+        "\t\t\twantErr: false,",
+        "\t\t},",
+        "\t}",
+        "\tfor _, tt := range tests {",
+        "\t\tt.Run(tt.name, func(t *testing.T) {",
+        "\t\t\tm, err := storage.UpdateCounter(context.Background(), tt.metric)",
+        "\t\t\tif tt.wantErr {",
+        "\t\t\t\trequire.ErrorIs(t, err, tt.err)",
+        "\t\t\t\treturn",
+        "\t\t\t}",
+        "\t\t\trequire.NoError(t, err)",
+        "",
+        "\t\t\trequire.Equal(t, tt.result, m)",
+        "\t\t})",
+        "\t}",
+        "}"
+      ],
+      "Replacement": null,
+      "LineRange": {
+        "From": 281,
+        "To": 325
+      },
+      "Pos": {
+        "Filename": "internal/repository/database/storage_test.go",
+        "Offset": 0,
+        "Line": 281,
+        "Column": 0
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "dupl",
+      "Text": "327-379 lines are duplicate of `internal/repository/database/storage_test.go:381-433`",
+      "Severity": "error",
+      "SourceLines": [
+        "func TestDB_GetGauge(t *testing.T) {",
+        "\tvar validFloat64 float64 = 12345",
+        "",
+        "\tstorage, err := NewMetricDB(context.Background(), dsn)",
+        "\trequire.NoError(t, err)",
+        "",
+        "\tcleanTables(",
+        "\t\tt, dsn,",
+        "\t\t\"gauge_metrics\", \"counter_metrics\",",
+        "\t)",
+        "",
+        "\tclient, err := postgresql.NewClient(context.Background(), dsn)",
+        "\trequire.NoError(t, err)",
+        "",
+        "\t_, err = client.Exec(",
+        "\t\tcontext.Background(),",
+        "\t\t`INSERT INTO gauge_metrics (m_name, m_value)",
+        "\t\tVALUES ('Alloc', 12345);`,",
+        "\t)",
+        "\trequire.NoError(t, err)",
+        "\ttests := []struct {",
+        "\t\tname    string",
+        "\t\tmetric  entity.GetMetricDTO",
+        "\t\tresult  entity.Metric",
+        "\t\twantErr bool",
+        "\t\terr     error",
+        "\t}{",
+        "\t\t{",
+        "\t\t\tname:    \"positive\",",
+        "\t\t\tmetric:  entity.GetMetricDTO{MType: \"gauge\", ID: \"Alloc\"},",
+        "\t\t\tresult:  entity.Metric{MType: \"gauge\", ID: \"Alloc\", Value: &validFloat64},",
+        "\t\t\twantErr: false,",
+        "\t\t},",
+        "\t\t{",
+        "\t\t\tname:    \"metric doesn`t exists\",",
+        "\t\t\tmetric:  entity.GetMetricDTO{MType: \"gauge\", ID: \"notfound\"},",
+        "\t\t\twantErr: true,",
+        "\t\t\terr:     repository.ErrNotFound,",
+        "\t\t},",
+        "\t}",
+        "\tfor _, tt := range tests {",
+        "\t\tt.Run(tt.name, func(t *testing.T) {",
+        "\t\t\tmetric, err := storage.GetGauge(context.Background(), tt.metric)",
+        "\t\t\tif tt.wantErr {",
+        "\t\t\t\trequire.ErrorIs(t, err, tt.err)",
+        "\t\t\t\treturn",
+        "\t\t\t}",
+        "\t\t\trequire.NoError(t, err)",
+        "",
+        "\t\t\trequire.Equal(t, tt.result, metric)",
+        "\t\t})",
+        "\t}",
+        "}"
+      ],
+      "Replacement": null,
+      "LineRange": {
+        "From": 327,
+        "To": 379
+      },
+      "Pos": {
+        "Filename": "internal/repository/database/storage_test.go",
+        "Offset": 0,
+        "Line": 327,
+        "Column": 0
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "dupl",
+      "Text": "381-433 lines are duplicate of `internal/repository/database/storage_test.go:327-379`",
+      "Severity": "error",
+      "SourceLines": [
+        "func TestDB_GetCounter(t *testing.T) {",
+        "\tvar validInt64 int64 = 123",
+        "",
+        "\tstorage, err := NewMetricDB(context.Background(), dsn)",
+        "\trequire.NoError(t, err)",
+        "",
+        "\tcleanTables(",
+        "\t\tt, dsn,",
+        "\t\t\"gauge_metrics\", \"counter_metrics\",",
+        "\t)",
+        "",
+        "\tclient, err := postgresql.NewClient(context.Background(), dsn)",
+        "\trequire.NoError(t, err)",
+        "",
+        "\t_, err = client.Exec(",
+        "\t\tcontext.Background(),",
+        "\t\t`INSERT INTO counter_metrics (m_name, m_value)",
+        "\t\tVALUES ('PollCount', 123);`,",
+        "\t)",
+        "\trequire.NoError(t, err)",
+        "\ttests := []struct {",
+        "\t\tname    string",
+        "\t\tmetric  entity.GetMetricDTO",
+        "\t\tresult  entity.Metric",
+        "\t\twantErr bool",
+        "\t\terr     error",
+        "\t}{",
+        "\t\t{",
+        "\t\t\tname:    \"positive\",",
+        "\t\t\tmetric:  entity.GetMetricDTO{MType: \"counter\", ID: \"PollCount\"},",
+        "\t\t\tresult:  entity.Metric{MType: \"counter\", ID: \"PollCount\", Delta: &validInt64},",
+        "\t\t\twantErr: false,",
+        "\t\t},",
+        "\t\t{",
+        "\t\t\tname:    \"metric doesn`t exists\",",
+        "\t\t\tmetric:  entity.GetMetricDTO{MType: \"counter\", ID: \"notfound\"},",
+        "\t\t\twantErr: true,",
+        "\t\t\terr:     repository.ErrNotFound,",
+        "\t\t},",
+        "\t}",
+        "\tfor _, tt := range tests {",
+        "\t\tt.Run(tt.name, func(t *testing.T) {",
+        "\t\t\tmetric, err := storage.GetCounter(context.Background(), tt.metric)",
+        "\t\t\tif tt.wantErr {",
+        "\t\t\t\trequire.ErrorIs(t, err, tt.err)",
+        "\t\t\t\treturn",
+        "\t\t\t}",
+        "\t\t\trequire.NoError(t, err)",
+        "",
+        "\t\t\trequire.Equal(t, tt.result, metric)",
+        "\t\t})",
+        "\t}",
+        "}"
+      ],
+      "Replacement": null,
+      "LineRange": {
+        "From": 381,
+        "To": 433
+      },
+      "Pos": {
+        "Filename": "internal/repository/database/storage_test.go",
+        "Offset": 0,
+        "Line": 381,
+        "Column": 0
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func os.Create(name string) (*os.File, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/file_storage/file_storage.go",
+        "Offset": 357,
+        "Line": 23,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (*os.File).Write(b []byte) (n int, err error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/file_storage/file_storage.go",
+        "Offset": 417,
+        "Line": 27,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (*os.File).Close() error",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/file_storage/file_storage.go",
+        "Offset": 470,
+        "Line": 31,
+        "Column": 10
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (*bufio.Scanner).Err() error",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn []byte{}, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/file_storage/file_storage.go",
+        "Offset": 841,
+        "Line": 47,
+        "Column": 20
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "stylecheck",
+      "Text": "ST1023: should omit type float64 from declaration; it will be inferred from the right-hand side",
+      "Severity": "error",
+      "SourceLines": [
+        "\tvar float64Val float64 = 123.4 // lint:ignore"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/repository/memory/storage_test.go",
+        "Offset": 2790,
+        "Line": 136,
+        "Column": 17
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (*net/http.Server).ListenAndServe() error",
+      "Severity": "error",
+      "SourceLines": [
+        "\treturn s.ListenAndServe()"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "internal/server/server.go",
+        "Offset": 1806,
+        "Line": 67,
+        "Column": 9
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 5, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\tctx, cancel := context.WithTimeout(ctx, 5*time.Second)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "pkg/client/postgresql.go",
+        "Offset": 880,
+        "Line": 29,
+        "Column": 44
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func github.com/jackc/pgx/v5/pgxpool.New(ctx context.Context, connString string) (*github.com/jackc/pgx/v5/pgxpool.Pool, error)",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\t\t\treturn err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "pkg/client/postgresql.go",
+        "Offset": 981,
+        "Line": 34,
+        "Column": 12
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "wrapcheck",
+      "Text": "error returned from external package is unwrapped: sig: func (*github.com/jackc/pgx/v5/pgxpool.Pool).Ping(ctx context.Context) error",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\treturn nil, err"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "pkg/client/postgresql.go",
+        "Offset": 1092,
+        "Line": 43,
+        "Column": 15
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 2, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\twaitTimeDiff: time.Duration(2),"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "pkg/utils/retry/retry.go",
+        "Offset": 322,
+        "Line": 17,
+        "Column": 31
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 3, in <assign> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tretryCount:   3,"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "pkg/utils/retry/retry.go",
+        "Offset": 342,
+        "Line": 18,
+        "Column": 17
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "govet",
+      "Text": "fieldalignment: struct with 32 pointer bytes could be 8",
+      "Severity": "error",
+      "SourceLines": [
+        "type retryConfig struct {"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "pkg/utils/retry/retry.go",
+        "Offset": 419,
+        "Line": 23,
+        "Column": 18
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 3, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tUpdateGaugeJSON(\"Malloc\", 3)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 349,
+        "Line": 20,
+        "Column": 28
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `Accept-Encoding` has 4 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tSetHeader(\"Accept-Encoding\", \"gzip\")."
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 629,
+        "Line": 33,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `gzip` has 4 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tSetHeader(\"Accept-Encoding\", \"gzip\")."
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 648,
+        "Line": 33,
+        "Column": 32
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `Content-Type` has 12 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tSetHeader(\"Content-Type\", \"application/json\")"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 669,
+        "Line": 34,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `application/json` has 12 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tSetHeader(\"Content-Type\", \"application/json\")"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 685,
+        "Line": 34,
+        "Column": 29
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 100, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tvalueCounter1, valueCounter2 := int64(100), int64(200)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 817,
+        "Line": 38,
+        "Column": 40
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 200, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tvalueCounter1, valueCounter2 := int64(100), int64(200)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 829,
+        "Line": 38,
+        "Column": 52
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 123.123, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tvalueGauge1, valueGauge2 := float64(123.123), float64(123.456)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 899,
+        "Line": 40,
+        "Column": 38
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 123.456, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tvalueGauge1, valueGauge2 := float64(123.123), float64(123.456)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 917,
+        "Line": 40,
+        "Column": 56
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gomnd",
+      "Text": "mnd: Magic number: 3, in <argument> detected",
+      "Severity": "error",
+      "SourceLines": [
+        "\tSetRetryCount(3)."
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 1421,
+        "Line": 73,
+        "Column": 16
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `client: error marshalling to json: %s\n` has 4 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tlog.Printf(\"client: error marshalling to json: %s\\n\", err)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 1695,
+        "Line": 86,
+        "Column": 14
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `Request body is %s` has 4 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\tlog.Printf(\"Request body is %s\", string(body))"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 1767,
+        "Line": 89,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "gocritic",
+      "Text": "appendCombine: can combine chain of 2 appends into one",
+      "Severity": "error",
+      "SourceLines": [
+        "\tmetrics = append(metrics, entity.Metric{ID: \"unknownn\", MType: \"gauge\", Value: &valF})"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 2076,
+        "Line": 102,
+        "Column": 2
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `http://localhost:8080/` has 4 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\t\tGet(\"http://localhost:8080/\" + uri)"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 3711,
+        "Line": 159,
+        "Column": 7
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    },
+    {
+      "FromLinter": "goconst",
+      "Text": "string `Response is %s` has 6 occurrences, make it a constant",
+      "Severity": "error",
+      "SourceLines": [
+        "\tlog.Printf(\"Response is %s\", string(resp.Body()))"
+      ],
+      "Replacement": null,
+      "Pos": {
+        "Filename": "playground/playground.go",
+        "Offset": 3755,
+        "Line": 160,
+        "Column": 13
+      },
+      "ExpectNoLint": false,
+      "ExpectedNoLintLinter": ""
+    }
+  ],
+  "Report": {
+    "Linters": [
+      {
+        "Name": "asasalint",
+        "Enabled": true
+      },
+      {
+        "Name": "asciicheck",
+        "Enabled": true
+      },
+      {
+        "Name": "bidichk"
+      },
+      {
+        "Name": "bodyclose",
+        "Enabled": true
+      },
+      {
+        "Name": "containedctx",
+        "Enabled": true
+      },
+      {
+        "Name": "contextcheck"
+      },
+      {
+        "Name": "cyclop"
+      },
+      {
+        "Name": "decorder"
+      },
+      {
+        "Name": "deadcode"
+      },
+      {
+        "Name": "depguard"
+      },
+      {
+        "Name": "dogsled"
+      },
+      {
+        "Name": "dupl",
+        "Enabled": true
+      },
+      {
+        "Name": "dupword",
+        "Enabled": true
+      },
+      {
+        "Name": "durationcheck",
+        "Enabled": true
+      },
+      {
+        "Name": "errcheck",
+        "EnabledByDefault": true
+      },
+      {
+        "Name": "errchkjson"
+      },
+      {
+        "Name": "errname",
+        "Enabled": true
+      },
+      {
+        "Name": "errorlint",
+        "Enabled": true
+      },
+      {
+        "Name": "execinquery",
+        "Enabled": true
+      },
+      {
+        "Name": "exhaustive",
+        "Enabled": true
+      },
+      {
+        "Name": "exhaustivestruct"
+      },
+      {
+        "Name": "exhaustruct"
+      },
+      {
+        "Name": "exportloopref"
+      },
+      {
+        "Name": "forbidigo"
+      },
+      {
+        "Name": "forcetypeassert"
+      },
+      {
+        "Name": "funlen"
+      },
+      {
+        "Name": "gci"
+      },
+      {
+        "Name": "ginkgolinter"
+      },
+      {
+        "Name": "gocheckcompilerdirectives",
+        "Enabled": true
+      },
+      {
+        "Name": "gochecknoglobals"
+      },
+      {
+        "Name": "gochecknoinits"
+      },
+      {
+        "Name": "gochecksumtype"
+      },
+      {
+        "Name": "gocognit"
+      },
+      {
+        "Name": "goconst",
+        "Enabled": true
+      },
+      {
+        "Name": "gocritic",
+        "Enabled": true
+      },
+      {
+        "Name": "gocyclo"
+      },
+      {
+        "Name": "godot",
+        "Enabled": true
+      },
+      {
+        "Name": "godox"
+      },
+      {
+        "Name": "goerr113"
+      },
+      {
+        "Name": "gofmt",
+        "Enabled": true
+      },
+      {
+        "Name": "gofumpt"
+      },
+      {
+        "Name": "goheader"
+      },
+      {
+        "Name": "goimports",
+        "Enabled": true
+      },
+      {
+        "Name": "golint"
+      },
+      {
+        "Name": "gomnd",
+        "Enabled": true
+      },
+      {
+        "Name": "gomoddirectives"
+      },
+      {
+        "Name": "gomodguard"
+      },
+      {
+        "Name": "goprintffuncname",
+        "Enabled": true
+      },
+      {
+        "Name": "gosec"
+      },
+      {
+        "Name": "gosimple",
+        "Enabled": true,
+        "EnabledByDefault": true
+      },
+      {
+        "Name": "gosmopolitan"
+      },
+      {
+        "Name": "govet",
+        "Enabled": true,
+        "EnabledByDefault": true
+      },
+      {
+        "Name": "grouper",
+        "Enabled": true
+      },
+      {
+        "Name": "ifshort"
+      },
+      {
+        "Name": "importas"
+      },
+      {
+        "Name": "inamedparam"
+      },
+      {
+        "Name": "ineffassign",
+        "Enabled": true,
+        "EnabledByDefault": true
+      },
+      {
+        "Name": "interfacebloat"
+      },
+      {
+        "Name": "interfacer"
+      },
+      {
+        "Name": "ireturn"
+      },
+      {
+        "Name": "lll"
+      },
+      {
+        "Name": "loggercheck"
+      },
+      {
+        "Name": "maintidx"
+      },
+      {
+        "Name": "makezero",
+        "Enabled": true
+      },
+      {
+        "Name": "maligned"
+      },
+      {
+        "Name": "mirror"
+      },
+      {
+        "Name": "misspell"
+      },
+      {
+        "Name": "musttag"
+      },
+      {
+        "Name": "nakedret"
+      },
+      {
+        "Name": "nestif"
+      },
+      {
+        "Name": "nilerr",
+        "Enabled": true
+      },
+      {
+        "Name": "nilnil"
+      },
+      {
+        "Name": "nlreturn"
+      },
+      {
+        "Name": "noctx"
+      },
+      {
+        "Name": "nonamedreturns"
+      },
+      {
+        "Name": "nosnakecase"
+      },
+      {
+        "Name": "nosprintfhostport",
+        "Enabled": true
+      },
+      {
+        "Name": "paralleltest"
+      },
+      {
+        "Name": "perfsprint"
+      },
+      {
+        "Name": "prealloc",
+        "Enabled": true
+      },
+      {
+        "Name": "predeclared",
+        "Enabled": true
+      },
+      {
+        "Name": "promlinter"
+      },
+      {
+        "Name": "protogetter"
+      },
+      {
+        "Name": "reassign",
+        "Enabled": true
+      },
+      {
+        "Name": "revive",
+        "Enabled": true
+      },
+      {
+        "Name": "rowserrcheck",
+        "Enabled": true
+      },
+      {
+        "Name": "sloglint"
+      },
+      {
+        "Name": "scopelint"
+      },
+      {
+        "Name": "sqlclosecheck",
+        "Enabled": true
+      },
+      {
+        "Name": "spancheck"
+      },
+      {
+        "Name": "staticcheck",
+        "Enabled": true,
+        "EnabledByDefault": true
+      },
+      {
+        "Name": "structcheck"
+      },
+      {
+        "Name": "stylecheck",
+        "Enabled": true
+      },
+      {
+        "Name": "tagalign"
+      },
+      {
+        "Name": "tagliatelle"
+      },
+      {
+        "Name": "tenv",
+        "Enabled": true
+      },
+      {
+        "Name": "testableexamples",
+        "Enabled": true
+      },
+      {
+        "Name": "testifylint"
+      },
+      {
+        "Name": "testpackage"
+      },
+      {
+        "Name": "thelper",
+        "Enabled": true
+      },
+      {
+        "Name": "tparallel",
+        "Enabled": true
+      },
+      {
+        "Name": "typecheck",
+        "Enabled": true,
+        "EnabledByDefault": true
+      },
+      {
+        "Name": "unconvert",
+        "Enabled": true
+      },
+      {
+        "Name": "unparam",
+        "Enabled": true
+      },
+      {
+        "Name": "unused",
+        "Enabled": true,
+        "EnabledByDefault": true
+      },
+      {
+        "Name": "usestdlibvars",
+        "Enabled": true
+      },
+      {
+        "Name": "varcheck"
+      },
+      {
+        "Name": "varnamelen"
+      },
+      {
+        "Name": "wastedassign",
+        "Enabled": true
+      },
+      {
+        "Name": "whitespace",
+        "Enabled": true
+      },
+      {
+        "Name": "wrapcheck",
+        "Enabled": true
+      },
+      {
+        "Name": "wsl"
+      },
+      {
+        "Name": "zerologlint"
+      },
+      {
+        "Name": "nolintlint",
+        "Enabled": true
+      }
+    ]
+  }
+}

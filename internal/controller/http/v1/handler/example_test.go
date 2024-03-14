@@ -15,7 +15,6 @@ import (
 )
 
 func Example_getAllMetricHandler_ServeHTTP() {
-
 	s := memory.New()
 	s.UpdateMetric("gauge", "Alloc", "123.4")
 	s.UpdateMetric("counter", "PollCount", "12")
@@ -43,12 +42,10 @@ func Example_getAllMetricHandler_ServeHTTP() {
 
 	// Output:
 	// 200
-	// {"Gauge":[{"id":"Alloc","type":"gauge","value":123.4}],"Counter":[{"id":"PollCount","type":"counter","delta":12}]}
-
+	// {"Gauge":[{"value":123.4,"id":"Alloc","type":"gauge"}],"Counter":[{"delta":12,"id":"PollCount","type":"counter"}]}
 }
 
 func Example_getMetricJSONHandler_ServeHTTP() {
-
 	s := memory.New()
 	s.UpdateMetric("gauge", "Alloc", "3782369280")
 	metricService := service.NewMetricService(s)
@@ -80,12 +77,10 @@ func Example_getMetricJSONHandler_ServeHTTP() {
 
 	// Output:
 	// 200
-	// {"id":"Alloc","type":"gauge","value":3782369280}
-
+	// {"value":3782369280,"id":"Alloc","type":"gauge"}
 }
 
 func Example_getMetricHandler_ServeHTTP() {
-
 	s := memory.New()
 	s.UpdateMetric("gauge", "Alloc", "123.4")
 	metricService := service.NewMetricService(s)
@@ -113,11 +108,9 @@ func Example_getMetricHandler_ServeHTTP() {
 	// Output:
 	// 200
 	// 123.4
-
 }
 
 func Example_updateMetricJSONHandler_ServeHTTP() {
-
 	s := memory.New()
 	metricService := service.NewMetricService(s)
 	updateMetricUsecase := usecase.NewUpdateMetricUsecase(metricService, nil)
@@ -149,8 +142,7 @@ func Example_updateMetricJSONHandler_ServeHTTP() {
 
 	// Output:
 	// 200
-	// {"id":"Alloc","type":"gauge","value":123.123}
-
+	// {"value":123.123,"id":"Alloc","type":"gauge"}
 }
 
 func Example_updateMetricSetHandler_ServeHTTP() {
@@ -193,11 +185,9 @@ func Example_updateMetricSetHandler_ServeHTTP() {
 	// Output:
 	// 200
 	// 2 metrics updated
-
 }
 
 func Example_updateMetricHandler_ServeHTTP() {
-
 	s := memory.New()
 	metricService := service.NewMetricService(s)
 	updateMetricUsecase := usecase.NewUpdateMetricUsecase(metricService, nil)
@@ -224,5 +214,4 @@ func Example_updateMetricHandler_ServeHTTP() {
 	// Output:
 	// 200
 	// 12.12
-
 }

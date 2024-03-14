@@ -36,7 +36,6 @@ import (
 	"golang.org/x/tools/go/analysis/passes/pkgfact"
 	"golang.org/x/tools/go/analysis/passes/printf"
 	"golang.org/x/tools/go/analysis/passes/reflectvaluecompare"
-	"golang.org/x/tools/go/analysis/passes/shadow"
 	"golang.org/x/tools/go/analysis/passes/shift"
 	"golang.org/x/tools/go/analysis/passes/sigchanyzer"
 	"golang.org/x/tools/go/analysis/passes/slog"
@@ -57,7 +56,6 @@ import (
 )
 
 func main() {
-
 	var Mychecks []*analysis.Analyzer
 	for _, v := range staticcheck.Analyzers {
 		if strings.HasPrefix(v.Analyzer.Name, "SA") ||
@@ -134,7 +132,7 @@ func main() {
 		framepointer.Analyzer,
 
 		httpmux.Analyzer,
-		//Package httpresponse defines an Analyzer that checks for mistakes using HTTP responses.
+		// Package httpresponse defines an Analyzer that checks for mistakes using HTTP responses.
 		httpresponse.Analyzer,
 
 		// Package ifaceassert defines an Analyzer that flags impossible interface-interface type assertions.
@@ -163,9 +161,6 @@ func main() {
 
 		// Package reflectvaluecompare defines an Analyzer that checks for accidentally using == or reflect.DeepEqual to compare reflect.Value values.
 		reflectvaluecompare.Analyzer,
-
-		// Package shadow defines an Analyzer that checks for shadowed variables.
-		shadow.Analyzer,
 
 		// Package shift defines an Analyzer that checks for shifts that exceed the width of an integer.
 		shift.Analyzer,
@@ -221,7 +216,7 @@ func main() {
 	)
 }
 
-// OsExitCheckAnalyzer checks if there is a direct call to os.Exit in main function
+// OsExitCheckAnalyzer checks if there is a direct call to os.Exit in main function.
 var OsExitCheckAnalyzer = &analysis.Analyzer{
 	Name: "osexit",
 	Doc:  "check for os.Exit() in main func",
@@ -229,15 +224,12 @@ var OsExitCheckAnalyzer = &analysis.Analyzer{
 }
 
 func run(pass *analysis.Pass) (interface{}, error) {
-
 	for _, file := range pass.Files {
-
 		if file.Name.Name != "main" {
 			continue
 		}
 
 		ast.Inspect(file, func(node ast.Node) bool {
-
 			if d, ok := node.(*ast.FuncDecl); !ok || d.Name.Name != "main" {
 				return true
 			}
@@ -268,7 +260,6 @@ func run(pass *analysis.Pass) (interface{}, error) {
 			return true
 		},
 		)
-
 	}
 	return nil, nil
 }

@@ -61,7 +61,6 @@ func SetupRoutes(r *chi.Mux, h Handlers) {
 }
 
 func Run(s *http.Server) error {
-
 	logger.Log.Infow("Running server",
 		"address", s.Addr,
 	)

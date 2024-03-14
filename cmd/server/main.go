@@ -32,7 +32,6 @@ var (
 )
 
 func main() {
-
 	fmt.Printf(
 		"Build version: %s\nBuild date: %s\nBuild commit: %s\n",
 		BuildVersion, BuildDate, BuildCommit,
@@ -41,7 +40,6 @@ func main() {
 	if err := Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
-
 }
 
 func Run(ctx context.Context) error {

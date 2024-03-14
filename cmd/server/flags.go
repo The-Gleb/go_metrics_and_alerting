@@ -7,17 +7,17 @@ import (
 	"os"
 
 	"github.com/caarlos0/env"
-	// ".com/The-Gleb/go_metrics_and_alerting/internal/logger"
+	// ".com/The-Gleb/go_metrics_and_alerting/internal/logger".
 )
 
 type Config struct {
 	Addres          string `env:"ADDRESS"`
 	LogLevel        string
-	StoreInterval   int    `env:"STORE_INTERVAL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
-	Restore         bool   `env:"RESTORE"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
 	SignKey         string `env:"KEY"`
+	StoreInterval   int    `env:"STORE_INTERVAL"`
+	Restore         bool   `env:"RESTORE"`
 }
 
 type ConfigBuilder struct {
@@ -56,7 +56,6 @@ func (b ConfigBuilder) SetSignKey(key string) ConfigBuilder {
 }
 
 func NewConfigFromFlags() Config {
-
 	fmt.Printf(
 		"Build version: %s\nBuild date: %s\nBuild commit: %s\n",
 		BuildVersion, BuildDate, BuildCommit,

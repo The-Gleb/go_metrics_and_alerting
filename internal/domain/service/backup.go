@@ -33,7 +33,6 @@ func NewBackupService(ms MetricStorage, bs FileStorage, interval int, restore bo
 }
 
 func (service *backupService) Run(ctx context.Context) error {
-
 	if service.restore {
 		err := service.LoadDataFromFile(ctx)
 		if err != nil {
@@ -61,11 +60,9 @@ func (service *backupService) Run(ctx context.Context) error {
 			}
 		}
 	}
-
 }
 
 func (service *backupService) LoadDataFromFile(ctx context.Context) error {
-
 	data, err := service.backupStorage.ReadData()
 	if err != nil {
 		return fmt.Errorf("LoadDataFromFile: failed reading data: %w", err)
@@ -103,7 +100,6 @@ func (service *backupService) LoadDataFromFile(ctx context.Context) error {
 }
 
 func (service *backupService) StoreDataToFile(ctx context.Context) error {
-
 	var MetricSlices entity.MetricSlices
 	var err error
 	err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {

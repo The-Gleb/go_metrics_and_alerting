@@ -101,7 +101,6 @@ func Test_updateMetricHandler_ServeHTTP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			resp, body := testRequest(t, ts, "POST", tt.address, nil)
 			defer resp.Body.Close()
 
@@ -114,7 +113,6 @@ func Test_updateMetricHandler_ServeHTTP(t *testing.T) {
 
 			// val, _ := h.app.GetMetricFromParams(context.Background(), tt.mType, tt.mName)
 			// assert.Equal(t, tt.mValue, string(val))
-
 		})
 	}
 }
