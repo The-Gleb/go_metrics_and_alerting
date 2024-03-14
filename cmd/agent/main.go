@@ -52,8 +52,8 @@ func main() {
 	logger.Log.Info(config)
 
 	gaugeMap := make(map[string]float64)
-	var PollCount atomic.Int64
-	PollCount.Store(1)
+	var pollCount atomic.Int64
+	pollCount.Store(1)
 
 	var pollInterval = time.Duration(config.PollInterval * 1000000000)
 	var reportInterval = time.Duration(config.ReportInterval * 1000000000)
@@ -84,7 +84,7 @@ func main() {
 	for i := 0; i < config.RateLimit; i++ {
 		go func() {
 			for range sendTaskCh {
-				SendMetricsInOneRequest(gaugeMap, &PollCount, client, []byte(config.SignKey), &mu)
+				SendMetricsInOneRequest(gaugeMap, &pollCount, client, []byte(config.SignKey), &mu)
 			}
 		}()
 	}
@@ -123,7 +123,7 @@ func SendTestGet(req *resty.Request) {
 	log.Println(resp.StatusCode())
 }
 
-func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int64, client *resty.Client, signKey []byte, mu *sync.RWMutex) {
+func SendMetricsInOneRequest(gaugeMap map[string]float64, pollCount *atomic.Int64, client *resty.Client, signKey []byte, mu *sync.RWMutex) {
 	metrics := make([]entity.Metric, 0)
 
 	mu.RLock()
@@ -136,7 +136,7 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int6
 	}
 	mu.RUnlock()
 
-	counter := PollCount.Load()
+	counter := pollCount.Load()
 	metrics = append(metrics, entity.Metric{
 		MType: "counter",
 		ID:    "PollCount",
@@ -228,7 +228,7 @@ func hash(data, key []byte) ([]byte, error) {
 	return sign, nil
 }
 
-func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.Request) {
+func SendMetricsJSON(gaugeMap map[string]float64, pollCount *int64, req *resty.Request) {
 	for name, val := range gaugeMap {
 		var result entity.Metric
 		_, err := req.
@@ -249,7 +249,7 @@ func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.R
 		SetBody(&entity.Metric{
 			ID:    "PollCount",
 			MType: "counter",
-			Delta: PollCount,
+			Delta: pollCount,
 		}).
 		SetResult(&result).
 		Post("/update/")
@@ -260,7 +260,7 @@ func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.R
 	log.Printf("\nUpdated to %v\n", result)
 }
 
-func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Client) {
+func SendMetrics(gaugeMap map[string]float64, pollCount *int64, client *resty.Client) {
 	for name, val := range gaugeMap {
 		requestURL := fmt.Sprintf("%s/update/gauge/%s/%f", client.BaseURL, name, val)
 
@@ -276,7 +276,7 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 		log.Println(string(resp.Body()))
 	}
 
-	requestURL := fmt.Sprintf("%s/update/counter/PollCount/%d", client.BaseURL, *PollCount)
+	requestURL := fmt.Sprintf("%s/update/counter/PollCount/%d", client.BaseURL, *pollCount)
 	resp, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		Post(requestURL)

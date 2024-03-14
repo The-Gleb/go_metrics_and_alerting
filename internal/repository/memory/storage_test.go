@@ -133,7 +133,7 @@ func Test_storage_UpdateMetric(t *testing.T) {
 
 func Test_storage_GetAllMetrics(t *testing.T) {
 	var int64Val int64 = 123
-	var float64Val float64 = 123.4 // lint:ignore
+	float64Val := 123.4
 
 	memory := New()
 	memory.UpdateMetric("gauge", "Alloc", "123.4")

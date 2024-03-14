@@ -60,8 +60,6 @@ linters-settings:
   asasalint:
     ignore-test: false
 
-  dupl:
-    threshold: 100
 
   dupword:
     keywords: []
@@ -89,14 +87,6 @@ linters-settings:
     ignore-enum-members: ""
     ignore-enum-types: ""
     package-scope-only: false
-
-  goconst:
-    ignore-calls: false
-    ignore-tests: true
-    match-constant: true
-    min-len: 3
-    min-occurrences: 4
-    numbers: false
 
   gocritic:
     enabled-checks:
@@ -149,18 +139,6 @@ linters-settings:
 
   goimports:
     local-prefixes: ""
-
-  gomnd:
-    checks:
-      - argument
-      - case
-      - condition
-      - operation
-      - return
-      - assign
-    ignored-files: []
-    ignored-functions: []
-    ignored-numbers: []
 
   gosec:
     includes:
@@ -319,42 +297,9 @@ linters-settings:
   tenv:
     all: false
 
-  thelper:
-    benchmark:
-      begin: true
-      first: true
-      name: true
-    fuzz:
-      begin: false
-      first: false
-      name: false
-    tb:
-      begin: true
-      first: true
-      name: true
-    test:
-      begin: true
-      first: true
-      name: true
-
   unparam:
     check-exported: false
 
-  usestdlibvars:
-    constant-kind: true
-    crypto-hash: true
-    default-rpc-path: true
-    http-method: true
-    http-status-code: true
-    sql-isolation-level: true
-    time-layout: true
-    time-month: true
-    time-weekday: true
-    tls-signature-scheme: true
-
-  whitespace:
-    multi-func: false
-    multi-if: false
 
 # Linters configuration
 linters:
@@ -366,7 +311,6 @@ linters:
     - asciicheck
     - bodyclose
     - containedctx
-    - dupl
     - dupword
     - durationcheck
     # - errcheck
@@ -375,16 +319,13 @@ linters:
     - execinquery
     - exhaustive
     - gocheckcompilerdirectives
-    - goconst
     - gocritic
     - godot
     - gofmt
     - goimports
-    - gomnd
     - goprintffuncname
     # - gosec
     - gosimple
-    - govet
     - grouper
     - ineffassign
     # - lll
@@ -396,23 +337,17 @@ linters:
     - prealloc
     - predeclared
     - reassign
-    - revive
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
     - stylecheck
     - tenv
     - testableexamples
-    - thelper
     - tparallel
     - typecheck
-    - unconvert
     - unparam
     - unused
-    - usestdlibvars
     - wastedassign
-    - whitespace
-    - wrapcheck
   # Run only fast linters from enabled linters set (first run won't be fast).
   fast: false
 
