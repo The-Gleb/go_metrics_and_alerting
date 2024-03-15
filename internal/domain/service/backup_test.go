@@ -18,7 +18,7 @@ func Test_backupService_StoreDataToFile(t *testing.T) {
 	var counterVal int64 = 123
 
 	m := memory.New()
-	backupMemory := filestorage.NewFileStorage("/tmp/backup.json")
+	backupMemory := filestorage.MustGetFileStorage("/tmp/backup.json")
 	defer os.Remove("/tmp/backup.json")
 	backupService := NewBackupService(m, backupMemory, 1, false)
 
@@ -55,7 +55,7 @@ func Test_backupService_LoadDataFromFile(t *testing.T) {
 	var counterVal int64 = 123
 
 	m := memory.New()
-	backupMemory := filestorage.NewFileStorage("/tmp/backup.json")
+	backupMemory := filestorage.MustGetFileStorage("/tmp/backup.json")
 	defer os.Remove("/tmp/backup.json")
 	backupService := NewBackupService(m, backupMemory, 1, false)
 
@@ -86,7 +86,7 @@ func Test_backupService_Run(t *testing.T) {
 	var counterVal int64 = 123
 
 	m := memory.New()
-	backupMemory := filestorage.NewFileStorage("/tmp/backup.json")
+	backupMemory := filestorage.MustGetFileStorage("/tmp/backup.json")
 	defer os.Remove("/tmp/backup.json")
 	backupService := NewBackupService(m, backupMemory, 2, true)
 

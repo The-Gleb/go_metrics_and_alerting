@@ -62,7 +62,7 @@ func Run(ctx context.Context) error {
 	var fileStorage service.FileStorage
 
 	if config.FileStoragePath != "" {
-		fileStorage = filestorage.NewFileStorage(config.FileStoragePath)
+		fileStorage = filestorage.MustGetFileStorage(config.FileStoragePath)
 	}
 
 	if config.DatabaseDSN != "" {
