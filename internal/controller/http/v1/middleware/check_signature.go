@@ -52,7 +52,6 @@ func (md *checkSignatureMiddleware) Do(next http.Handler) http.Handler {
 		}
 
 		gotSign, err := hex.DecodeString(r.Header.Get("HashSHA256"))
-		// gotSign := r.Header.Get("HashSHA256")
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -87,7 +86,6 @@ func (md *checkSignatureMiddleware) Do(next http.Handler) http.Handler {
 			key:            md.signKey,
 		}
 		next.ServeHTTP(&srw, r)
-
 	}
 	return http.HandlerFunc(fn)
 }

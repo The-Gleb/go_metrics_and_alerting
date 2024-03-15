@@ -18,7 +18,6 @@ func NewGetAllMetricsUsecase(ms MetricService) *getAllMetricsUsecase {
 }
 
 func (uc *getAllMetricsUsecase) GetAllMetricsJSON(ctx context.Context) ([]byte, error) {
-
 	MetricSlices, err := uc.metricService.GetAllMetrics(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GetAllMetricsJSON: %w", err)
@@ -37,11 +36,9 @@ func (uc *getAllMetricsUsecase) GetAllMetricsJSON(ctx context.Context) ([]byte, 
 	}
 
 	return b.Bytes(), nil
-
 }
 
 func (uc *getAllMetricsUsecase) GetAllMetricsHTML(ctx context.Context) ([]byte, error) {
-
 	MetricSlices, err := uc.metricService.GetAllMetrics(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GetAllMetricsHTML: %w", err)
@@ -72,5 +69,4 @@ func (uc *getAllMetricsUsecase) GetAllMetricsHTML(ctx context.Context) ([]byte, 
 	fmt.Fprintf(b, "</ul></body></body>")
 
 	return b.Bytes(), nil
-
 }

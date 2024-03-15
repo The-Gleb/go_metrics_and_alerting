@@ -2,21 +2,22 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/caarlos0/env"
-	// "github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
+	// ".com/The-Gleb/go_metrics_and_alerting/internal/logger".
 )
 
 type Config struct {
 	Addres          string `env:"ADDRESS"`
 	LogLevel        string
-	StoreInterval   int    `env:"STORE_INTERVAL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
-	Restore         bool   `env:"RESTORE"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
 	SignKey         string `env:"KEY"`
+	StoreInterval   int    `env:"STORE_INTERVAL"`
+	Restore         bool   `env:"RESTORE"`
 }
 
 type ConfigBuilder struct {
@@ -55,6 +56,11 @@ func (b ConfigBuilder) SetSignKey(key string) ConfigBuilder {
 }
 
 func NewConfigFromFlags() Config {
+	fmt.Printf(
+		"Build version: %s\nBuild date: %s\nBuild commit: %s\n",
+		BuildVersion, BuildDate, BuildCommit,
+	)
+
 	flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
 	var address string
@@ -94,18 +100,6 @@ func NewConfigFromFlags() Config {
 		SetSignKey(key)
 
 	env.Parse(&builder.config)
-	// if envAddress := os.Getenv("ADDRESS"); envAddress != "" {
-	// 	builder = builder.SetAddres(envAddress)
-	// }
-	// if envStoreInterval := os.Getenv("STORE_INTERVAL"); envStoreInterval != "" {
-	// 	builder = builder.SetStoreInterval(envStoreInterval)
-	// }
-	// if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
-	// 	builder = builder.SetFileStoragePath(envFileStoragePath)
-	// }
-	// if envRestore := os.Getenv("RESTORE"); envRestore != "" {
-	// 	builder = builder.SetRestore(envRestore)
-	// }
 
 	return builder.config
 }

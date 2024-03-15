@@ -85,7 +85,6 @@ func Test_getMetricHandler_ServeHTTP(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tt.want.value, string(val))
-
 		})
 	}
 }

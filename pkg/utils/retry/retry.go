@@ -51,10 +51,6 @@ func Retry(
 ) error {
 	var err error
 
-	// if len(retryErrors) <= 0 {
-	// 	return make([]byte, 0), err
-	// }
-
 	for i := 0; i < retryCount+1; i++ {
 		select {
 		case <-ctx.Done():
