@@ -52,27 +52,26 @@ func (md *checkSignatureMiddleware) Do(next http.Handler) http.Handler {
 		}
 
 		gotSign, err := hex.DecodeString(r.Header.Get("HashSHA256"))
-		// gotSign := r.Header.Get("HashSHA256")
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		h := hmac.New(sha256.New, md.signKey)
 
-		data, _ := io.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		r.Body.Close()
 		_, err = h.Write(data)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		sign := h.Sum(nil)
-
-		logger.Log.Debug("sign key is ", string(md.signKey))
-		logger.Log.Debug("received body is ", string(data))
-		logger.Log.Debug("received hex signature: ", r.Header.Get("HashSHA256"))
-		logger.Log.Debug("calculated hex signature: ", hex.EncodeToString(sign))
-		logger.Log.Debug("Headers: ", r.Header)
 
 		if !hmac.Equal(sign, []byte(gotSign)) {
 			logger.Log.Debug("hash signatures are not equal")
@@ -86,8 +85,10 @@ func (md *checkSignatureMiddleware) Do(next http.Handler) http.Handler {
 			ResponseWriter: w,
 			key:            md.signKey,
 		}
-		next.ServeHTTP(&srw, r)
 
+		logger.Log.Debug("signatuge successfully checked")
+
+		next.ServeHTTP(&srw, r)
 	}
 	return http.HandlerFunc(fn)
 }

@@ -15,18 +15,16 @@ func Test_metricService_UpdateMetric(t *testing.T) {
 	var gaugeVal2 float64 = 321
 	var counterVal int64 = 123
 	var counterVal2 int64 = 246
-	// gaugeMetric := entity.Metric{MType: "gauge", ID: "Alloc", Value: &gaugeVal}
-	// counterMetric := entity.Metric{MType: "counter", ID: "PollCount", Delta: &counterVal}
 
 	m := memory.New()
 	metricService := NewMetricService(m)
 
 	tests := []struct {
-		name    string
 		metric  entity.Metric
 		want    entity.Metric
-		wantErr bool
 		err     error
+		name    string
+		wantErr bool
 	}{
 		{
 			name:    "positive add gauge",
@@ -88,11 +86,11 @@ func Test_metricService_UpdateMetricSet(t *testing.T) {
 	metricService := NewMetricService(m)
 
 	tests := []struct {
+		err     error
 		name    string
 		metrics []entity.Metric
 		result  []entity.Metric
 		wantErr bool
-		err     error
 	}{
 		{
 			name: "first insert",
@@ -134,7 +132,6 @@ func Test_metricService_UpdateMetricSet(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			n, err := metricService.UpdateMetricSet(context.Background(), tt.metrics)
 			if tt.wantErr {
 				require.ErrorIs(t, err, tt.err)
@@ -147,7 +144,6 @@ func Test_metricService_UpdateMetricSet(t *testing.T) {
 
 			require.Equal(t, int64(len(tt.metrics)), n)
 			require.ElementsMatch(t, tt.result, append(metrics.Counter, metrics.Gauge...))
-
 		})
 	}
 }
@@ -162,32 +158,32 @@ func Test_metricService_GetMetric(t *testing.T) {
 	metricService := NewMetricService(memory)
 
 	tests := []struct {
-		name    string
-		metric  entity.Metric
+		metric  entity.GetMetricDTO
 		want    entity.Metric
-		wantErr bool
 		err     error
+		name    string
+		wantErr bool
 	}{
 		{
 			name:   "pos gauge test #1",
-			metric: entity.Metric{MType: "gauge", ID: "Alloc"},
+			metric: entity.GetMetricDTO{MType: "gauge", ID: "Alloc"},
 			want:   entity.Metric{MType: "gauge", ID: "Alloc", Value: &gaugeVal},
 			err:    nil,
 		},
 		{
 			name:   "pos counter test #2",
-			metric: entity.Metric{MType: "counter", ID: "PollCount"},
+			metric: entity.GetMetricDTO{MType: "counter", ID: "PollCount"},
 			want:   entity.Metric{MType: "counter", ID: "PollCount", Delta: &counterVal},
 			err:    nil,
 		}, {
 			name:    "neg, metric not found",
-			metric:  entity.Metric{MType: "counter", ID: "asdfas"},
+			metric:  entity.GetMetricDTO{MType: "counter", ID: "asdfas"},
 			wantErr: true,
 			err:     repository.ErrNotFound,
 		},
 		{
 			name:    "invalid type",
-			metric:  entity.Metric{MType: "asdf", ID: "PollCount"},
+			metric:  entity.GetMetricDTO{MType: "asdf", ID: "PollCount"},
 			wantErr: true,
 			err:     repository.ErrInvalidMetricStruct,
 		},

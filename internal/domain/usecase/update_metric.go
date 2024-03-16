@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 )
 
@@ -18,7 +19,6 @@ func NewUpdateMetricUsecase(ms MetricService, bs BackupService) *updateMetricUse
 }
 
 func (uc *updateMetricUsecase) UpdateMetric(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-
 	metric, err := uc.metricService.UpdateMetric(ctx, metric)
 	if err != nil {
 		return entity.Metric{}, err
@@ -32,5 +32,4 @@ func (uc *updateMetricUsecase) UpdateMetric(ctx context.Context, metric entity.M
 	}
 
 	return metric, nil
-
 }

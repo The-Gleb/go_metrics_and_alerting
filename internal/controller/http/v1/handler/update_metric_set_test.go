@@ -58,7 +58,6 @@ func Test_updateMetricSetHandler_ServeHTTP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			resp, b := testRequest(t, ts, "POST", "/updates/", tt.body)
 			defer resp.Body.Close()
 

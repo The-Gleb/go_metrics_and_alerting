@@ -43,7 +43,6 @@ func (h *getAllMetricsHandler) Middlewares(md ...func(http.Handler) http.Handler
 }
 
 func (h *getAllMetricsHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-
 	body, err := h.usecase.GetAllMetricsJSON(r.Context())
 	if err != nil {
 		err = fmt.Errorf("getAllMetricsHandler: %w", err) // TODO: handler errors
@@ -53,5 +52,4 @@ func (h *getAllMetricsHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request
 
 	rw.Header().Set("Content-Type", "application/json")
 	rw.Write(body)
-
 }
