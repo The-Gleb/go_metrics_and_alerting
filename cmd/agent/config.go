@@ -8,7 +8,7 @@ type Config struct {
 	SignKey        string  `default:"secret" flag:"k" envvar:"KEY"`
 	PollInterval   float64 `default:"2" flag:"p" envvar:"POLL_INTERVAL"`
 	ReportInterval float64 `default:"10" flag:"r" envvar:"REPORT_INTERVAL"`
-	PublicKeyPath  string  `default:"/mnt/d/Programming/Go/src/Study/Practicum/go_metrics_and_alerting/cmd/server/public.pem" envvar:"public_KEY_PATH"`
+	PublicKeyPath  string  `default:"/mnt/d/Programming/Go/src/Study/Practicum/go_metrics_and_alerting/cmd/server/public.pem" flag:"crypto-key" envvar:"CRYPTO_KEY"`
 	RateLimit      int     `default:"1" flag:"l" envvar:"RATE_LIMIT"`
 }
 
