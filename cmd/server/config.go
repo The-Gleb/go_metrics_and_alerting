@@ -10,7 +10,7 @@ type Config struct {
 	SignKey         string `default:"secret" flag:"k" envvar:"KEY"`
 	StoreInterval   int    `default:"300" flag:"i" envvar:"STORE_INTERVAL"`
 	Restore         bool   `default:"true" flag:"r"`
-	PrivateKeyPath  string `default:"./private.pem" envvar:"PRIVATE_KEY_PATH"`
+	PrivateKeyPath  string `default:"/mnt/d/Programming/Go/src/Study/Practicum/go_metrics_and_alerting/cmd/server/private.pem" envvar:"PRIVATE_KEY_PATH"`
 }
 
 func MustBuildConfig(cfgFile string) *Config {

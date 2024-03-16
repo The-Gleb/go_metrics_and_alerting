@@ -1,5 +1,7 @@
 package main
 
+//go:generate go run ../../internal/encryption
+
 import (
 	"context"
 	"fmt"
@@ -50,7 +52,7 @@ func Run(ctx context.Context) error {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	config := NewConfigFromFlags()
+	config := MustBuildConfig("")
 
 	if err := logger.Initialize(config.LogLevel); err != nil {
 		logger.Log.Fatal(err)
@@ -93,9 +95,10 @@ func Run(ctx context.Context) error {
 	gzipMiddleware := middleware.NewGzipMiddleware()
 	checkSignatureMiddleware := middleware.NewCheckSignatureMiddleware([]byte(config.SignKey))
 	loggerMidleware := middleware.NewLoggerMiddleware(logger.Log)
+	decryptionMiddleware := middleware.NewDecryptionMiddleware(config.PrivateKeyPath)
 
 	r := chi.NewMux()
-	r.Use(gzipMiddleware.Do, checkSignatureMiddleware.Do, loggerMidleware.Do)
+	r.Use(loggerMidleware.Do, decryptionMiddleware.Do, gzipMiddleware.Do, checkSignatureMiddleware.Do)
 
 	updateMetricHandler.AddToRouter(r)
 	updateMetricJSONHandler.AddToRouter(r)
@@ -105,7 +108,7 @@ func Run(ctx context.Context) error {
 	getAllMetricsHandler.AddToRouter(r)
 
 	s := http.Server{
-		Addr:    config.Addres,
+		Addr:    config.Address,
 		Handler: r,
 	}
 

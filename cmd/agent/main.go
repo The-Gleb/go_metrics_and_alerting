@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/hmac"
+	cryptoRand "crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"log"
 	"math/rand"
@@ -45,7 +49,7 @@ func main() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	config := NewConfigFromFlags()
+	config := MustBuildConfig("")
 
 	logger.Initialize("debug")
 
@@ -64,17 +68,21 @@ func main() {
 	pollTicker := time.NewTicker(pollInterval)
 	reportTicker := time.NewTicker(reportInterval)
 
-	baseURL := fmt.Sprintf("http://%s", config.Addres)
+	baseURL := fmt.Sprintf("http://%s", config.Address)
 	client := resty.New()
 	client.
 		SetRetryCount(3).
 		SetRetryMaxWaitTime(5 * time.Second).
 		SetRetryAfter(func(c *resty.Client, r *resty.Response) (time.Duration, error) {
-			log.Printf("attempt: %d", r.Request.Attempt)
+			logger.Log.Debug("attempt: %d", r.Request.Attempt)
 			dur := time.Duration(r.Request.Attempt*2-1) * time.Second
 			return dur, nil
 		}).
 		SetBaseURL(baseURL)
+
+	// client.GetClient().Transport = &http.Transport{
+	// 	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	// }
 
 	sendTaskCh := make(chan struct{}, 1)
 	collectTaskCh := make(chan struct{}, 1)
@@ -84,7 +92,7 @@ func main() {
 	for i := 0; i < config.RateLimit; i++ {
 		go func() {
 			for range sendTaskCh {
-				SendMetricsInOneRequest(gaugeMap, &pollCount, client, []byte(config.SignKey), &mu)
+				SendMetricSet(gaugeMap, &pollCount, client, []byte(config.SignKey), config.PublicKeyPath, &mu)
 			}
 		}()
 	}
@@ -119,11 +127,15 @@ func main() {
 func SendTestGet(req *resty.Request) {
 	resp, _ := req.
 		Get("/value/counter/PollCount")
-	log.Println(string(resp.Body()))
-	log.Println(resp.StatusCode())
+	logger.Log.Debug(string(resp.Body()))
+	logger.Log.Debug(resp.StatusCode())
 }
 
-func SendMetricsInOneRequest(gaugeMap map[string]float64, pollCount *atomic.Int64, client *resty.Client, signKey []byte, mu *sync.RWMutex) {
+func SendMetricSet(
+	gaugeMap map[string]float64, pollCount *atomic.Int64,
+	client *resty.Client, signKey []byte, publicKeyPath string,
+	mu *sync.RWMutex,
+) {
 	metrics := make([]entity.Metric, 0)
 
 	mu.RLock()
@@ -167,9 +179,17 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, pollCount *atomic.Int6
 	err = gw.Close()
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
+
 	body := buf.Bytes()
+
+	if publicKeyPath != "" {
+		var err error
+		body, err = encrypt(body, publicKeyPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	resp, err := client.R().
 		SetHeader("Content-Type", "application/json").
@@ -179,10 +199,13 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, pollCount *atomic.Int6
 		SetBody(body).
 		Post("/updates/")
 	if err != nil {
+		logger.Log.Error(err)
 		return
 	}
-	log.Println(resp.Header().Get("Content-Encoding"))
-	log.Println(string(resp.Body()))
+
+	// logger.Log.Debug(resp.Header().Get("Content-Encoding"))
+	logger.Log.Debugf("response code %d", resp.StatusCode())
+	logger.Log.Debugf("response body %d", string(resp.Body()))
 }
 
 func CollectMemMetrics(gauge map[string]float64, mu *sync.RWMutex) {
@@ -347,4 +370,32 @@ func SendTestGetJSON(req *resty.Request) {
 		return
 	}
 	log.Printf("PollCount is %d", *result.Delta)
+}
+
+func encrypt(plainText []byte, keyPath string) ([]byte, error) {
+
+	logger.Log.Debugf("palin text lenght is %d", len(plainText))
+
+	publicKeyPEM, err := os.ReadFile(keyPath)
+	if err != nil {
+		logger.Log.Error(err)
+		return nil, err
+	}
+
+	logger.Log.Debugf("public key lenght is %d", len(publicKeyPEM))
+
+	publicKeyBlock, _ := pem.Decode(publicKeyPEM)
+	publicKey, err := x509.ParsePKCS1PublicKey(publicKeyBlock.Bytes)
+	if err != nil {
+		logger.Log.Error(err)
+		return nil, err
+	}
+
+	ciphertext, err := rsa.EncryptPKCS1v15(cryptoRand.Reader, publicKey, plainText)
+	if err != nil {
+		logger.Log.Error(err)
+		return nil, err
+	}
+
+	return ciphertext, nil
 }

@@ -63,6 +63,9 @@ func (service *backupService) Run(ctx context.Context) error {
 }
 
 func (service *backupService) LoadDataFromFile(ctx context.Context) error {
+	if service.backupStorage == nil {
+		return nil
+	}
 	data, err := service.backupStorage.ReadData()
 	if err != nil {
 		return fmt.Errorf("LoadDataFromFile: failed reading data: %w", err)
