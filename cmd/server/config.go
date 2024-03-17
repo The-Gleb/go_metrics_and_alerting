@@ -1,7 +1,7 @@
 package main
 
 import (
-	// "flag"
+	// "flag".
 	"encoding/json"
 	"flag"
 	"log"
@@ -25,7 +25,7 @@ type ConfigBuilder struct {
 	config Config
 }
 
-func (b ConfigBuilder) SetAddres(address string) ConfigBuilder {
+func (b ConfigBuilder) setAddress(address string) ConfigBuilder {
 	if address != "" {
 		b.config.Address = address
 		return b
@@ -37,7 +37,7 @@ func (b ConfigBuilder) SetAddres(address string) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetFileStoragePath(path string) ConfigBuilder {
+func (b ConfigBuilder) setFileStoragePath(path string) ConfigBuilder {
 	if path != "" {
 		b.config.FileStoragePath = path
 		return b
@@ -45,7 +45,7 @@ func (b ConfigBuilder) SetFileStoragePath(path string) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetDatabaseDSN(dsn string) ConfigBuilder {
+func (b ConfigBuilder) setDatabaseDSN(dsn string) ConfigBuilder {
 	if dsn != "" {
 		b.config.DatabaseDSN = dsn
 		return b
@@ -53,7 +53,7 @@ func (b ConfigBuilder) SetDatabaseDSN(dsn string) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetSignKey(key string) ConfigBuilder {
+func (b ConfigBuilder) setSignKey(key string) ConfigBuilder {
 	if key != "" {
 		b.config.SignKey = key
 		return b
@@ -61,7 +61,7 @@ func (b ConfigBuilder) SetSignKey(key string) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetStoreInterval(interval int) ConfigBuilder {
+func (b ConfigBuilder) setStoreInterval(interval int) ConfigBuilder {
 	if interval != 0 {
 		b.config.StoreInterval = interval
 		return b
@@ -74,14 +74,14 @@ func (b ConfigBuilder) SetStoreInterval(interval int) ConfigBuilder {
 }
 
 // TODO: it is unclear wether 'false' returned by -r flag is default or it was set by flag.
-// So it is unclear if it is necessary to change 'restore' in config
-func (b ConfigBuilder) SetRestore(restore bool) ConfigBuilder {
+// So it is unclear if it is necessary to change 'restore' in config.
+func (b ConfigBuilder) setRestore(restore bool) ConfigBuilder {
 	b.config.Restore = restore
 	return b
 
 }
 
-func (b ConfigBuilder) SetPrivateKeyPath(path string) ConfigBuilder {
+func (b ConfigBuilder) setPrivateKeyPath(path string) ConfigBuilder {
 	if path != "" {
 		b.config.PrivateKeyPath = path
 		return b
@@ -93,7 +93,7 @@ func (b ConfigBuilder) SetPrivateKeyPath(path string) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetLogLevel(level string) ConfigBuilder {
+func (b ConfigBuilder) setLogLevel(level string) ConfigBuilder {
 	if level != "" {
 		b.config.LogLevel = level
 		return b
@@ -147,14 +147,14 @@ func MustBuildConfig() *Config {
 	flag.Parse()
 
 	builder = builder.
-		SetAddres(address).
-		SetLogLevel(loglevel).
-		SetStoreInterval(storeInterval).
-		SetFileStoragePath(fileStoragePath).
-		SetRestore(restore).
-		SetDatabaseDSN(databaseDSN).
-		SetSignKey(key).
-		SetPrivateKeyPath(privateKeyPath)
+		setAddress(address).
+		setLogLevel(loglevel).
+		setStoreInterval(storeInterval).
+		setFileStoragePath(fileStoragePath).
+		setRestore(restore).
+		setDatabaseDSN(databaseDSN).
+		setSignKey(key).
+		setPrivateKeyPath(privateKeyPath)
 
 	err = env.Parse(&builder.config)
 	if err != nil {

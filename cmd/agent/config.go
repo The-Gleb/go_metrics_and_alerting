@@ -23,7 +23,7 @@ type ConfigBuilder struct {
 	config Config
 }
 
-func (b ConfigBuilder) SetAddres(address string) ConfigBuilder {
+func (b ConfigBuilder) setAddress(address string) ConfigBuilder {
 
 	if address != "" {
 		b.config.Address = address
@@ -38,7 +38,7 @@ func (b ConfigBuilder) SetAddres(address string) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetPollInterval(interval float64) ConfigBuilder {
+func (b ConfigBuilder) setPollInterval(interval float64) ConfigBuilder {
 	if interval != 0.0 {
 		b.config.PollInterval = interval
 		return b
@@ -50,7 +50,7 @@ func (b ConfigBuilder) SetPollInterval(interval float64) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetReportInterval(interval float64) ConfigBuilder {
+func (b ConfigBuilder) setReportInterval(interval float64) ConfigBuilder {
 	if interval != 0.0 {
 		b.config.ReportInterval = interval
 		return b
@@ -62,7 +62,7 @@ func (b ConfigBuilder) SetReportInterval(interval float64) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetSignKey(key string) ConfigBuilder {
+func (b ConfigBuilder) setSignKey(key string) ConfigBuilder {
 	if key != "" {
 		b.config.SignKey = key
 		return b
@@ -70,7 +70,7 @@ func (b ConfigBuilder) SetSignKey(key string) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetRateLimit(limit int) ConfigBuilder {
+func (b ConfigBuilder) setRateLimit(limit int) ConfigBuilder {
 	if limit != 0 {
 		b.config.RateLimit = limit
 		return b
@@ -82,7 +82,7 @@ func (b ConfigBuilder) SetRateLimit(limit int) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetPublicKeyPath(path string) ConfigBuilder {
+func (b ConfigBuilder) setPublicKeyPath(path string) ConfigBuilder {
 	if path != "" {
 		b.config.PublicKeyPath = path
 		return b
@@ -94,7 +94,7 @@ func (b ConfigBuilder) SetPublicKeyPath(path string) ConfigBuilder {
 	return b
 }
 
-func (b ConfigBuilder) SetLogLevel(level string) ConfigBuilder {
+func (b ConfigBuilder) setLogLevel(level string) ConfigBuilder {
 	if level != "" {
 		b.config.LogLevel = level
 		return b
@@ -143,13 +143,13 @@ func MustBuildConfig() *Config {
 	flag.Parse()
 
 	builder = builder.
-		SetAddres(address).
-		SetPollInterval(pollInterval).
-		SetReportInterval(reportInterval).
-		SetSignKey(key).
-		SetRateLimit(rateLimit).
-		SetLogLevel(logLevel).
-		SetPublicKeyPath(publicKeyPath)
+		setAddress(address).
+		setPollInterval(pollInterval).
+		setReportInterval(reportInterval).
+		setSignKey(key).
+		setRateLimit(rateLimit).
+		setLogLevel(logLevel).
+		setPublicKeyPath(publicKeyPath)
 
 	env.Parse(&builder.config)
 
