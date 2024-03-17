@@ -18,6 +18,10 @@ type decryptionMiddleware struct {
 }
 
 func NewDecryptionMiddleware(path string) *decryptionMiddleware {
+	if path == "" {
+		logger.Log.Info("path to private key is empty")
+		return &decryptionMiddleware{}
+	}
 
 	privateKeyPEM, err := os.ReadFile("/mnt/d/Programming/Go/src/Study/Practicum/go_metrics_and_alerting/cmd/server/private.pem")
 	if err != nil {
@@ -36,8 +40,13 @@ func NewDecryptionMiddleware(path string) *decryptionMiddleware {
 }
 
 func (md *decryptionMiddleware) Do(h http.Handler) http.Handler {
-
 	decryptionMiddleware := func(rw http.ResponseWriter, r *http.Request) {
+		if md.privateKey == nil {
+			logger.Log.Info("path to private key is empty")
+			h.ServeHTTP(rw, r)
+			return
+		}
+
 		logger.Log.Debug("decryption middleware working")
 
 		cipher, err := io.ReadAll(r.Body)

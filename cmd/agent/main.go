@@ -49,9 +49,9 @@ func main() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	config := MustBuildConfig("")
+	config := MustBuildConfig()
 
-	logger.Initialize("debug")
+	logger.Initialize(config.LogLevel)
 
 	logger.Log.Info(config)
 

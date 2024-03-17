@@ -69,6 +69,7 @@ func Retry(
 				for _, retryErr := range retryErrors {
 					if errors.Is(err, retryErr) {
 						shouldContinue = true
+						break
 					}
 				}
 

@@ -52,12 +52,13 @@ func Run(ctx context.Context) error {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	config := MustBuildConfig("")
+	config := MustBuildConfig()
 
 	if err := logger.Initialize(config.LogLevel); err != nil {
 		logger.Log.Fatal(err)
 		return err
 	}
+
 	logger.Log.Info(config)
 
 	var repository service.MetricStorage
