@@ -17,8 +17,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testRequest(t *testing.T, ts *httptest.Server, method,
-	path string, body []byte) (*http.Response, string) {
+func testRequest(
+	t *testing.T, ts *httptest.Server,
+	method, path string, body []byte,
+) (*http.Response, string) {
+	t.Helper()
+
 	req, err := http.NewRequest(method, ts.URL+path, bytes.NewReader(body))
 	require.NoError(t, err)
 
@@ -82,7 +86,6 @@ func Test_getAllMetricHandler_ServeHTTP(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			resp, b := testRequest(t, ts, "GET", "/", nil)
 			defer resp.Body.Close()
 

@@ -2,19 +2,18 @@ package database
 
 import (
 	"context"
-	_ "embed"
+	"embed"
 	"errors"
 	"fmt"
-	"strings"
+	"log/slog"
 	"time"
 
-	// "github.com/jackc/pgerrcode"
-	// "github.com/jackc/pgx/v5/pgconn"
-
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
@@ -22,23 +21,17 @@ import (
 	postgresql "github.com/The-Gleb/go_metrics_and_alerting/pkg/client"
 )
 
-var (
-	//go:embed sqls/schema.sql
-	schemaQuery string
-)
-
 type DB struct {
 	client postgresql.Client
 }
 
-func NewMetricDB(client postgresql.Client) (*DB, error) {
-	// ps := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=disable",
-	// 	`localhost`, `videos`, `userpassword`, `videos`)
+func NewMetricDB(ctx context.Context, dsn string) (*DB, error) {
+	client, err := postgresql.NewClient(ctx, dsn)
+	if err != nil {
+		return nil, err
+	}
 
-	// migrate.
-	schemaQuery = strings.TrimSpace(schemaQuery)
-
-	_, err := client.Exec(context.Background(), schemaQuery)
+	err = runMigrations(dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -46,13 +39,28 @@ func NewMetricDB(client postgresql.Client) (*DB, error) {
 	return &DB{client}, nil
 }
 
-type Repositiries interface {
-	GetAllMetrics(ctx context.Context) ([]entity.Metric, []entity.Metric)
-	UpdateGauge(ctx context.Context, metric entity.Metric) error
-	UpdateCounter(ctx context.Context, metric entity.Metric) error
-	GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error)
-	GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error)
-	PingDB() error
+//go:embed migration/*.sql
+var migrationsDir embed.FS
+
+func runMigrations(dsn string) error {
+	d, err := iofs.New(migrationsDir, "migration")
+	if err != nil {
+		slog.Error(err.Error())
+		return fmt.Errorf("failed to return an iofs driver: %w", err)
+	}
+
+	m, err := migrate.NewWithSourceInstance("iofs", d, dsn)
+	if err != nil {
+		slog.Error(err.Error())
+		return fmt.Errorf("failed to get a new migrate instance: %w", err)
+	}
+	if err := m.Up(); err != nil {
+		slog.Error(err.Error())
+		if !errors.Is(err, migrate.ErrNoChange) {
+			return fmt.Errorf("failed to apply migrations to the DB: %w", err)
+		}
+	}
+	return nil
 }
 
 func (db *DB) PingDB() error {
@@ -65,7 +73,6 @@ func (db *DB) PingDB() error {
 }
 
 func (db *DB) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error) {
-
 	tx, err := db.client.Begin(ctx)
 	if err != nil {
 		return 0, checkForConectionErr("UpdateMetricSet", err)
@@ -215,28 +222,36 @@ func (db *DB) UpdateCounter(ctx context.Context, mertic entity.Metric) (entity.M
 	return mertic, nil
 }
 
-func (db *DB) GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-	row := db.client.QueryRow(ctx, "SELECT m_value FROM gauge_metrics WHERE m_name = $1", metric.ID)
+func (db *DB) GetGauge(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
+	row := db.client.QueryRow(ctx, "SELECT m_value FROM gauge_metrics WHERE m_name = $1", dto.ID)
 
 	var value float64
 	err := row.Scan(&value)
 	if err != nil {
-		return metric, checkForConectionErr("GetGauge", err)
+		return entity.Metric{}, checkForConectionErr("GetGauge", err)
 	}
-	metric.Value = &value
-	return metric, nil
+
+	return entity.Metric{
+		MType: dto.MType,
+		ID:    dto.ID,
+		Value: &value,
+	}, nil
 }
 
-func (db *DB) GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-	row := db.client.QueryRow(ctx, "SELECT m_value FROM counter_metrics WHERE m_name = $1", metric.ID)
+func (db *DB) GetCounter(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
+	row := db.client.QueryRow(ctx, "SELECT m_value FROM counter_metrics WHERE m_name = $1", dto.ID)
 
 	var value int64
 	err := row.Scan(&value)
 	if err != nil {
-		return metric, checkForConectionErr("GetCounter", err)
+		return entity.Metric{}, checkForConectionErr("GetCounter", err)
 	}
-	metric.Delta = &value
-	return metric, nil
+
+	return entity.Metric{
+		MType: dto.MType,
+		ID:    dto.ID,
+		Delta: &value,
+	}, nil
 }
 
 func checkForConectionErr(funcName string, err error) error {
