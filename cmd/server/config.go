@@ -18,6 +18,7 @@ type Config struct {
 	StoreInterval   int    `json:"store_interval" env:"STORE_INTERVAL"`
 	Restore         bool   `json:"restore" env:"RESTORE"`
 	PrivateKeyPath  string `json:"crypto_key" env:"CRYPTO_KEY"`
+	TrustedSubnet   string `json:"trusted_subnet" env:"TRUSTED_SUBNET"`
 }
 
 type ConfigBuilder struct {
@@ -114,6 +115,14 @@ func (b ConfigBuilder) setLogLevel(level string) ConfigBuilder {
 	return b
 }
 
+func (b ConfigBuilder) setTrustedSubnet(net string) ConfigBuilder {
+	if net != "" {
+		b.config.TrustedSubnet = net
+	}
+	return b
+
+}
+
 func BuildConfig() (*Config, error) {
 	var builder ConfigBuilder
 
@@ -153,6 +162,9 @@ func BuildConfig() (*Config, error) {
 	var privateKeyPath string
 	flag.StringVar(&privateKeyPath, "crypto-key", "", "private key for decryption")
 
+	var trustedSubnet string
+	flag.StringVar(&trustedSubnet, "t", "", "trusted_subnet")
+
 	flag.Parse()
 
 	builder = builder.
@@ -163,7 +175,8 @@ func BuildConfig() (*Config, error) {
 		setRestore(restore).
 		setDatabaseDSN(databaseDSN).
 		setSignKey(key).
-		setPrivateKeyPath(privateKeyPath)
+		setPrivateKeyPath(privateKeyPath).
+		setTrustedSubnet(trustedSubnet)
 
 	err = env.Parse(&builder.config)
 	if err != nil {

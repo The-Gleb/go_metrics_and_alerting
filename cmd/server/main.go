@@ -100,9 +100,19 @@ func Run(ctx context.Context) error {
 	checkSignatureMiddleware := middleware.NewCheckSignatureMiddleware([]byte(config.SignKey))
 	loggerMidleware := middleware.NewLoggerMiddleware(logger.Log)
 	decryptionMiddleware := middleware.NewDecryptionMiddleware(config.PrivateKeyPath)
+	checkSubnetMiddleware, err := middleware.NewCheckSubnetMiddleware(config.TrustedSubnet)
+	if err != nil {
+		return err
+	}
 
 	r := chi.NewMux()
-	r.Use(loggerMidleware.Do, decryptionMiddleware.Do, gzipMiddleware.Do, checkSignatureMiddleware.Do)
+	r.Use(
+		checkSubnetMiddleware.Do,
+		loggerMidleware.Do,
+		decryptionMiddleware.Do,
+		gzipMiddleware.Do,
+		checkSignatureMiddleware.Do,
+	)
 
 	updateMetricHandler.AddToRouter(r)
 	updateMetricJSONHandler.AddToRouter(r)

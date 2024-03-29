@@ -196,6 +196,7 @@ func SendMetricSet(
 		SetHeader("Content-Encoding", "gzip").
 		SetHeader("Accept-Encoding", "gzip").
 		SetHeader("HashSHA256", hex.EncodeToString(sign)).
+		SetHeader("X-Real-IP", "127.0.0.1").
 		SetBody(body).
 		Post("/updates/")
 	if err != nil {
