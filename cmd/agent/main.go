@@ -50,7 +50,10 @@ func main() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	config := MustBuildConfig()
+	config, err := BuildConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	logger.Initialize(config.LogLevel)
 
@@ -80,10 +83,6 @@ func main() {
 			return dur, nil
 		}).
 		SetBaseURL(baseURL)
-
-	// client.GetClient().Transport = &http.Transport{
-	// 	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	// }
 
 	sendTaskCh := make(chan struct{}, 1)
 	collectTaskCh := make(chan struct{}, 1)

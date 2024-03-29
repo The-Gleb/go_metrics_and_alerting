@@ -19,7 +19,7 @@ type decryptionMiddleware struct {
 
 func NewDecryptionMiddleware(path string) *decryptionMiddleware {
 	if path == "" {
-		logger.Log.Info("path to private key is empty")
+		logger.Log.Debug("path to private key is empty")
 		return &decryptionMiddleware{}
 	}
 
@@ -42,7 +42,7 @@ func NewDecryptionMiddleware(path string) *decryptionMiddleware {
 func (md *decryptionMiddleware) Do(h http.Handler) http.Handler {
 	decryptionMiddleware := func(rw http.ResponseWriter, r *http.Request) {
 		if md.privateKey == nil {
-			logger.Log.Info("path to private key is empty")
+			logger.Log.Debug("path to private key is empty")
 			h.ServeHTTP(rw, r)
 			return
 		}
@@ -55,16 +55,6 @@ func (md *decryptionMiddleware) Do(h http.Handler) http.Handler {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// logger.Log.Debugf("request body is %s", string(cipher))
-
-		// hexDecodedText, err := hex.DecodeString(string(cipher))
-		// if err != nil {
-
-		// 	http.Error(rw, err.Error(), http.StatusInternalServerError)
-		// 	return
-		// }
-
-		// logger.Log.Debugf("hexDecodedText %s", string(hexDecodedText))
 
 		plainText, err := md.privateKey.Decrypt(rand.Reader, cipher, nil)
 		if err != nil {

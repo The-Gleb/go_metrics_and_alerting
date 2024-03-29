@@ -52,7 +52,10 @@ func Run(ctx context.Context) error {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	config := MustBuildConfig()
+	config, err := BuildConfig()
+	if err != nil {
+		return err
+	}
 
 	if err := logger.Initialize(config.LogLevel); err != nil {
 		logger.Log.Fatal(err)

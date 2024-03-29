@@ -1,11 +1,10 @@
 package main
 
 import (
-	// "flag".
 	"encoding/json"
 	"flag"
-	"log"
 	"os"
+	"strings"
 
 	"github.com/caarlos0/env"
 )
@@ -75,10 +74,20 @@ func (b ConfigBuilder) setStoreInterval(interval int) ConfigBuilder {
 
 // TODO: it is unclear wether 'false' returned by -r flag is default or it was set by flag.
 // So it is unclear if it is necessary to change 'restore' in config.
-func (b ConfigBuilder) setRestore(restore bool) ConfigBuilder {
-	b.config.Restore = restore
-	return b
+func (b ConfigBuilder) setRestore(restore string) ConfigBuilder {
+	if restore != "" {
+		restore = strings.ToLower(restore)
+		if restore == "true" || restore == "t" || restore == "1" {
+			b.config.Restore = true
+			return b
+		} else if restore == "false" || restore == "f" || restore == "0" {
+			b.config.Restore = false
+			return b
+		}
 
+	}
+
+	return b
 }
 
 func (b ConfigBuilder) setPrivateKeyPath(path string) ConfigBuilder {
@@ -105,17 +114,17 @@ func (b ConfigBuilder) setLogLevel(level string) ConfigBuilder {
 	return b
 }
 
-func MustBuildConfig() *Config {
+func BuildConfig() (*Config, error) {
 	var builder ConfigBuilder
 
 	configPath := flag.String("config", "server-config.json", "path to config file")
 	configFile, err := os.Open(*configPath)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	err = json.NewDecoder(configFile).Decode(&builder.config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	var address string
@@ -130,8 +139,8 @@ func MustBuildConfig() *Config {
 	var fileStoragePath string
 	flag.StringVar(&fileStoragePath, "f", "", "path to file to store metrics")
 
-	var restore bool
-	flag.BoolVar(&restore, "r", true, "bool, wether or not restore metrics from file")
+	var restore string
+	flag.StringVar(&restore, "r", "", "bool, wether or not restore metrics from file")
 
 	var databaseDSN string
 	flag.StringVar(&databaseDSN, "d", "",
@@ -158,8 +167,8 @@ func MustBuildConfig() *Config {
 
 	err = env.Parse(&builder.config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return &builder.config
+	return &builder.config, nil
 }

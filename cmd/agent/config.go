@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"log"
 	"os"
 
 	"github.com/caarlos0/env"
@@ -106,17 +105,17 @@ func (b ConfigBuilder) setLogLevel(level string) ConfigBuilder {
 	return b
 }
 
-func MustBuildConfig() *Config {
+func BuildConfig() (*Config, error) {
 	var builder ConfigBuilder
 
 	configPath := flag.String("config", "agent-config.json", "path to config file")
 	configFile, err := os.Open(*configPath)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	err = json.NewDecoder(configFile).Decode(&builder.config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	var address string
@@ -153,5 +152,5 @@ func MustBuildConfig() *Config {
 
 	env.Parse(&builder.config)
 
-	return &builder.config
+	return &builder.config, nil
 }
