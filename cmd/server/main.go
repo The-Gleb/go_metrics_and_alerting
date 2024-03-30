@@ -14,15 +14,15 @@ import (
 
 	_ "net/http/pprof"
 
-	v1 "github.com/The-Gleb/go_metrics_and_alerting/internal/controller/http/v1/handler"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/controller/http/v1/middleware"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/controller"
+	grpcserver "github.com/The-Gleb/go_metrics_and_alerting/internal/controller/grpc/server"
+	// httpServer "github.com/The-Gleb/go_metrics_and_alerting/internal/controller/http/v1/server"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/service"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/usecase"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository/database"
 	filestorage "github.com/The-Gleb/go_metrics_and_alerting/internal/repository/file_storage"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository/memory"
-	"github.com/go-chi/chi/v5"
 )
 
 // postgres://metric_db:metric_db@localhost:5434/metric_db?sslmode=disable
@@ -89,41 +89,20 @@ func Run(ctx context.Context) error {
 	getMetricUsecase := usecase.NewGetMetricUsecase(metricServie)
 	getAllMetricsUsecase := usecase.NewGetAllMetricsUsecase(metricServie)
 
-	updateMetricHandler := v1.NewUpdateMetricHandler(updateMetricUsecase)
-	updateMetricJSONHandler := v1.NewUpdateMetricJSONHandler(updateMetricUsecase)
-	getMetricHandler := v1.NewGetMetricHandler(getMetricUsecase)
-	getMetricJSONHandler := v1.NewGetMetricJSONHandler(getMetricUsecase)
-	updateMetricSetHandler := v1.NewUpdateMetricSetHandler(updateMetricSetUsecase)
-	getAllMetricsHandler := v1.NewGetAllMetricsHandler(getAllMetricsUsecase)
-
-	gzipMiddleware := middleware.NewGzipMiddleware()
-	checkSignatureMiddleware := middleware.NewCheckSignatureMiddleware([]byte(config.SignKey))
-	loggerMidleware := middleware.NewLoggerMiddleware(logger.Log)
-	decryptionMiddleware := middleware.NewDecryptionMiddleware(config.PrivateKeyPath)
-	checkSubnetMiddleware, err := middleware.NewCheckSubnetMiddleware(config.TrustedSubnet)
+	var s controller.Server
+	s, err = grpcserver.NewServer(
+		config.Address,
+		[]byte(config.SignKey),
+		logger.Log,
+		config.PrivateKeyPath,
+		config.TrustedSubnet,
+		updateMetricUsecase,
+		updateMetricSetUsecase,
+		getMetricUsecase,
+		getAllMetricsUsecase,
+	)
 	if err != nil {
 		return err
-	}
-
-	r := chi.NewMux()
-	r.Use(
-		checkSubnetMiddleware.Do,
-		loggerMidleware.Do,
-		decryptionMiddleware.Do,
-		gzipMiddleware.Do,
-		checkSignatureMiddleware.Do,
-	)
-
-	updateMetricHandler.AddToRouter(r)
-	updateMetricJSONHandler.AddToRouter(r)
-	getMetricHandler.AddToRouter(r)
-	getMetricJSONHandler.AddToRouter(r)
-	updateMetricSetHandler.AddToRouter(r)
-	getAllMetricsHandler.AddToRouter(r)
-
-	s := http.Server{
-		Addr:    config.Address,
-		Handler: r,
 	}
 
 	var wg sync.WaitGroup
@@ -145,7 +124,7 @@ func Run(ctx context.Context) error {
 
 		ctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		err := s.Shutdown(ctxShutdown)
+		err := s.Stop(ctxShutdown)
 		if err != nil {
 			panic(err)
 		}
@@ -153,7 +132,7 @@ func Run(ctx context.Context) error {
 	}()
 
 	logger.Log.Info("starting server")
-	if err := s.ListenAndServe(); err != nil {
+	if err := s.Start(); err != nil {
 		logger.Log.Error("server error", "error", err)
 	}
 
