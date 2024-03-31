@@ -40,6 +40,12 @@ var (
 	BuildCommit  string = "N/A"
 )
 
+type metricsMap struct {
+	Gauge     map[string]float64
+	PollCount atomic.Int64
+	mu        sync.RWMutex
+}
+
 func main() {
 	fmt.Printf(
 		"Build version: %s\nBuild date: %s\nBuild commit: %s\n",
@@ -59,9 +65,10 @@ func main() {
 
 	logger.Log.Info(config)
 
-	gaugeMap := make(map[string]float64)
-	var pollCount atomic.Int64
-	pollCount.Store(1)
+	metrics := metricsMap{
+		Gauge: make(map[string]float64),
+	}
+	metrics.PollCount.Store(1)
 
 	var pollInterval = time.Duration(config.PollInterval * 1000000000)
 	var reportInterval = time.Duration(config.ReportInterval * 1000000000)
@@ -72,40 +79,33 @@ func main() {
 	pollTicker := time.NewTicker(pollInterval)
 	reportTicker := time.NewTicker(reportInterval)
 
-	baseURL := fmt.Sprintf("http://%s", config.Address)
-	client := resty.New()
-	client.
-		SetRetryCount(3).
-		SetRetryMaxWaitTime(5 * time.Second).
-		SetRetryAfter(func(c *resty.Client, r *resty.Response) (time.Duration, error) {
-			logger.Log.Debug("attempt: %d", r.Request.Attempt)
-			dur := time.Duration(r.Request.Attempt*2-1) * time.Second
-			return dur, nil
-		}).
-		SetBaseURL(baseURL)
-
 	sendTaskCh := make(chan struct{}, 1)
 	collectTaskCh := make(chan struct{}, 1)
 	collectMemsTaskCh := make(chan struct{}, 1)
-	var mu sync.RWMutex
+
+	client, err := NewGRPCClient(config.Address, []byte(config.SignKey), config.PublicKeyPath)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for i := 0; i < config.RateLimit; i++ {
 		go func() {
 			for range sendTaskCh {
-				SendMetricSet(gaugeMap, &pollCount, client, []byte(config.SignKey), config.PublicKeyPath, &mu)
+				client.SendMetricSet(&metrics)
+				client.GetAllMetrics()
 			}
 		}()
 	}
 
 	go func() {
 		for range collectTaskCh {
-			CollectMetrics(gaugeMap, &mu)
+			CollectMetrics(&metrics)
 		}
 	}()
 
 	go func() {
 		for range collectMemsTaskCh {
-			CollectMemMetrics(gaugeMap, &mu)
+			CollectMemMetrics(&metrics)
 		}
 	}()
 
@@ -209,7 +209,7 @@ func SendMetricSet(
 	logger.Log.Debugf("response body %d", string(resp.Body()))
 }
 
-func CollectMemMetrics(gauge map[string]float64, mu *sync.RWMutex) {
+func CollectMemMetrics(metrics *metricsMap) {
 	v, err := mem.VirtualMemory()
 	if err != nil {
 		logger.Log.Error(err)
@@ -229,13 +229,13 @@ func CollectMemMetrics(gauge map[string]float64, mu *sync.RWMutex) {
 	}
 	log.Println("All CPUS ", allCPUutil)
 
-	mu.Lock()
+	metrics.mu.Lock()
 
-	gauge["TotalMemory"] = float64(v.Total)
-	gauge["FreeMemory"] = float64(v.Free)
-	gauge["CPUutilization1"] = cpu[0]
+	metrics.Gauge["TotalMemory"] = float64(v.Total)
+	metrics.Gauge["FreeMemory"] = float64(v.Free)
+	metrics.Gauge["CPUutilization1"] = cpu[0]
 
-	mu.Unlock()
+	metrics.mu.Unlock()
 
 	log.Println("MEM METRICS COLLECTED")
 }
@@ -252,107 +252,42 @@ func hash(data, key []byte) ([]byte, error) {
 	return sign, nil
 }
 
-func SendMetricsJSON(gaugeMap map[string]float64, pollCount *int64, req *resty.Request) {
-	for name, val := range gaugeMap {
-		var result entity.Metric
-		_, err := req.
-			SetBody(&entity.Metric{
-				ID:    name,
-				MType: "gauge",
-				Value: &val,
-			}).
-			SetResult(&result).
-			Post("/update/")
-
-		if err != nil {
-			return
-		}
-	}
-	var result entity.Metric
-	_, err := req.
-		SetBody(&entity.Metric{
-			ID:    "PollCount",
-			MType: "counter",
-			Delta: pollCount,
-		}).
-		SetResult(&result).
-		Post("/update/")
-
-	if err != nil {
-		return
-	}
-	log.Printf("\nUpdated to %v\n", result)
-}
-
-func SendMetrics(gaugeMap map[string]float64, pollCount *int64, client *resty.Client) {
-	for name, val := range gaugeMap {
-		requestURL := fmt.Sprintf("%s/update/gauge/%s/%f", client.BaseURL, name, val)
-
-		resp, err := client.R().
-			SetHeader("Content-Type", "application/json").
-			SetHeader("Content-Encoding", "gzip").
-			SetHeader("Accept-Encoding", "gzip").
-			Post(requestURL)
-		if err != nil {
-			log.Printf("client: error making http request: %s\n", err)
-			return
-		}
-		log.Println(string(resp.Body()))
-	}
-
-	requestURL := fmt.Sprintf("%s/update/counter/PollCount/%d", client.BaseURL, *pollCount)
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		Post(requestURL)
-	if err != nil {
-		log.Printf("client: error making http request: %s\n", err)
-		return
-	}
-
-	logger.Log.Infow("METRICS SENT - : %s\nStatus: %d\n",
-		"ADDRES", client.BaseURL,
-		"Status", resp.StatusCode(),
-	)
-	log.Printf("client: status code: %d\n", resp.StatusCode())
-	log.Println(string(resp.Body()))
-}
-
-func CollectMetrics(gaugeMap map[string]float64, mu *sync.RWMutex) {
+func CollectMetrics(metrics *metricsMap) {
 	var rtm runtime.MemStats
 	runtime.ReadMemStats(&rtm)
 
-	mu.Lock()
+	metrics.mu.Lock()
 
-	gaugeMap["Alloc"] = float64(rtm.Alloc)
-	gaugeMap["BuckHashSys"] = float64(rtm.BuckHashSys)
-	gaugeMap["Frees"] = float64(rtm.Frees)
-	gaugeMap["GCCPUFraction"] = float64(rtm.GCCPUFraction)
-	gaugeMap["GCSys"] = float64(rtm.GCSys)
-	gaugeMap["HeapAlloc"] = float64(rtm.HeapAlloc)
-	gaugeMap["HeapIdle"] = float64(rtm.HeapIdle)
-	gaugeMap["HeapInuse"] = float64(rtm.HeapInuse)
-	gaugeMap["HeapObjects"] = float64(rtm.HeapObjects)
-	gaugeMap["HeapReleased"] = float64(rtm.HeapReleased)
-	gaugeMap["HeapSys"] = float64(rtm.HeapSys)
-	gaugeMap["LastGC"] = float64(rtm.LastGC)
-	gaugeMap["Lookups"] = float64(rtm.Lookups)
-	gaugeMap["MCacheInuse"] = float64(rtm.MCacheInuse)
-	gaugeMap["MCacheSys"] = float64(rtm.MCacheSys)
-	gaugeMap["MSpanInuse"] = float64(rtm.MSpanInuse)
-	gaugeMap["MSpanSys"] = float64(rtm.MSpanSys)
-	gaugeMap["Mallocs"] = float64(rtm.Mallocs)
-	gaugeMap["NextGC"] = float64(rtm.NextGC)
-	gaugeMap["NumForcedGC"] = float64(rtm.NumForcedGC)
-	gaugeMap["NumGC"] = float64(rtm.NumGC)
-	gaugeMap["OtherSys"] = float64(rtm.OtherSys)
-	gaugeMap["PauseTotalNs"] = float64(rtm.PauseTotalNs)
-	gaugeMap["StackInuse"] = float64(rtm.StackInuse)
-	gaugeMap["StackSys"] = float64(rtm.StackSys)
-	gaugeMap["Sys"] = float64(rtm.Sys)
-	gaugeMap["TotalAlloc"] = float64(rtm.TotalAlloc)
-	gaugeMap["RandomValue"] = rand.Float64()
+	metrics.Gauge["Alloc"] = float64(rtm.Alloc)
+	metrics.Gauge["BuckHashSys"] = float64(rtm.BuckHashSys)
+	metrics.Gauge["Frees"] = float64(rtm.Frees)
+	metrics.Gauge["GCCPUFraction"] = float64(rtm.GCCPUFraction)
+	metrics.Gauge["GCSys"] = float64(rtm.GCSys)
+	metrics.Gauge["HeapAlloc"] = float64(rtm.HeapAlloc)
+	metrics.Gauge["HeapIdle"] = float64(rtm.HeapIdle)
+	metrics.Gauge["HeapInuse"] = float64(rtm.HeapInuse)
+	metrics.Gauge["HeapObjects"] = float64(rtm.HeapObjects)
+	metrics.Gauge["HeapReleased"] = float64(rtm.HeapReleased)
+	metrics.Gauge["HeapSys"] = float64(rtm.HeapSys)
+	metrics.Gauge["LastGC"] = float64(rtm.LastGC)
+	metrics.Gauge["Lookups"] = float64(rtm.Lookups)
+	metrics.Gauge["MCacheInuse"] = float64(rtm.MCacheInuse)
+	metrics.Gauge["MCacheSys"] = float64(rtm.MCacheSys)
+	metrics.Gauge["MSpanInuse"] = float64(rtm.MSpanInuse)
+	metrics.Gauge["MSpanSys"] = float64(rtm.MSpanSys)
+	metrics.Gauge["Mallocs"] = float64(rtm.Mallocs)
+	metrics.Gauge["NextGC"] = float64(rtm.NextGC)
+	metrics.Gauge["NumForcedGC"] = float64(rtm.NumForcedGC)
+	metrics.Gauge["NumGC"] = float64(rtm.NumGC)
+	metrics.Gauge["OtherSys"] = float64(rtm.OtherSys)
+	metrics.Gauge["PauseTotalNs"] = float64(rtm.PauseTotalNs)
+	metrics.Gauge["StackInuse"] = float64(rtm.StackInuse)
+	metrics.Gauge["StackSys"] = float64(rtm.StackSys)
+	metrics.Gauge["Sys"] = float64(rtm.Sys)
+	metrics.Gauge["TotalAlloc"] = float64(rtm.TotalAlloc)
+	metrics.Gauge["RandomValue"] = rand.Float64()
 
-	mu.Unlock()
+	metrics.mu.Unlock()
 	log.Printf("METRICS COLLECTED \n\n")
 }
 

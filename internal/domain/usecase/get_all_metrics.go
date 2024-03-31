@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 )
 
 type getAllMetricsUsecase struct {
@@ -17,15 +19,25 @@ func NewGetAllMetricsUsecase(ms MetricService) *getAllMetricsUsecase {
 	}
 }
 
+func (uc *getAllMetricsUsecase) GetAllMetrics(ctx context.Context) (entity.MetricSlices, error) {
+	metricSlices, err := uc.metricService.GetAllMetrics(ctx)
+	if err != nil {
+		return entity.MetricSlices{}, fmt.Errorf("GetAllMetricsJSON: %w", err)
+	}
+
+	return metricSlices, nil
+
+}
+
 func (uc *getAllMetricsUsecase) GetAllMetricsJSON(ctx context.Context) ([]byte, error) {
-	MetricSlices, err := uc.metricService.GetAllMetrics(ctx)
+	metricSlices, err := uc.metricService.GetAllMetrics(ctx)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GetAllMetricsJSON: %w", err)
 	}
 
 	b := new(bytes.Buffer)
 
-	jsonMaps, err := json.Marshal(&MetricSlices)
+	jsonMaps, err := json.Marshal(&metricSlices)
 	if err != nil {
 		return []byte{}, fmt.Errorf("GetAllMetricsJSON: %w", err)
 	}

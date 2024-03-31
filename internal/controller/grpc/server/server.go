@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 
-	v1 "github.com/The-Gleb/go_metrics_and_alerting/internal/controller/http/v1/handler"
 	metrics "github.com/The-Gleb/go_metrics_and_alerting/internal/proto"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -21,10 +20,10 @@ func NewServer(
 	logger *zap.SugaredLogger,
 	privateKeyPath string,
 	trustedSubnet string,
-	updateMetricUsecase v1.UpdateMetricUsecase,
-	updateMetricSetUsecase v1.UpdateMetricSetUsecase,
-	getMetricUsecase v1.GetMetricUsecase,
-	getAllMetricsUsecase v1.GetAllMetricsUsecase,
+	updateMetricUsecase UpdateMetricUsecase,
+	updateMetricSetUsecase UpdateMetricSetUsecase,
+	getMetricUsecase GetMetricUsecase,
+	getAllMetricsUsecase GetAllMetricsUsecase,
 ) (*grpcServer, error) {
 	s := grpc.NewServer()
 

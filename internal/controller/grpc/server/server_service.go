@@ -5,8 +5,8 @@ import (
 	"errors"
 	"strings"
 
-	v1 "github.com/The-Gleb/go_metrics_and_alerting/internal/controller/http/v1/handler"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
+	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	metrics "github.com/The-Gleb/go_metrics_and_alerting/internal/proto"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
 	"google.golang.org/grpc/codes"
@@ -15,19 +15,48 @@ import (
 
 type serverService struct {
 	metrics.UnimplementedMetricServiceServer
-	updateMetricUsecase    v1.UpdateMetricUsecase
-	updateMetricSetUsecase v1.UpdateMetricSetUsecase
-	getMetricUsecase       v1.GetMetricUsecase
-	getAllMetricsUsecase   v1.GetAllMetricsUsecase
+	updateMetricUsecase    UpdateMetricUsecase
+	updateMetricSetUsecase UpdateMetricSetUsecase
+	getMetricUsecase       GetMetricUsecase
+	getAllMetricsUsecase   GetAllMetricsUsecase
 	signKey                []byte
 	// logger *zap.SugaredLogger
 	privateKeyPath string
 	trustedSubnet  string
 }
 
-// func (s serverService) GetAllMetrics(context.Context, *metrics.GetAllMetricsRequest) (*metrics.GetAllMetricsResponse, error) {
-// 	return nil, nil
-// }
+func (s serverService) GetAllMetrics(context.Context, *metrics.GetAllMetricsRequest) (*metrics.GetAllMetricsResponse, error) {
+
+	metricSlices, err := s.getAllMetricsUsecase.GetAllMetrics(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	grpcMetrics := make([]*metrics.Metric, len(metricSlices.Gauge)+1)
+
+	for _, m := range metricSlices.Gauge {
+		metric := &metrics.Metric{
+			Type:       metrics.MetricType_GAUGE,
+			Name:       m.ID,
+			GaugeValue: *m.Value,
+		}
+
+		grpcMetrics = append(grpcMetrics, metric)
+
+	}
+
+	pollCountMetric := metricSlices.Counter[0]
+
+	grpcMetrics = append(grpcMetrics, &metrics.Metric{
+		Type:         metrics.MetricType_COUNTER,
+		Name:         pollCountMetric.ID,
+		CounterValue: *pollCountMetric.Delta,
+	})
+
+	return &metrics.GetAllMetricsResponse{
+		Metrics: grpcMetrics,
+	}, nil
+}
 
 // func (s serverService) GetMetric(context.Context, *metrics.GetMetricRequest) (*metrics.GetMetricResponse, error) {
 // 	return nil, nil
@@ -51,6 +80,8 @@ func (s serverService) UpdateMetricSet(ctx context.Context, updateMetricSetReque
 			Delta: &m.Delta,
 		}
 	}
+
+	logger.Log.Debug(metricSlice)
 
 	n, err := s.updateMetricSetUsecase.UpdateMetricSet(ctx, metricSlice)
 	if err != nil {
