@@ -32,18 +32,17 @@ func NewBackupService(ms MetricStorage, bs FileStorage, interval int, restore bo
 	}
 }
 
-func (service *backupService) Run(ctx context.Context) {
-
+func (service *backupService) Run(ctx context.Context) error {
 	if service.restore {
 		err := service.LoadDataFromFile(ctx)
 		if err != nil {
-			logger.Log.Errorf("error in backupservice, stopping", "error", err)
-			return
+			logger.Log.Errorf("error in backupservice, stopping")
+			return err
 		}
 	}
 
 	if service.backupInterval <= 0 || service.backupStorage == nil {
-		return
+		return nil
 	}
 
 	saveTicker := time.NewTicker(time.Duration(service.backupInterval) * time.Second)
@@ -53,29 +52,34 @@ func (service *backupService) Run(ctx context.Context) {
 			case <-saveTicker.C:
 				err := service.StoreDataToFile(ctx)
 				if err != nil {
-					logger.Log.Errorf("error in backupservice, stopping", "error", err)
-					return
+					return err
 				}
 			case <-ctx.Done():
 				logger.Log.Debug("stop saving to file")
-				return
+				return nil
 			}
 		}
 	}
-
 }
 
 func (service *backupService) LoadDataFromFile(ctx context.Context) error {
-
+	if service.backupStorage == nil {
+		return nil
+	}
 	data, err := service.backupStorage.ReadData()
 	if err != nil {
 		return fmt.Errorf("LoadDataFromFile: failed reading data: %w", err)
+	}
+	if len(data) == 0 {
+		logger.Log.Debug("backup file is empty, nothing to restore")
+		return nil
 	}
 
 	var maps entity.MetricSlices
 
 	err = json.Unmarshal(data, &maps)
 	if err != nil {
+		logger.Log.Errorf("error in backupservice, stopping", "error", err)
 		return fmt.Errorf("LoadDataFromFile: failed unmarshalling: %w", err)
 	}
 
@@ -84,24 +88,21 @@ func (service *backupService) LoadDataFromFile(ctx context.Context) error {
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("LoadDataFromFile:: %w", err)
+		return fmt.Errorf("LoadDataFromFile: %w", err)
 	}
 
-	_, err = service.metricStorage.UpdateMetricSet(ctx, maps.Gauge)
+	err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
+		_, err = service.metricStorage.UpdateMetricSet(ctx, maps.Counter)
+		return err
+	})
 	if err != nil {
-		return fmt.Errorf("LoadDataFromFile:: %w", err)
-	}
-
-	_, err = service.metricStorage.UpdateMetricSet(ctx, maps.Counter)
-	if err != nil {
-		return fmt.Errorf("LoadDataFromFile: failded updating counter: %w", err)
+		return fmt.Errorf("LoadDataFromFile: %w", err)
 	}
 
 	return nil
 }
 
 func (service *backupService) StoreDataToFile(ctx context.Context) error {
-
 	var MetricSlices entity.MetricSlices
 	var err error
 	err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {

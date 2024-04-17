@@ -1,13 +1,16 @@
 package main
 
 import (
-	// "compress/gzip"
 	"bytes"
 	"compress/gzip"
 	"crypto/hmac"
+	cryptoRand "crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"log"
 	"math/rand"
@@ -16,6 +19,7 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -30,38 +34,51 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 )
 
+var (
+	BuildVersion string = "N/A"
+	BuildDate    string = "N/A"
+	BuildCommit  string = "N/A"
+)
+
 func main() {
+	fmt.Printf(
+		"Build version: %s\nBuild date: %s\nBuild commit: %s\n",
+		BuildVersion, BuildDate, BuildCommit,
+	)
+
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	config := NewConfigFromFlags()
+	config, err := BuildConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	logger.Initialize("debug")
+	logger.Initialize(config.LogLevel)
 
 	logger.Log.Info(config)
 
 	gaugeMap := make(map[string]float64)
-	var PollCount atomic.Int64
-	PollCount.Store(1)
+	var pollCount atomic.Int64
+	pollCount.Store(1)
 
 	var pollInterval = time.Duration(config.PollInterval * 1000000000)
 	var reportInterval = time.Duration(config.ReportInterval * 1000000000)
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
 	pollTicker := time.NewTicker(pollInterval)
 	reportTicker := time.NewTicker(reportInterval)
 
-	baseURL := fmt.Sprintf("http://%s", config.Addres)
+	baseURL := fmt.Sprintf("http://%s", config.Address)
 	client := resty.New()
 	client.
 		SetRetryCount(3).
 		SetRetryMaxWaitTime(5 * time.Second).
-		// SetRetryWaitTime(1 * time.Second).
 		SetRetryAfter(func(c *resty.Client, r *resty.Response) (time.Duration, error) {
-			log.Printf("attempt: %d", r.Request.Attempt)
+			logger.Log.Debug("attempt: %d", r.Request.Attempt)
 			dur := time.Duration(r.Request.Attempt*2-1) * time.Second
 			return dur, nil
 		}).
@@ -75,7 +92,7 @@ func main() {
 	for i := 0; i < config.RateLimit; i++ {
 		go func() {
 			for range sendTaskCh {
-				SendMetricsInOneRequest(gaugeMap, &PollCount, client, []byte(config.SignKey), &mu)
+				SendMetricSet(gaugeMap, &pollCount, client, []byte(config.SignKey), config.PublicKeyPath, &mu)
 			}
 		}()
 	}
@@ -108,14 +125,17 @@ func main() {
 }
 
 func SendTestGet(req *resty.Request) {
-
 	resp, _ := req.
 		Get("/value/counter/PollCount")
-	log.Println(string(resp.Body()))
-	log.Println(resp.StatusCode())
+	logger.Log.Debug(string(resp.Body()))
+	logger.Log.Debug(resp.StatusCode())
 }
 
-func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int64, client *resty.Client, signKey []byte, mu *sync.RWMutex) {
+func SendMetricSet(
+	gaugeMap map[string]float64, pollCount *atomic.Int64,
+	client *resty.Client, signKey []byte, publicKeyPath string,
+	mu *sync.RWMutex,
+) {
 	metrics := make([]entity.Metric, 0)
 
 	mu.RLock()
@@ -128,7 +148,7 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int6
 	}
 	mu.RUnlock()
 
-	counter := PollCount.Load()
+	counter := pollCount.Load()
 	metrics = append(metrics, entity.Metric{
 		MType: "counter",
 		ID:    "PollCount",
@@ -148,7 +168,6 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int6
 		if err != nil {
 			log.Fatal(err)
 		}
-		// sign, err = []byte(hex.EncodeToString())
 
 		logger.Log.Debug("signKey is ", string(signKey))
 		logger.Log.Debug("hex encoded signature is ", hex.EncodeToString(sign))
@@ -160,9 +179,17 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int6
 	err = gw.Close()
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
+
 	body := buf.Bytes()
+
+	if publicKeyPath != "" {
+		var err error
+		body, err = encrypt(body, publicKeyPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	resp, err := client.R().
 		SetHeader("Content-Type", "application/json").
@@ -172,10 +199,13 @@ func SendMetricsInOneRequest(gaugeMap map[string]float64, PollCount *atomic.Int6
 		SetBody(body).
 		Post("/updates/")
 	if err != nil {
+		logger.Log.Error(err)
 		return
 	}
-	log.Println(resp.Header().Get("Content-Encoding"))
-	log.Println(string(resp.Body()))
+
+	// logger.Log.Debug(resp.Header().Get("Content-Encoding"))
+	logger.Log.Debugf("response code %d", resp.StatusCode())
+	logger.Log.Debugf("response body %d", string(resp.Body()))
 }
 
 func CollectMemMetrics(gauge map[string]float64, mu *sync.RWMutex) {
@@ -221,7 +251,7 @@ func hash(data, key []byte) ([]byte, error) {
 	return sign, nil
 }
 
-func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.Request) {
+func SendMetricsJSON(gaugeMap map[string]float64, pollCount *int64, req *resty.Request) {
 	for name, val := range gaugeMap {
 		var result entity.Metric
 		_, err := req.
@@ -236,14 +266,13 @@ func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.R
 		if err != nil {
 			return
 		}
-
 	}
 	var result entity.Metric
 	_, err := req.
 		SetBody(&entity.Metric{
 			ID:    "PollCount",
 			MType: "counter",
-			Delta: PollCount,
+			Delta: pollCount,
 		}).
 		SetResult(&result).
 		Post("/update/")
@@ -254,7 +283,7 @@ func SendMetricsJSON(gaugeMap map[string]float64, PollCount *int64, req *resty.R
 	log.Printf("\nUpdated to %v\n", result)
 }
 
-func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Client) {
+func SendMetrics(gaugeMap map[string]float64, pollCount *int64, client *resty.Client) {
 	for name, val := range gaugeMap {
 		requestURL := fmt.Sprintf("%s/update/gauge/%s/%f", client.BaseURL, name, val)
 
@@ -268,10 +297,9 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 			return
 		}
 		log.Println(string(resp.Body()))
-
 	}
 
-	requestURL := fmt.Sprintf("%s/update/counter/PollCount/%d", client.BaseURL, *PollCount)
+	requestURL := fmt.Sprintf("%s/update/counter/PollCount/%d", client.BaseURL, *pollCount)
 	resp, err := client.R().
 		SetHeader("Content-Type", "application/json").
 		Post(requestURL)
@@ -286,7 +314,6 @@ func SendMetrics(gaugeMap map[string]float64, PollCount *int64, client *resty.Cl
 	)
 	log.Printf("client: status code: %d\n", resp.StatusCode())
 	log.Println(string(resp.Body()))
-
 }
 
 func CollectMetrics(gaugeMap map[string]float64, mu *sync.RWMutex) {
@@ -325,21 +352,13 @@ func CollectMetrics(gaugeMap map[string]float64, mu *sync.RWMutex) {
 	gaugeMap["RandomValue"] = rand.Float64()
 
 	mu.Unlock()
-	// *counter++
-
-	// b, _ := json.Marshal(gaugeMap)
-	// fmt.Println(string(b))
 	log.Printf("METRICS COLLECTED \n\n")
-
 }
 
 func SendTestGetJSON(req *resty.Request) {
-
 	var result entity.Metric
 	_, err := req.
-		// SetHeader("Content-Encoding", "gzip").
 		SetHeader("Accept-Encoding", "gzip").
-		// SetHeader("Content-Encoding", "gzip").
 		SetBody(&entity.Metric{
 			ID:    "PollCount",
 			MType: "counter",
@@ -351,5 +370,32 @@ func SendTestGetJSON(req *resty.Request) {
 		return
 	}
 	log.Printf("PollCount is %d", *result.Delta)
+}
 
+func encrypt(plainText []byte, keyPath string) ([]byte, error) {
+
+	logger.Log.Debugf("palin text lenght is %d", len(plainText))
+
+	publicKeyPEM, err := os.ReadFile(keyPath)
+	if err != nil {
+		logger.Log.Error(err)
+		return nil, err
+	}
+
+	logger.Log.Debugf("public key lenght is %d", len(publicKeyPEM))
+
+	publicKeyBlock, _ := pem.Decode(publicKeyPEM)
+	publicKey, err := x509.ParsePKCS1PublicKey(publicKeyBlock.Bytes)
+	if err != nil {
+		logger.Log.Error(err)
+		return nil, err
+	}
+
+	ciphertext, err := rsa.EncryptPKCS1v15(cryptoRand.Reader, publicKey, plainText)
+	if err != nil {
+		logger.Log.Error(err)
+		return nil, err
+	}
+
+	return ciphertext, nil
 }

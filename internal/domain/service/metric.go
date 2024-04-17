@@ -15,8 +15,8 @@ type MetricStorage interface {
 
 	UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error)
 
-	GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error)
-	GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error)
+	GetGauge(ctx context.Context, metric entity.GetMetricDTO) (entity.Metric, error)
+	GetCounter(ctx context.Context, metric entity.GetMetricDTO) (entity.Metric, error)
 	GetAllMetrics(ctx context.Context) (entity.MetricSlices, error)
 
 	PingDB() error
@@ -31,7 +31,6 @@ func NewMetricService(s MetricStorage) *metricService {
 }
 
 func (service *metricService) UpdateMetric(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-
 	var err error
 	switch metric.MType {
 	case "gauge":
@@ -60,7 +59,6 @@ func (service *metricService) UpdateMetric(ctx context.Context, metric entity.Me
 	}
 
 	return metric, nil
-
 }
 
 func (service *metricService) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error) {
@@ -75,22 +73,21 @@ func (service *metricService) UpdateMetricSet(ctx context.Context, metrics []ent
 	}
 
 	return n, nil
-
 }
 
-func (service *metricService) GetMetric(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-
+func (service *metricService) GetMetric(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
+	var metric entity.Metric
 	var err error
-	switch metric.MType {
+	switch dto.MType {
 	case "gauge":
 		err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
-			metric, err = service.storage.GetGauge(ctx, metric)
+			metric, err = service.storage.GetGauge(ctx, dto)
 			return err
 		})
 
 	case "counter":
 		err = retry.DefaultRetry(ctx, func(ctx context.Context) error {
-			metric, err = service.storage.GetCounter(ctx, metric)
+			metric, err = service.storage.GetCounter(ctx, dto)
 			return err
 		})
 	default:
@@ -102,11 +99,9 @@ func (service *metricService) GetMetric(ctx context.Context, metric entity.Metri
 	}
 
 	return metric, nil
-
 }
 
 func (service *metricService) GetAllMetrics(ctx context.Context) (entity.MetricSlices, error) {
-
 	var MetricSlices entity.MetricSlices
 	var err error
 	err = retry.DefaultRetry(context.TODO(), func(ctx context.Context) error {
@@ -118,12 +113,9 @@ func (service *metricService) GetAllMetrics(ctx context.Context) (entity.MetricS
 	}
 
 	return MetricSlices, nil
-
 }
 
 // why does metric service ping database???
 func (service *metricService) PingDB() error {
-
 	return service.storage.PingDB()
-
 }

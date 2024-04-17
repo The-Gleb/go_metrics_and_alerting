@@ -16,7 +16,6 @@ var (
 	ErrInvalidMetricValueFloat64 error = errors.New("incorrect metric value\ncannot parse to float64")
 	ErrInvalidMetricValueInt64   error = errors.New("incorrect metric value\ncannot parse to int64")
 	ErrInvalidMetricType         error = errors.New("invalid mertic type")
-	// ErrMetricNotFound            error = errors.New(("metric was not found"))
 )
 
 type storage struct {
@@ -46,31 +45,42 @@ func (s *storage) UpdateCounter(ctx context.Context, metric entity.Metric) (enti
 	return metric, nil
 }
 
-// TODO: check
-func (s *storage) GetGauge(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-	val, ok := s.gauge.Load(metric.ID)
-	if ok {
-		metric.Value = val.(*float64)
-		return metric, nil
+func (s *storage) GetGauge(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
+	val, ok := s.gauge.Load(dto.ID)
+	if !ok {
+		return entity.Metric{}, repository.ErrNotFound
 	}
-	return metric, repository.ErrNotFound
+	floatVal, ok := val.(*float64)
+	if !ok {
+		return entity.Metric{}, fmt.Errorf("error to covert value from map to *float64")
+	}
+
+	return entity.Metric{
+		MType: "gauge",
+		ID:    dto.ID,
+		Value: floatVal,
+	}, nil
 }
 
-func (s *storage) GetCounter(ctx context.Context, metric entity.Metric) (entity.Metric, error) {
-	val, ok := s.counter.Load(metric.ID)
-	if ok {
-		v := val.(*atomic.Int64).Load()
-		metric.Delta = &v
-		return metric, nil
+func (s *storage) GetCounter(ctx context.Context, dto entity.GetMetricDTO) (entity.Metric, error) {
+	val, ok := s.counter.Load(dto.ID)
+	if !ok {
+		return entity.Metric{}, repository.ErrNotFound
 	}
-	return metric, repository.ErrNotFound
+	v := val.(*atomic.Int64).Load()
+
+	return entity.Metric{
+		MType: dto.MType,
+		ID:    dto.ID,
+		Delta: &v,
+	}, nil
 }
 
 func (s *storage) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) (int64, error) {
 	var updated int64
 	newGauge := *CopySyncMap(&s.gauge)
 	newCounter := *CopySyncMap(&s.counter)
-	// var newCounter sync.Map
+
 	for _, metric := range metrics {
 		switch metric.MType {
 		case "gauge":
@@ -101,7 +111,6 @@ func (s *storage) UpdateMetricSet(ctx context.Context, metrics []entity.Metric) 
 func (s *storage) GetAllMetrics(ctx context.Context) (entity.MetricSlices, error) {
 	newGauge := make([]entity.Metric, 0)
 	s.gauge.Range(func(key any, value any) bool {
-
 		metric := entity.Metric{
 			MType: "gauge",
 			ID:    key.(string),
@@ -111,12 +120,10 @@ func (s *storage) GetAllMetrics(ctx context.Context) (entity.MetricSlices, error
 		newGauge = append(newGauge, metric)
 
 		return true
-
 	})
 
 	newCounter := make([]entity.Metric, 0)
 	s.counter.Range(func(key any, value any) bool {
-
 		v := value.(*atomic.Int64).Load()
 		metric := entity.Metric{
 			MType: "counter",
@@ -186,7 +193,7 @@ func (s *storage) UpdateMetric(mType, mName, mValue string) error {
 		}
 
 		val, _ := s.counter.LoadOrStore(mName, new(atomic.Int64))
-		// atomic.AddInt64(val.(*int64), mValue)
+
 		val.(*atomic.Int64).Add(mValue)
 
 	default:

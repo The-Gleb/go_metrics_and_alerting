@@ -30,3 +30,5 @@ playground.go
 # Metrictest
 metricstest
 random
+
+golangci-lint

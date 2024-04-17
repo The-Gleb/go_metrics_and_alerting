@@ -46,7 +46,6 @@ func (h *updateMetricSetHandler) Middlewares(md ...func(http.Handler) http.Handl
 }
 
 func (h *updateMetricSetHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-
 	var metrics []entity.Metric
 	err := json.NewDecoder(r.Body).Decode(&metrics)
 	if err != nil {
@@ -63,5 +62,4 @@ func (h *updateMetricSetHandler) ServeHTTP(rw http.ResponseWriter, r *http.Reque
 
 	updatedMetricsCount := strconv.FormatInt(int64(n), 10)
 	rw.Write([]byte(updatedMetricsCount + " metrics updated"))
-
 }

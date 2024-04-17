@@ -1,13 +1,16 @@
 package main
 
+//go:generate go run ../../internal/encryption
+
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	_ "net/http/pprof"
 
@@ -17,49 +20,59 @@ import (
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/usecase"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository/database"
-	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository/file_storage"
+	filestorage "github.com/The-Gleb/go_metrics_and_alerting/internal/repository/file_storage"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository/memory"
-	postgresql "github.com/The-Gleb/go_metrics_and_alerting/pkg/client"
 	"github.com/go-chi/chi/v5"
 )
 
 // postgres://metric_db:metric_db@localhost:5434/metric_db?sslmode=disable
 
-func main() {
+var (
+	BuildVersion string = "N/A"
+	BuildDate    string = "N/A"
+	BuildCommit  string = "N/A"
+)
 
-	if err := Run(); err != nil {
+func main() {
+	fmt.Printf(
+		"Build version: %s\nBuild date: %s\nBuild commit: %s\n",
+		BuildVersion, BuildDate, BuildCommit,
+	)
+
+	if err := Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
-
 }
 
-func Run() error {
+func Run(ctx context.Context) error {
+	ctx, cancel := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer cancel()
 
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 
-	config := NewConfigFromFlags()
+	config, err := BuildConfig()
+	if err != nil {
+		return err
+	}
 
 	if err := logger.Initialize(config.LogLevel); err != nil {
 		logger.Log.Fatal(err)
 		return err
 	}
+
 	logger.Log.Info(config)
 
 	var repository service.MetricStorage
 	var fileStorage service.FileStorage
 
 	if config.FileStoragePath != "" {
-		fileStorage = filestorage.NewFileStorage(config.FileStoragePath)
+		fileStorage = filestorage.MustGetFileStorage(config.FileStoragePath)
 	}
 
 	if config.DatabaseDSN != "" {
-		client, err := postgresql.NewClient(context.Background(), config.DatabaseDSN)
-		if err != nil {
-			return err
-		}
-		db, err := database.NewMetricDB(client)
+		db, err := database.NewMetricDB(ctx, config.DatabaseDSN)
 		if err != nil {
 			return err
 		}
@@ -86,9 +99,10 @@ func Run() error {
 	gzipMiddleware := middleware.NewGzipMiddleware()
 	checkSignatureMiddleware := middleware.NewCheckSignatureMiddleware([]byte(config.SignKey))
 	loggerMidleware := middleware.NewLoggerMiddleware(logger.Log)
+	decryptionMiddleware := middleware.NewDecryptionMiddleware(config.PrivateKeyPath)
 
 	r := chi.NewMux()
-	r.Use(gzipMiddleware.Do, checkSignatureMiddleware.Do, loggerMidleware.Do)
+	r.Use(loggerMidleware.Do, decryptionMiddleware.Do, gzipMiddleware.Do, checkSignatureMiddleware.Do)
 
 	updateMetricHandler.AddToRouter(r)
 	updateMetricJSONHandler.AddToRouter(r)
@@ -98,30 +112,30 @@ func Run() error {
 	getAllMetricsHandler.AddToRouter(r)
 
 	s := http.Server{
-		Addr:    config.Addres,
+		Addr:    config.Address,
 		Handler: r,
 	}
 
 	var wg sync.WaitGroup
 
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		backupService.Run(ctx)
+		err := backupService.Run(ctx)
+		if err != nil {
+			cancel()
+		}
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		ServerShutdownSignal := make(chan os.Signal, 1)
-		signal.Notify(ServerShutdownSignal, syscall.SIGINT)
 
-		<-ServerShutdownSignal
+		<-ctx.Done()
 
-		cancelCtx()
-		err := s.Shutdown(context.Background())
+		ctxShutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err := s.Shutdown(ctxShutdown)
 		if err != nil {
 			panic(err)
 		}

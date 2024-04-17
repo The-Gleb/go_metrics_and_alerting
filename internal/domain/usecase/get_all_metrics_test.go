@@ -12,7 +12,6 @@ import (
 )
 
 func Test_getAllMetricsUsecase_GetAllMetricsJSON(t *testing.T) {
-
 	var gaugeVal float64 = 12345
 	var counterVal int64 = 123
 	gaugeMetric := entity.Metric{MType: "gauge", ID: "Alloc", Value: &gaugeVal}
@@ -34,10 +33,10 @@ func Test_getAllMetricsUsecase_GetAllMetricsJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
+		err     error
 		name    string
 		want    []byte
 		wantErr bool
-		err     error
 	}{
 		{
 			name:    "positive",

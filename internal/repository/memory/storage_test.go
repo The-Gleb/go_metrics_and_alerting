@@ -2,12 +2,12 @@ package memory
 
 import (
 	"context"
-	"reflect"
 	"testing"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/repository"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_storage_GetMetric(t *testing.T) {
@@ -19,10 +19,10 @@ func Test_storage_GetMetric(t *testing.T) {
 		mName string
 	}
 	tests := []struct {
-		name string
 		args args
-		want string
 		err  error
+		name string
+		want string
 	}{
 		{
 			name: "pos gauge test #1",
@@ -69,10 +69,10 @@ func Test_storage_UpdateMetric(t *testing.T) {
 		mValue string
 	}
 	tests := []struct {
-		name string
 		args args
-		val  string
 		err  error
+		name string
+		val  string
 	}{
 		{
 			name: "pos new counter test #1",
@@ -132,28 +132,36 @@ func Test_storage_UpdateMetric(t *testing.T) {
 }
 
 func Test_storage_GetAllMetrics(t *testing.T) {
-	type args struct {
-		ctx context.Context
-	}
+	var int64Val int64 = 123
+	float64Val := 123.4
+
+	memory := New()
+	memory.UpdateMetric("gauge", "Alloc", "123.4")
+	memory.UpdateMetric("counter", "Counter", "123")
+
 	tests := []struct {
+		err     error
 		name    string
-		s       *storage
-		args    args
 		want    entity.MetricSlices
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "positive",
+			want: entity.MetricSlices{
+				Gauge:   []entity.Metric{{MType: "gauge", ID: "Alloc", Value: &float64Val}},
+				Counter: []entity.Metric{{MType: "counter", ID: "Counter", Delta: &int64Val}},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.s.GetAllMetrics(tt.args.ctx)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("storage.GetAllMetrics() error = %v, wantErr %v", err, tt.wantErr)
+			got, err := memory.GetAllMetrics(context.Background())
+			if tt.wantErr {
+				require.ErrorIs(t, err, tt.err)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("storage.GetAllMetrics() = %v, want %v", got, tt.want)
-			}
+			require.ElementsMatch(t, tt.want.Counter, got.Counter)
+			require.ElementsMatch(t, tt.want.Gauge, got.Gauge)
 		})
 	}
 }
