@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/domain/entity"
 	"github.com/The-Gleb/go_metrics_and_alerting/internal/logger"
@@ -31,8 +30,6 @@ func NewGRPCClient(
 
 	c := metrics.NewMetricServiceClient(conn)
 
-	// TODO: interceptors
-
 	return &grpcClient{
 		client:        c,
 		signKey:       signKey,
@@ -41,15 +38,8 @@ func NewGRPCClient(
 
 }
 
-// func (c *grpcClient) SomeInterceptor(
-// 	ctx context.Context, method string, req any, reply any, cc *grpc.ClientConn,
-// 	invoker grpc.UnaryInvoker, opts ...grpc.CallOption,
-// ) error {
-
-// }
-
-func (c *grpcClient) SendMetricSet(metricsMap *metricsMap) {
-	metricStructs := make([]*metrics.UpdateMetricRequest, 0)
+func (c *grpcClient) SendMetricSet(metricsMap *metricsMap) error {
+	metricStructs := make([]*metrics.UpdateMetricRequest, 0, len(metricsMap.Gauge)+1)
 
 	for name, value := range metricsMap.Gauge {
 
@@ -78,10 +68,12 @@ func (c *grpcClient) SendMetricSet(metricsMap *metricsMap) {
 
 	resp, err := c.client.UpdateMetricSet(context.Background(), in)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	logger.Log.Debugf("%d metrics updated", resp.GetUpdatedNum())
+
+	return nil
 
 }
 
@@ -91,7 +83,7 @@ func (c *grpcClient) GetAllMetrics() ([]entity.Metric, error) {
 		return nil, err
 	}
 
-	metricStructs := make([]entity.Metric, len(resp.Metrics))
+	metricStructs := make([]entity.Metric, 0, len(resp.Metrics))
 
 	for _, m := range resp.Metrics {
 		counter := m.GetCounterValue()

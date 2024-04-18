@@ -18,6 +18,11 @@ Configuration details can be found in `cmd/server/flags.go`
 go test -v ./...
 ```
 
+### How to generate public/private key pair
+```bash
+go generate ./cmd/server
+```
+
 ### How to run staticlinter
 ```bash
 go run ./cmd/staticlint ./...

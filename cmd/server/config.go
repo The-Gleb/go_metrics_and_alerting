@@ -11,7 +11,7 @@ import (
 
 type Config struct {
 	Address         string `json:"address" env:"ADDRESS"`
-	LogLevel        string
+	LogLevel        string `json:"log_level" env:"LOG_LEVEL"`
 	FileStoragePath string `json:"store_file" env:"FILE_STORAGE_PATH"`
 	DatabaseDSN     string `json:"database_dsn" env:"DATABASE_DSN"`
 	SignKey         string `env:"KEY"`

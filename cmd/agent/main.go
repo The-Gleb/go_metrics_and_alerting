@@ -1,15 +1,11 @@
 package main
 
 import (
-	"bytes"
-	"compress/gzip"
 	"crypto/hmac"
 	cryptoRand "crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/hex"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"log"
@@ -91,8 +87,10 @@ func main() {
 	for i := 0; i < config.RateLimit; i++ {
 		go func() {
 			for range sendTaskCh {
-				client.SendMetricSet(&metrics)
-				client.GetAllMetrics()
+				err := client.SendMetricSet(&metrics)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 		}()
 	}
@@ -129,84 +127,6 @@ func SendTestGet(req *resty.Request) {
 		Get("/value/counter/PollCount")
 	logger.Log.Debug(string(resp.Body()))
 	logger.Log.Debug(resp.StatusCode())
-}
-
-func SendMetricSet(
-	gaugeMap map[string]float64, pollCount *atomic.Int64,
-	client *resty.Client, signKey []byte, publicKeyPath string,
-	mu *sync.RWMutex,
-) {
-	metrics := make([]entity.Metric, 0)
-
-	mu.RLock()
-	for name, value := range gaugeMap {
-		metrics = append(metrics, entity.Metric{
-			MType: "gauge",
-			ID:    name,
-			Value: &value,
-		})
-	}
-	mu.RUnlock()
-
-	counter := pollCount.Load()
-	metrics = append(metrics, entity.Metric{
-		MType: "counter",
-		ID:    "PollCount",
-		Delta: &counter,
-	})
-
-	data, err := json.Marshal(&metrics)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	logger.Log.Debug("sent body is", string(data))
-
-	var sign []byte
-	if len(signKey) > 0 {
-		sign, err = hash(data, signKey)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		logger.Log.Debug("signKey is ", string(signKey))
-		logger.Log.Debug("hex encoded signature is ", hex.EncodeToString(sign))
-	}
-
-	buf := bytes.Buffer{}
-	gw := gzip.NewWriter(&buf)
-	gw.Write(data)
-	err = gw.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	body := buf.Bytes()
-
-	if publicKeyPath != "" {
-		var err error
-		body, err = encrypt(body, publicKeyPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Content-Encoding", "gzip").
-		SetHeader("Accept-Encoding", "gzip").
-		SetHeader("HashSHA256", hex.EncodeToString(sign)).
-		SetHeader("X-Real-IP", "127.0.0.1").
-		SetBody(body).
-		Post("/updates/")
-	if err != nil {
-		logger.Log.Error(err)
-		return
-	}
-
-	// logger.Log.Debug(resp.Header().Get("Content-Encoding"))
-	logger.Log.Debugf("response code %d", resp.StatusCode())
-	logger.Log.Debugf("response body %d", string(resp.Body()))
 }
 
 func CollectMemMetrics(metrics *metricsMap) {
