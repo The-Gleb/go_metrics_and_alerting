@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package metrics;
+
+option go_package = "github.com/The-Gleb/go_metrics_and_alerting/internal/proto;metrics";
+
+service MetricService {
+    rpc GetMetric(GetMetricRequest) returns (GetMetricResponse);
+    rpc UpdateMetric(UpdateMetricRequest) returns (UpdateMetricResponse);
+    rpc UpdateMetricSet(UpdateMetricSetRequest) returns (UpdateMetricSetResponse);
+    rpc GetAllMetrics(GetAllMetricsRequest) returns (GetAllMetricsResponse);
+}
+
+enum MetricType {
+    GAUGE = 0;
+    COUNTER = 1;
+}
+
+message Metric {
+    MetricType type = 1;
+    string name = 2;
+    double gauge_value = 3;
+    int64 counter_value = 4;
+}
+
+message GetMetricRequest {
+    MetricType type = 1;
+    string name = 2;
+}
+
+message GetMetricResponse {
+    Metric metric = 1;
+}
+
+message UpdateMetricRequest {
+    MetricType type = 1;
+    string name = 2;
+    double value = 3;
+    int64 delta = 4;
+}
+
+message UpdateMetricResponse {
+    Metric metric = 1;
+}
+
+message UpdateMetricSetRequest {
+    repeated UpdateMetricRequest metrics = 1;
+}
+
+message UpdateMetricSetResponse {
+    int32 updatedNum = 1;
+}
+
+message GetAllMetricsRequest {
+
+}
+
+message GetAllMetricsResponse {
+    repeated Metric metrics = 1;
+}
